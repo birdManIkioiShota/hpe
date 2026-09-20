@@ -19,7 +19,6 @@ import torch
 from hpe.data.dataset import ManifestDataset
 from hpe.datasets.dad3dheads import full_range_euler, rotation_from_model_view
 from hpe.evaluation import EvaluationConfig, compare_runs, evaluate
-from hpe.evaluation.runner import _validate_config
 from training.audit import BENCHMARKS, audit_manifest
 from training.prepare_dad3dheads import extract_validation, item_file, prepare
 
@@ -130,7 +129,7 @@ class DADTests(unittest.TestCase):
                 results = [evaluate(EvaluationConfig(
                     project_root=root, checkpoint=root / "unused.pth", run_name=name,
                     output_root=root / "eval/reference/evaluations", datasets=("dad3dheads",), device="cpu", workers=0,
-                    amp=False, protocol_version=2, manifest_paths={"dad3dheads": manifest},
+                    amp=False, manifest_paths={"dad3dheads": manifest},
                     image_lock_sha256={"dad3dheads": audit["image_lock_sha256"]},
                 )) for name in ("baseline", "candidate")]
             predictions = pd.read_csv(results[0] / "predictions/dad3dheads.csv.gz")
@@ -154,7 +153,6 @@ class DADTests(unittest.TestCase):
             config = inference.call_args.args[0]
             self.assertEqual(config.datasets, ("dad3dheads",))
             self.assertEqual(config.manifest_paths, {"dad3dheads": manifest})
-            self.assertEqual(config.protocol_version, 2)
             self.assertFalse(config.amp)
             before = manifest.read_bytes()
             with self.assertRaises(FileExistsError):
@@ -171,12 +169,6 @@ class DADTests(unittest.TestCase):
                 prepare(root, archive, output, expected_count=2)
             self.assertEqual(json.loads((output / "status.json").read_text())["status"], "failed")
             self.assertTrue(archive.is_file())
-
-    def test_dad_requires_protocol_v2(self):
-        config = EvaluationConfig(Path("/tmp"), Path("/tmp/unused.pth"), "test", datasets=("dad3dheads",), device="cpu")
-        with self.assertRaisesRegex(ValueError, "protocol v2"):
-            _validate_config(config)
-
 
 if __name__ == "__main__":
     unittest.main()

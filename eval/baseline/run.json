@@ -1,0 +1,117 @@
+{
+    "run_name": "baseline",
+  "checkpoint": {
+    "path": "/home/hoge/learn/hpe/checkpoints/6DRepNet360_Full-Rotation_300W_LP+Panoptic.pth",
+    "sha256": "3ee08f1e04b8d452a6c4a40926a6f38051894ae6d0aaa6d191fe6d8bc6e4f9c6",
+    "parameter_tensors": 320
+  },
+  "datasets": [
+    {
+      "dataset": "agora_hpe",
+      "count": 7505,
+      "elapsed_seconds": 21.371458421999705,
+      "samples_per_second": 351.16929560007844,
+      "manifest": "/home/hoge/learn/hpe/datasets/prepared/agora_hpe/manifest.jsonl",
+      "manifest_sha256": "c4b70189a17ea4ad7d79112f66c2562672395c8dd969e85b1bd0804357c6abf2",
+      "overall": {
+        "count": 7505.0,
+        "pitch_error_deg_mean": 42.8559384706257,
+        "yaw_error_deg_mean": 27.047088837544177,
+        "roll_error_deg_mean": 41.84365960006155,
+        "mean_axis_error_deg_mean": 37.24889664315606,
+        "geodesic_error_deg_mean": 45.48163019794372,
+        "vec1_error_deg_mean": 41.28952375356751,
+        "vec2_error_deg_mean": 15.845016808727436,
+        "vec3_error_deg_mean": 43.249563969285546,
+        "vmae_deg_mean": 33.46136908881431,
+        "geodesic_error_deg_median": 29.6027774810791,
+        "geodesic_error_deg_p90": 113.69250335693361,
+        "geodesic_error_deg_p95": 145.00767517089838
+      }
+    },
+    {
+      "dataset": "aflw2000",
+      "count": 1988,
+      "elapsed_seconds": 1.5104763320005077,
+      "samples_per_second": 1316.1411124973072,
+      "manifest": "/home/hoge/learn/hpe/datasets/prepared/aflw2000/manifest.jsonl",
+      "manifest_sha256": "218f3dc212ccfe7b6f88475649febd0124a81670de462ad9caab5e9040e98470",
+      "overall": {
+        "count": 1988.0,
+        "pitch_error_deg_mean": 5.997249775969046,
+        "yaw_error_deg_mean": 3.494982583182199,
+        "roll_error_deg_mean": 4.092142032185791,
+        "mean_axis_error_deg_mean": 4.528124937439109,
+        "geodesic_error_deg_mean": 6.5612453514301565,
+        "vec1_error_deg_mean": 4.499101500467246,
+        "vec2_error_deg_mean": 4.564812607591001,
+        "vec3_error_deg_mean": 6.123461808432156,
+        "vmae_deg_mean": 5.062458774648322,
+        "geodesic_error_deg_median": 5.323283910751343,
+        "geodesic_error_deg_p90": 11.331922435760498,
+        "geodesic_error_deg_p95": 14.266112327575682
+      }
+    },
+    {
+      "dataset": "300w_lp",
+      "count": 122217,
+      "elapsed_seconds": 32.622935257999416,
+      "samples_per_second": 3746.3520383265136,
+      "manifest": "/home/hoge/learn/hpe/datasets/prepared/300w_lp/manifest.jsonl",
+      "manifest_sha256": "9e425513d30747d1fc1c9d5e6fab93ced9c6d900ac0cc457d0d4d94c57cf1619",
+      "overall": {
+        "count": 122217.0,
+        "pitch_error_deg_mean": 5.125558530022079,
+        "yaw_error_deg_mean": 4.133459136210544,
+        "roll_error_deg_mean": 4.310688459113468,
+        "mean_axis_error_deg_mean": 4.523235504833652,
+        "geodesic_error_deg_mean": 5.845783239186514,
+        "vec1_error_deg_mean": 4.778013067034154,
+        "vec2_error_deg_mean": 3.3243424670852955,
+        "vec3_error_deg_mean": 5.434637295723439,
+        "vmae_deg_mean": 4.512331071899346,
+        "geodesic_error_deg_median": 5.170437335968018,
+        "geodesic_error_deg_p90": 9.793383598327638,
+        "geodesic_error_deg_p95": 11.890891647338867
+      }
+    }
+  ],
+  "settings": {
+    "model": "SixDRepNet360-ResNet50",
+    "crop_source": "ground_truth_manifest",
+    "resize": 256,
+    "center_crop": 224,
+    "normalization_mean": [
+      0.485,
+      0.456,
+      0.406
+    ],
+    "normalization_std": [
+      0.229,
+      0.224,
+      0.225
+    ],
+    "device": "cuda:0",
+    "batch_size": 256,
+    "workers": 8,
+    "amp": true,
+    "max_samples": null,
+    "axis_error_representation": "canonical RzRyRx Euler for both target and prediction",
+    "yaw_group_source": "manifest source yaw",
+    "head_size_measure": "sqrt(bbox_width*bbox_height)"
+  },
+  "environment": {
+    "python": "3.11.13",
+    "platform": "Linux-7.0.0-31-generic-x86_64-with-glibc2.39",
+    "torch": "2.9.0+cu128",
+    "torchvision": "0.24.0+cu128",
+    "cuda_runtime": "12.8",
+    "cudnn": 91002,
+    "device": "cuda:0",
+    "gpu_name": "NVIDIA GeForce RTX 4090",
+    "gpu_capability": [
+      8,
+      9
+    ]
+  }
+}

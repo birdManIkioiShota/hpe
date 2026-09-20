@@ -28,8 +28,6 @@ def _manifest_map(metadata: dict[str, Any]) -> dict[str, str]:
 
 
 def _check_compatible(baseline: dict[str, Any], candidate: dict[str, Any]) -> list[str]:
-    if baseline["protocol_version"] != candidate["protocol_version"]:
-        raise ValueError("Runs use different evaluation protocol versions.")
     baseline_settings = baseline["settings"]
     candidate_settings = candidate["settings"]
     comparable_settings = (
@@ -43,12 +41,11 @@ def _check_compatible(baseline: dict[str, Any], candidate: dict[str, Any]) -> li
         "axis_error_representation",
         "yaw_group_source",
     )
-    if baseline["protocol_version"] >= 2:
-        comparable_settings += (
-            "amp", "batch_size", "deterministic", "rotation_normalization", "metric_dtype",
-            "geodesic_formula", "vector_definition", "cuda_matmul_fp32_precision",
-            "cudnn_conv_fp32_precision",
-        )
+    comparable_settings += (
+        "amp", "batch_size", "deterministic", "rotation_normalization", "metric_dtype",
+        "geodesic_formula", "vector_definition", "cuda_matmul_fp32_precision",
+        "cudnn_conv_fp32_precision",
+    )
     mismatches = [
         key for key in comparable_settings if baseline_settings.get(key) != candidate_settings.get(key)
     ]
@@ -58,11 +55,10 @@ def _check_compatible(baseline: dict[str, Any], candidate: dict[str, Any]) -> li
     candidate_manifests = _manifest_map(candidate)
     if baseline_manifests != candidate_manifests:
         raise ValueError("Runs were evaluated against different dataset manifests.")
-    if baseline["protocol_version"] >= 2:
-        baseline_images = {item["dataset"]: item.get("image_lock_sha256") for item in baseline["datasets"]}
-        candidate_images = {item["dataset"]: item.get("image_lock_sha256") for item in candidate["datasets"]}
-        if baseline_images != candidate_images:
-            raise ValueError("Runs have different or missing image locks.")
+    baseline_images = {item["dataset"]: item.get("image_lock_sha256") for item in baseline["datasets"]}
+    candidate_images = {item["dataset"]: item.get("image_lock_sha256") for item in candidate["datasets"]}
+    if baseline_images != candidate_images:
+        raise ValueError("Runs have different or missing image locks.")
     return list(baseline_manifests)
 
 
@@ -215,7 +211,6 @@ def compare_runs(
                 "baseline_checkpoint_sha256": baseline["checkpoint"]["sha256"],
                 "candidate": str(candidate_dir),
                 "candidate_checkpoint_sha256": candidate["checkpoint"]["sha256"],
-                "protocol_version": baseline["protocol_version"],
                 "datasets": datasets,
                 "bootstrap_repetitions": bootstrap_repetitions,
                 "bootstrap_sample_limit": bootstrap_sample_limit,

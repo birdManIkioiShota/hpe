@@ -1,0 +1,14 @@
+{
+  "epoch": 10,
+  "step": 32590,
+  "train_loss_rad": 0.04675265932904622,
+  "dev": {
+    "count": 51914,
+    "geodesic_mean_deg": 3.0149194511244635,
+    "geodesic_median_deg": 1.5095192667840567,
+    "geodesic_p90_deg": 4.287844081663354,
+    "over90_percent": 0.3101282890935008
+  },
+  "best_dev_deg": 3.0149194511244635,
+  "improved": true
+}

@@ -29,8 +29,6 @@ from hpe.geometry import (
 from hpe.models import SixDRepNet360, load_checkpoint
 
 
-PROTOCOL_VERSION = 1
-AUDITED_PROTOCOL_VERSION = 2
 DEFAULT_DATASETS = ("agora_hpe", "aflw2000", "300w_lp")
 MANIFESTS = {
     "agora_hpe": Path("datasets/prepared/agora_hpe/manifest.jsonl"),
@@ -53,7 +51,6 @@ class EvaluationConfig:
     amp: bool = True
     max_samples: int | None = None
     overwrite: bool = False
-    protocol_version: int = PROTOCOL_VERSION
     deterministic: bool = False
     preserve_partial: bool = False
     image_lock_sha256: dict[str, str] | None = None
@@ -73,8 +70,6 @@ def _validate_config(config: EvaluationConfig) -> tuple[Path, torch.device]:
         raise ValueError("Specify at least one dataset, without duplicates.")
     if config.max_samples is not None and config.max_samples <= 0:
         raise ValueError("max_samples must be positive.")
-    if config.protocol_version not in (PROTOCOL_VERSION, AUDITED_PROTOCOL_VERSION):
-        raise ValueError("Unsupported evaluation protocol version.")
     if config.image_lock_sha256 is not None and set(config.image_lock_sha256) != set(config.datasets):
         raise ValueError("Image locks must cover exactly the selected datasets.")
     unknown = set(config.datasets) - set(MANIFESTS)
@@ -82,8 +77,6 @@ def _validate_config(config: EvaluationConfig) -> tuple[Path, torch.device]:
         raise ValueError(f"Unknown datasets: {sorted(unknown)}")
     if config.manifest_paths and set(config.manifest_paths) - set(config.datasets):
         raise ValueError("Manifest overrides must name selected datasets")
-    if "dad3dheads" in config.datasets and config.protocol_version != AUDITED_PROTOCOL_VERSION:
-        raise ValueError("DAD-3DHeads requires evaluation protocol v2")
     device = torch.device(config.device)
     if device.type not in ("cuda", "cpu"):
         raise ValueError("Only CUDA and explicitly selected CPU are supported.")
@@ -136,7 +129,6 @@ def _evaluate_dataset(
     error_sum = 0.0
     max_orthogonality_error = 0.0
     max_determinant_error = 0.0
-    audited = config.protocol_version == AUDITED_PROTOCOL_VERSION
     with torch.inference_mode(), tqdm(
         total=len(dataset), desc=f"evaluate {dataset_name}",
         unit="head", dynamic_ncols=True,
@@ -154,17 +146,15 @@ def _evaluate_dataset(
                     metadata["roll_deg"],
                 ),
                 dim=1,
-            ).to(device=device, dtype=torch.float64 if audited else torch.float32,
-                 non_blocking=True)
+            ).to(device=device, dtype=torch.float64, non_blocking=True)
             predicted_matrix = predicted_matrix.to(dtype=source_euler.dtype)
-            if audited:
-                identity = torch.eye(3, dtype=source_euler.dtype, device=device)
-                ortho = (predicted_matrix.transpose(1, 2) @ predicted_matrix - identity).abs().amax()
-                det_error = (torch.linalg.det(predicted_matrix) - 1).abs().amax()
-                if not torch.isfinite(predicted_matrix).all() or ortho > 1e-4 or det_error > 1e-4:
-                    raise RuntimeError(f"Invalid predicted rotation in {dataset_name}.")
-                max_orthogonality_error = max(max_orthogonality_error, float(ortho))
-                max_determinant_error = max(max_determinant_error, float(det_error))
+            identity = torch.eye(3, dtype=source_euler.dtype, device=device)
+            ortho = (predicted_matrix.transpose(1, 2) @ predicted_matrix - identity).abs().amax()
+            det_error = (torch.linalg.det(predicted_matrix) - 1).abs().amax()
+            if not torch.isfinite(predicted_matrix).all() or ortho > 1e-4 or det_error > 1e-4:
+                raise RuntimeError(f"Invalid predicted rotation in {dataset_name}.")
+            max_orthogonality_error = max(max_orthogonality_error, float(ortho))
+            max_determinant_error = max(max_determinant_error, float(det_error))
             if "rotation_matrix" in metadata:
                 target_matrix = metadata["rotation_matrix"].to(device=device, dtype=source_euler.dtype, non_blocking=True)
             else:
@@ -172,8 +162,8 @@ def _evaluate_dataset(
             predicted_euler = matrix_to_euler_degrees(predicted_matrix)
             target_euler = matrix_to_euler_degrees(target_matrix)
             axis_errors = circular_error_degrees(predicted_euler, target_euler)
-            geodesic = geodesic_error_degrees(predicted_matrix, target_matrix, stable=audited)
-            vector_errors = vector_errors_degrees(predicted_matrix, target_matrix, rows=audited)
+            geodesic = geodesic_error_degrees(predicted_matrix, target_matrix, stable=True)
+            vector_errors = vector_errors_degrees(predicted_matrix, target_matrix, rows=True)
             bbox = metadata["bbox_xyxy"]
             crop = metadata["crop_xyxy"]
 
@@ -208,11 +198,10 @@ def _evaluate_dataset(
             extend("crop_x2", crop[:, 2])
             extend("crop_y2", crop[:, 3])
             extend("occlusion_percent", metadata["occlusion_percent"])
-            if audited:
-                for row in range(3):
-                    for column in range(3):
-                        extend(f"pred_R_{row}{column}", predicted_matrix[:, row, column])
-                        extend(f"gt_R_{row}{column}", target_matrix[:, row, column])
+            for row in range(3):
+                for column in range(3):
+                    extend(f"pred_R_{row}{column}", predicted_matrix[:, row, column])
+                    extend(f"gt_R_{row}{column}", target_matrix[:, row, column])
             processed += images.shape[0]
             error_sum += float(geodesic.sum())
             progress.set_postfix(geodesic=f"{error_sum / processed:.3f} deg", refresh=False)
@@ -261,11 +250,10 @@ def _evaluate_dataset(
     if dataset_name == "dad3dheads":
         result["ground_truth_representation"] = "model_view_matrix[:3,:3].T (direct matrix)"
         result["yaw_group_definition"] = "derived RzRyRx branch with |pitch|<=90; rear |yaw|>=120"
-    if audited:
-        result["rotation_checks"] = {
-            "max_orthogonality_error": max_orthogonality_error,
-            "max_determinant_error": max_determinant_error,
-        }
+    result["rotation_checks"] = {
+        "max_orthogonality_error": max_orthogonality_error,
+        "max_determinant_error": max_determinant_error,
+    }
     if config.image_lock_sha256 is not None:
         result["image_lock_sha256"] = config.image_lock_sha256[dataset_name]
     tqdm.write(f"{dataset_name}: {len(predictions)} heads, SO(3)={error_sum / processed:.4f} deg")
@@ -311,7 +299,7 @@ def evaluate(
     partial_dir.mkdir(parents=True)
 
     try:
-        model = SixDRepNet360(rotation_fp32=config.protocol_version == AUDITED_PROTOCOL_VERSION)
+        model = SixDRepNet360(rotation_fp32=True)
         checkpoint_info = load_checkpoint(model, config.checkpoint)
         model.to(device).eval()
         torch.backends.cudnn.benchmark = not config.deterministic
@@ -327,7 +315,6 @@ def evaluate(
         summary.to_csv(partial_dir / "summary.csv", index=False, float_format="%.8f")
         write_json(partial_dir / "summary.json", summary.to_dict(orient="records"))
         run_metadata = {
-            "protocol_version": config.protocol_version,
             "run_name": config.run_name,
             "checkpoint": checkpoint_info,
             "datasets": results,
@@ -346,10 +333,10 @@ def evaluate(
                 "axis_error_representation": "canonical RzRyRx Euler for both target and prediction",
                 "yaw_group_source": "manifest source yaw",
                 "head_size_measure": "sqrt(bbox_width*bbox_height)",
-                "rotation_normalization": "fp32" if config.protocol_version == 2 else "inference dtype",
-                "metric_dtype": "float64" if config.protocol_version == 2 else "float32",
-                "geodesic_formula": "atan2" if config.protocol_version == 2 else "acos",
-                "vector_definition": "rows" if config.protocol_version == 2 else "columns",
+                "rotation_normalization": "fp32",
+                "metric_dtype": "float64",
+                "geodesic_formula": "atan2",
+                "vector_definition": "rows",
                 "deterministic": config.deterministic,
                 "cudnn_benchmark": torch.backends.cudnn.benchmark,
                 "cuda_matmul_fp32_precision": torch.backends.cuda.matmul.fp32_precision,
