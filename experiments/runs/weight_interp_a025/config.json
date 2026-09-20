@@ -1,0 +1,7 @@
+{
+  "kind": "checkpoint_interpolation",
+  "alpha": 0.25,
+  "formula": "(1-alpha)*base + alpha*candidate",
+  "base_checkpoint": "checkpoints/6DRepNet360_Full-Rotation_300W_LP+Panoptic.pth",
+  "candidate_checkpoint": "ft_runs/vgg_ft/best.pth"
+}

@@ -1,0 +1,154 @@
+{
+  "totals": {
+    "train": 417055,
+    "dev": 51914,
+    "holdout": 51677
+  },
+  "undefined_azimuth": {},
+  "groups": [
+    {
+      "split": "train",
+      "pose_band": "front_lt60",
+      "azimuth_side": "negative",
+      "count": 183798
+    },
+    {
+      "split": "train",
+      "pose_band": "front_lt60",
+      "azimuth_side": "positive",
+      "count": 203711
+    },
+    {
+      "split": "train",
+      "pose_band": "side_60_to_lt120",
+      "azimuth_side": "negative",
+      "count": 10392
+    },
+    {
+      "split": "train",
+      "pose_band": "side_60_to_lt120",
+      "azimuth_side": "positive",
+      "count": 11393
+    },
+    {
+      "split": "train",
+      "pose_band": "rear_120_to_lt150",
+      "azimuth_side": "negative",
+      "count": 1563
+    },
+    {
+      "split": "train",
+      "pose_band": "rear_120_to_lt150",
+      "azimuth_side": "positive",
+      "count": 1477
+    },
+    {
+      "split": "train",
+      "pose_band": "rear_150_to_180",
+      "azimuth_side": "negative",
+      "count": 2085
+    },
+    {
+      "split": "train",
+      "pose_band": "rear_150_to_180",
+      "azimuth_side": "positive",
+      "count": 2636
+    },
+    {
+      "split": "dev",
+      "pose_band": "front_lt60",
+      "azimuth_side": "negative",
+      "count": 22844
+    },
+    {
+      "split": "dev",
+      "pose_band": "front_lt60",
+      "azimuth_side": "positive",
+      "count": 25416
+    },
+    {
+      "split": "dev",
+      "pose_band": "side_60_to_lt120",
+      "azimuth_side": "negative",
+      "count": 1287
+    },
+    {
+      "split": "dev",
+      "pose_band": "side_60_to_lt120",
+      "azimuth_side": "positive",
+      "count": 1344
+    },
+    {
+      "split": "dev",
+      "pose_band": "rear_120_to_lt150",
+      "azimuth_side": "negative",
+      "count": 199
+    },
+    {
+      "split": "dev",
+      "pose_band": "rear_120_to_lt150",
+      "azimuth_side": "positive",
+      "count": 184
+    },
+    {
+      "split": "dev",
+      "pose_band": "rear_150_to_180",
+      "azimuth_side": "negative",
+      "count": 286
+    },
+    {
+      "split": "dev",
+      "pose_band": "rear_150_to_180",
+      "azimuth_side": "positive",
+      "count": 354
+    },
+    {
+      "split": "holdout",
+      "pose_band": "front_lt60",
+      "azimuth_side": "negative",
+      "count": 22795
+    },
+    {
+      "split": "holdout",
+      "pose_band": "front_lt60",
+      "azimuth_side": "positive",
+      "count": 25157
+    },
+    {
+      "split": "holdout",
+      "pose_band": "side_60_to_lt120",
+      "azimuth_side": "negative",
+      "count": 1330
+    },
+    {
+      "split": "holdout",
+      "pose_band": "side_60_to_lt120",
+      "azimuth_side": "positive",
+      "count": 1464
+    },
+    {
+      "split": "holdout",
+      "pose_band": "rear_120_to_lt150",
+      "azimuth_side": "negative",
+      "count": 161
+    },
+    {
+      "split": "holdout",
+      "pose_band": "rear_120_to_lt150",
+      "azimuth_side": "positive",
+      "count": 184
+    },
+    {
+      "split": "holdout",
+      "pose_band": "rear_150_to_180",
+      "azimuth_side": "negative",
+      "count": 265
+    },
+    {
+      "split": "holdout",
+      "pose_band": "rear_150_to_180",
+      "azimuth_side": "positive",
+      "count": 321
+    }
+  ]
+}
