@@ -1,0 +1,17 @@
+{
+  "kind": "pose_distribution_audit",
+  "data_id": "vgg_data",
+  "splits": [
+    "train",
+    "dev",
+    "holdout"
+  ],
+  "azimuth_definition": "atan2((R @ +Z).x, (R @ +Z).z)",
+  "bands_deg": [
+    0,
+    60,
+    120,
+    150,
+    180
+  ]
+}

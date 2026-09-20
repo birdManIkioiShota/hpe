@@ -1,0 +1,12 @@
+{
+  "base": {
+    "path": "/home/hoge/learn/hpe/checkpoints/6DRepNet360_Full-Rotation_300W_LP+Panoptic.pth",
+    "sha256": "3ee08f1e04b8d452a6c4a40926a6f38051894ae6d0aaa6d191fe6d8bc6e4f9c6",
+    "parameter_tensors": 320
+  },
+  "candidate": {
+    "path": "/home/hoge/learn/hpe/ft_runs/vgg_ft/best.pth",
+    "sha256": "f36abf2e366ce8cf13049202c2c970d8ea6bf723ee10e7ce9551e5d40f792ea4",
+    "parameter_tensors": 320
+  }
+}

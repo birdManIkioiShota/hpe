@@ -1,0 +1,3 @@
+yaw_band,count,pitch_error_deg_mean,yaw_error_deg_mean,roll_error_deg_mean,mean_axis_error_deg_mean,geodesic_error_deg_mean,vec1_error_deg_mean,vec2_error_deg_mean,vec3_error_deg_mean,vmae_deg_mean,geodesic_error_deg_median,geodesic_error_deg_p90,geodesic_error_deg_p95,geodesic_error_deg_gt90_count,geodesic_error_deg_gt90_percent
+front_lt60,76453,2.81808989,2.71984048,1.80912438,2.44901825,4.39535187,3.32983563,2.94439447,3.97538082,3.41653697,3.93582700,7.47274869,8.85833816,0,0.00000000
+side_60_to_lt120,45764,6.38352583,3.46845809,6.03420833,5.29539741,4.83863619,4.51287548,2.81028506,3.91851459,3.74722504,4.57398061,7.64200342,8.73317474,2,0.00437025

@@ -1,0 +1,6 @@
+{
+  "status": "completed",
+  "samples": 520646,
+  "undefined_azimuth": 0,
+  "artifact": "experiments/runs/vgg_pose_distribution/artifacts/pose_samples.csv.gz"
+}
