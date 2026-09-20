@@ -49,9 +49,16 @@ def main():
         raise ValueError("Reference must be a completed, full baseline evaluation")
     baseline = reference / "evaluations/baseline"
     baseline_run = json.loads((baseline / "run.json").read_text())
-    if (baseline_run["protocol_version"] != 2 or baseline_run["settings"]["amp"]
-            or baseline_run["settings"]["max_samples"] is not None):
-        raise ValueError("Reference must use full protocol v2 / FP32")
+    required_settings = {
+        "amp": False, "max_samples": None, "rotation_normalization": "fp32",
+        "metric_dtype": "float64", "geodesic_formula": "atan2", "vector_definition": "rows",
+    }
+    mismatches = [
+        key for key, value in required_settings.items()
+        if baseline_run["settings"].get(key) != value
+    ]
+    if mismatches:
+        raise ValueError(f"Reference does not use the fixed FP32 evaluation settings: {', '.join(mismatches)}")
     evaluation_root = ROOT / "eval"
     comparison_name = f"{baseline_run['run_name']}_vs_{evaluation_name}"
     occupied = [evaluation_root / evaluation_name,
@@ -98,7 +105,7 @@ def main():
         result = evaluate(EvaluationConfig(project_root=ROOT, checkpoint=run_dir / "best.pth",
             run_name=evaluation_name, output_root=evaluation_root, datasets=selected,
             device=args.device, batch_size=args.batch_size, workers=args.workers, amp=False,
-            protocol_version=2, deterministic=True, preserve_partial=True, image_lock_sha256=locks,
+            deterministic=True, preserve_partial=True, image_lock_sha256=locks,
             manifest_paths=manifests, image_hashes=image_hashes), event_callback=log)
         comparison = compare_runs(baseline, result, evaluation_root, name=comparison_name)
         print(f"Evaluation: {result}\nComparison: {comparison}")

@@ -1,0 +1,81 @@
+{
+  "geometry": {
+    "status": "passed",
+    "checks": [
+      "Rz @ Ry @ Rx agrees with independent SciPy xyz rotations",
+      "rear and singular Euler round trips preserve the rotation",
+      "horizontal reflection obeys S R S and reverses yaw/roll",
+      "6D output basis is stored in matrix columns",
+      "SO(3) distances match SciPy, including 0 and 180 degrees",
+      "Vec1/2/3 and VMAE use rows as in upstream test.py",
+      "circular angle error wraps at 180/360 degrees",
+      "sequential landmark margin, RGB, Resize256/CenterCrop224, ImageNet normalization"
+    ],
+    "references": {
+      "architecture_transform_and_row_vectors": "https://github.com/thohemp/6DRepNet360/blob/master/sixdrepnet360/test.py",
+      "rotation_convention": "https://github.com/thohemp/6DRepNet360/blob/master/sixdrepnet360/utils.py",
+      "landmark_crop": "https://github.com/thohemp/6DRepNet360/blob/master/sixdrepnet360/datasets.py",
+      "agora_label_provenance": "https://github.com/hnuzhy/DirectMHP"
+    }
+  },
+  "datasets": [
+    {
+      "dataset": "agora_hpe",
+      "manifest": "/home/hoge/learn/hpe/datasets/prepared/agora_hpe/manifest.jsonl",
+      "manifest_sha256": "c4b70189a17ea4ad7d79112f66c2562672395c8dd969e85b1bd0804357c6abf2",
+      "instances": 7505,
+      "images": 1070,
+      "yaw_bands": {
+        "front_lt60": 2681,
+        "side_60_to_lt120": 2180,
+        "rear_ge120": 2644
+      },
+      "image_lock": "/home/hoge/learn/hpe/eval/baseline_fp32/input_lock/agora_hpe_images.jsonl",
+      "image_lock_sha256": "d5fecd3e045d5b93ad3a7941b239ae2f4a05d36c3bfeee5be4bea67c0eacc5af",
+      "role": "benchmark"
+    },
+    {
+      "dataset": "aflw2000",
+      "manifest": "/home/hoge/learn/hpe/datasets/prepared/aflw2000/manifest.jsonl",
+      "manifest_sha256": "218f3dc212ccfe7b6f88475649febd0124a81670de462ad9caab5e9040e98470",
+      "instances": 1988,
+      "images": 1988,
+      "yaw_bands": {
+        "front_lt60": 1686,
+        "side_60_to_lt120": 302,
+        "rear_ge120": 0
+      },
+      "image_lock": "/home/hoge/learn/hpe/eval/baseline_fp32/input_lock/aflw2000_images.jsonl",
+      "image_lock_sha256": "d2f1fa927f0e0cf4708875de618af24c2af3bda608306f5a2ed0c693732631f9",
+      "role": "benchmark"
+    },
+    {
+      "dataset": "300w_lp",
+      "manifest": "/home/hoge/learn/hpe/datasets/prepared/300w_lp/manifest.jsonl",
+      "manifest_sha256": "9e425513d30747d1fc1c9d5e6fab93ced9c6d900ac0cc457d0d4d94c57cf1619",
+      "instances": 122217,
+      "images": 122217,
+      "yaw_bands": {
+        "front_lt60": 76453,
+        "side_60_to_lt120": 45764,
+        "rear_ge120": 0
+      },
+      "image_lock": "/home/hoge/learn/hpe/eval/baseline_fp32/input_lock/300w_lp_images.jsonl",
+      "image_lock_sha256": "d9c71e941d6394dd19340f5b1549d17cd75eb272be25130837f2b32826c63ab2",
+      "role": "seen_pretraining_regression"
+    }
+  ],
+  "checkpoint": {
+    "path": "/home/hoge/learn/hpe/checkpoints/6DRepNet360_Full-Rotation_300W_LP+Panoptic.pth",
+    "sha256": "3ee08f1e04b8d452a6c4a40926a6f38051894ae6d0aaa6d191fe6d8bc6e4f9c6",
+    "parameter_tensors": 320,
+    "parameters": 23520326,
+    "strict_load": true
+  },
+  "limitations": [
+    "Image hashes lock the files used by this evaluation.",
+    "Input integrity and synthetic geometry checks do not certify annotation accuracy or absence of training-data leakage.",
+    "AGORA/AFLW/300W-LP labels and sample membership are not altered.",
+    "300W-LP was already used to train the initial checkpoint; it is a regression reference."
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "root": "/home/hoge/learn/hpe",
+  "run_id": "baseline_fp32",
+  "datasets": [
+    "agora_hpe",
+    "aflw2000",
+    "300w_lp"
+  ],
+  "audit_only": false,
+  "device": "cuda:0",
+  "precision": "fp32",
+  "batch_size": 256,
+  "workers": 8,
+  "seed": 0,
+  "max_samples": null,
+  "checkpoint": "/home/hoge/learn/hpe/checkpoints/6DRepNet360_Full-Rotation_300W_LP+Panoptic.pth",
+    "scope": "full",
+  "source_sha256": {
+    "src/hpe/__init__.py": "ec0a2fbbb51ddd54ccb40d230978fd93316db44d8d3bcae7021510306485c61e",
+    "src/hpe/cli.py": "14f5b493c2fc53ac9abf8ae320aaee75e59bf2e1b4a1d2f4a437f2ee328bf26c",
+    "src/hpe/data/__init__.py": "86e9054201a80da8ee426a7410a554d9de2ef4aafbdb2111b31f18b2951f0ae9",
+    "src/hpe/data/dataset.py": "8583827634ac6f37675122abf9f5b0a4fcb349a938b0bb9ec5ffbae02af5ff31",
+    "src/hpe/datasets/__init__.py": "9bf3fffa6031e045b453d6268554a181cafdba621a3f0169182c2ea3fc7b35fb",
+    "src/hpe/datasets/agora.py": "5ab485dc9a1d7894ffc75ebaace5cb128cfd8f27fae3acd87fcf67dcb8aca046",
+    "src/hpe/datasets/common.py": "ccb6e328ee698020b9941be7efd67956345a83c506cf744245a6bcbe4cde00a5",
+    "src/hpe/datasets/prepare.py": "1acfaf4f3d9c6bf63b3b5515cd34fb13e1adc06bd5fc7aca39d405d4288b6dd7",
+    "src/hpe/datasets/single_pose.py": "023f0f1e4ae480a44ca78df193ab71e5485583110090775ba6e79434078dbecf",
+    "src/hpe/evaluation/__init__.py": "364cb48aa13ba5613c19ff8903fb143cf6e7172bd37e307a2b8ba6e0b7515d8e",
+    "src/hpe/evaluation/comparison.py": "3dce9df6dea751b27f80361d2f934ef4a5ff561557d7a70e06f1bf6faa3e0f4a",
+    "src/hpe/evaluation/metrics.py": "7d87b40e1a5cfd67fc94ada361864dc6ea2a94aa36a71348e1f694153d1e14a5",
+    "src/hpe/evaluation/reporting.py": "fcd64ebd02555bea94e7a47cb116dc9e33b867d29098d525305e0487384e1302",
+    "src/hpe/evaluation/runner.py": "dc448d227d97351b6ef6d7c79ba30121f7e85a5e26d88dc70ebd449429c3d808",
+    "src/hpe/geometry/__init__.py": "768fa1fc76cfdb9b5f567f9d04a1f1e6c7753fabebb28bf3d50ce86cefecb7a4",
+    "src/hpe/geometry/rotations.py": "232e605225ceba11e24de96d80ee7f784c2c50f4b114d914e2ac6c855b1722d6",
+    "src/hpe/models/__init__.py": "03156202c0434b4963ae2ae4eef5458be18e3b6aee5591d300a418e1e6c1e31f",
+    "src/hpe/models/checkpoint.py": "bdef13c0eb78bf3c325b1af94e8747c09fb0faf9031b6b799e03270daf210321",
+    "src/hpe/models/sixdrepnet360.py": "9e4ff8d9f4be26fd2aed4a7387bf128c4f242c8a9e9f4f4c513f0d01e90089a0",
+    "src/training/__init__.py": "4942223152c4ee440124ea43ddd724d6c5cacea182666c917e948c94d7f511f1",
+    "src/training/audit.py": "e67c9468283a4c671d0130d651ff21dfecfbbd579eb449ef6a17092b3e30f8e4",
+        "pyproject.toml": "2338ae20725c3fb4863f37f93bf2cd5aa4ec83fd2d9d1c99c292e5bf91bf8715",
+    "uv.lock": "1d515fe6df02ce82c0f1ed660c31a7586d12e80322180507fcbbd49f27031364"
+  }
+}

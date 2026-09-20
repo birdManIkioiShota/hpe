@@ -16,7 +16,7 @@ from hpe.data.dataset import ManifestDataset
 from hpe.datasets.common import sha256_file
 from hpe.evaluation.comparison import _check_compatible
 from hpe.evaluation.runner import EvaluationConfig, _validate_config, evaluate
-from hpe.geometry import euler_degrees_to_matrix, vector_errors_degrees
+from hpe.geometry import euler_degrees_to_matrix
 from hpe.models import SixDRepNet360
 from training.audit import BASE_SHA256, BENCHMARKS, audit_manifest, geometry_audit, validate_record
 from training.evaluate_baseline import build_parser, run, validate_args
@@ -185,7 +185,7 @@ class BaselineLifecycleTests(unittest.TestCase):
 
 
 class RunnerTests(unittest.TestCase):
-    def test_versioned_evaluation_writes_consistent_metrics_and_progress(self):
+    def test_evaluation_writes_consistent_metrics_and_progress(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             Image.new("RGB", (80, 60)).save(root / "image.png")
@@ -195,7 +195,7 @@ class RunnerTests(unittest.TestCase):
             events = []
             config = EvaluationConfig(root, root / "dummy.pth", "synthetic", output_root=root / "eval",
                                       datasets=("aflw2000",), device="cpu", batch_size=1, workers=0,
-                                      amp=False, protocol_version=2)
+                                      amp=False)
             with patch("hpe.evaluation.runner.SixDRepNet360", return_value=ConstantPose()), patch("hpe.evaluation.runner.load_checkpoint", return_value={"sha256": "test"}):
                 output = evaluate(config, event_callback=events.append)
             predictions = pd.read_csv(output / "predictions/aflw2000.csv.gz")
@@ -206,15 +206,10 @@ class RunnerTests(unittest.TestCase):
             self.assertEqual(events[-1]["event"], "dataset_complete")
             self.assertEqual(events[-2]["processed"], 2)
             info = json.loads((output / "run.json").read_text())
-            self.assertEqual(info["protocol_version"], 2)
             self.assertEqual(info["settings"]["vector_definition"], "rows")
             metrics = json.loads((output / "summary.json").read_text())[0]
             self.assertEqual(metrics["geodesic_error_deg_gt90_count"], 1)
             self.assertEqual(metrics["geodesic_error_deg_gt90_percent"], 50.)
-            legacy = copy.deepcopy(info)
-            legacy["protocol_version"] = 1
-            with self.assertRaisesRegex(ValueError, "protocol"):
-                _check_compatible(legacy, info)
             mixed_precision = copy.deepcopy(info)
             mixed_precision["settings"]["amp"] = True
             with self.assertRaisesRegex(ValueError, "amp"):
@@ -238,7 +233,7 @@ class RunnerTests(unittest.TestCase):
             config = EvaluationConfig(
                 root, root / "dummy", "bad", output_root=root / "eval",
                 datasets=("aflw2000",), device="cpu", workers=0,
-                protocol_version=2, preserve_partial=True,
+                preserve_partial=True,
             )
             with (
                 patch("hpe.evaluation.runner.SixDRepNet360", return_value=InvalidPose()),
@@ -248,13 +243,6 @@ class RunnerTests(unittest.TestCase):
                 evaluate(config)
             self.assertTrue((root / "eval/.bad.partial").exists())
             self.assertFalse((root / "eval/bad").exists())
-
-    def test_legacy_vector_metrics_remain_column_based(self):
-        pred = euler_degrees_to_matrix(torch.tensor([[21., 153., -37.]], dtype=torch.float64))
-        gt = euler_degrees_to_matrix(torch.tensor([[7., -52., 11.]], dtype=torch.float64))
-        expected = torch.rad2deg(torch.acos((pred * gt).sum(dim=1).clamp(-1, 1)))
-        torch.testing.assert_close(vector_errors_degrees(pred, gt), expected)
-        self.assertGreater(float((expected - vector_errors_degrees(pred, gt, rows=True)).abs().max()), 1.)
 
     def test_incomplete_runs_are_not_deleted(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -269,7 +257,7 @@ class RunnerTests(unittest.TestCase):
 
     def test_invalid_evaluation_configs_are_rejected(self):
         for changes in ({"run_name": ".."}, {"datasets": ()}, {"datasets": ("aflw2000", "aflw2000")},
-                        {"max_samples": 0}, {"protocol_version": 3}):
+                        {"max_samples": 0}):
             config = EvaluationConfig(**{"project_root": Path("/tmp"), "checkpoint": Path("dummy"),
                                          "run_name": "valid", "device": "cpu", **changes})
             with self.subTest(changes=changes), self.assertRaises(ValueError):

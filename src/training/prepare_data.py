@@ -16,7 +16,7 @@ from hpe.datasets.common import sha256_file, write_json_atomic
 from training.vgg import annotation_heads, read_jsonl
 
 ROOT = Path(__file__).resolve().parents[2]
-SCHEMA = "vggheads-v1"
+SCHEMA = "vggheads"
 
 
 def _named_path(root: Path, parent: Path, name: str, kind: str) -> Path:

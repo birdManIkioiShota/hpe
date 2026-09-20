@@ -1,0 +1,12 @@
+{
+  "operation": "baseline_evaluation",
+  "status": "completed",
+  "training_performed": false,
+  "evaluation": "/home/hoge/learn/hpe/eval/baseline_dad_fp32/evaluations/baseline",
+  "scope": "full",
+  "full_baseline": true,
+  "datasets": [
+    "dad3dheads"
+  ],
+  "elapsed_seconds": 6.47709916000008
+}

@@ -1,0 +1,8 @@
+{
+  "status": "completed",
+  "training_performed": false,
+  "evaluation": "/home/hoge/learn/hpe/eval/baseline_fp32/evaluations/baseline",
+  "scope": "full",
+  "full_three_benchmark_baseline": true,
+  "elapsed_seconds": 141.40939138300018
+}

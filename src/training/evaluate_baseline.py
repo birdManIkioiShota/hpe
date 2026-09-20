@@ -18,7 +18,7 @@ import torch
 from tqdm import tqdm
 
 from hpe.datasets.common import sha256_file, write_json_atomic
-from hpe.evaluation.runner import AUDITED_PROTOCOL_VERSION, EvaluationConfig, evaluate
+from hpe.evaluation.runner import EvaluationConfig, evaluate
 from hpe.models import SixDRepNet360, load_checkpoint
 from training.audit import BASE_CHECKPOINT, BASE_SHA256, BENCHMARKS, audit_manifest, geometry_audit
 from training.prepare_data import prepared_data_path
@@ -114,7 +114,6 @@ def run(args: argparse.Namespace) -> Path:
     write_json_atomic(output / "status.json", status)
     try:
         settings = {**vars(args), "root": str(root), "checkpoint": str(checkpoint),
-                    "protocol_version": AUDITED_PROTOCOL_VERSION,
                     "scope": "audit" if args.audit_only else "smoke" if args.max_samples else "full",
                     "source_sha256": source_hashes(root)}
         write_json_atomic(output / "config.json", settings)
@@ -142,7 +141,7 @@ def run(args: argparse.Namespace) -> Path:
                 log({"event": "dataset_audited", **result})
                 progress.update()
         audit["limitations"] = [
-            "Image hashes lock the current files; legacy eval/baseline has no image hashes.",
+            "Image hashes lock the files used by this evaluation.",
             "Input integrity and synthetic geometry checks do not certify annotation accuracy or absence of training-data leakage.",
             "AGORA/AFLW/300W-LP labels and sample membership are not altered.",
             "300W-LP was already used to train the initial checkpoint; it is a regression reference.",
@@ -155,7 +154,7 @@ def run(args: argparse.Namespace) -> Path:
                 output_root=output / "evaluations", datasets=tuple(args.datasets),
                 device=args.device, batch_size=args.batch_size, workers=args.workers,
                 amp=args.precision == "fp16", max_samples=args.max_samples,
-                protocol_version=AUDITED_PROTOCOL_VERSION, deterministic=True, preserve_partial=True,
+                deterministic=True, preserve_partial=True,
                 image_lock_sha256={item["dataset"]: item["image_lock_sha256"] for item in audit["datasets"]},
                 manifest_paths=manifests,
             ), event_callback=log)

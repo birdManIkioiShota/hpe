@@ -5,7 +5,7 @@ import numpy as np
 import torch
 from hpe.geometry import matrix_to_euler_degrees
 
-SCHEMA = "dad3dheads-validation-v1"
+SCHEMA = "dad3dheads-validation"
 VALIDATION_COUNT = 4312
 REFERENCES = {
     "annotation_format": "https://github.com/PinataFarms/DAD-3DHeads",

@@ -1,0 +1,51 @@
+{
+  "geometry": {
+    "status": "passed",
+    "checks": [
+      "Rz @ Ry @ Rx agrees with independent SciPy xyz rotations",
+      "rear and singular Euler round trips preserve the rotation",
+      "horizontal reflection obeys S R S and reverses yaw/roll",
+      "6D output basis is stored in matrix columns",
+      "SO(3) distances match SciPy, including 0 and 180 degrees",
+      "Vec1/2/3 and VMAE use rows as in upstream test.py",
+      "circular angle error wraps at 180/360 degrees",
+      "sequential landmark margin, RGB, Resize256/CenterCrop224, ImageNet normalization"
+    ],
+    "references": {
+      "architecture_transform_and_row_vectors": "https://github.com/thohemp/6DRepNet360/blob/master/sixdrepnet360/test.py",
+      "rotation_convention": "https://github.com/thohemp/6DRepNet360/blob/master/sixdrepnet360/utils.py",
+      "landmark_crop": "https://github.com/thohemp/6DRepNet360/blob/master/sixdrepnet360/datasets.py",
+      "agora_label_provenance": "https://github.com/hnuzhy/DirectMHP"
+    }
+  },
+  "datasets": [
+    {
+      "dataset": "dad3dheads",
+      "manifest": "/home/hoge/learn/hpe/datasets/prepared/dad3dheads/manifest.jsonl",
+      "manifest_sha256": "50c62ef6d8e6bc9bc7ca15a47457445c1996112a104f03dac4830bcb5355342f",
+      "instances": 4312,
+      "images": 4312,
+      "yaw_bands": {
+        "front_lt60": 3840,
+        "side_60_to_lt120": 425,
+        "rear_ge120": 47
+      },
+      "image_lock": "/home/hoge/learn/hpe/eval/baseline_dad_fp32/input_lock/dad3dheads_images.jsonl",
+      "image_lock_sha256": "c636eb4a7b96d4c5d53e911ee8264b614aac19c905edd96592db8c69fd70fdfe",
+      "role": "benchmark"
+    }
+  ],
+  "checkpoint": {
+    "path": "/home/hoge/learn/hpe/checkpoints/6DRepNet360_Full-Rotation_300W_LP+Panoptic.pth",
+    "sha256": "3ee08f1e04b8d452a6c4a40926a6f38051894ae6d0aaa6d191fe6d8bc6e4f9c6",
+    "parameter_tensors": 320,
+    "parameters": 23520326,
+    "strict_load": true
+  },
+  "limitations": [
+    "Image hashes lock the files used by this evaluation.",
+    "Input integrity and synthetic geometry checks do not certify annotation accuracy or absence of training-data leakage.",
+    "AGORA/AFLW/300W-LP labels and sample membership are not altered.",
+    "300W-LP was already used to train the initial checkpoint; it is a regression reference."
+  ]
+}

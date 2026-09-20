@@ -1,0 +1,6 @@
+{
+  "status": "completed",
+  "epochs": 20,
+  "step": 65180,
+  "best_dev_deg": 2.919495880048786
+}

@@ -1,0 +1,2 @@
+dataset,count,pitch_error_deg_mean,yaw_error_deg_mean,roll_error_deg_mean,mean_axis_error_deg_mean,geodesic_error_deg_mean,vec1_error_deg_mean,vec2_error_deg_mean,vec3_error_deg_mean,vmae_deg_mean,geodesic_error_deg_median,geodesic_error_deg_p90,geodesic_error_deg_p95,geodesic_error_deg_gt90_count,geodesic_error_deg_gt90_percent
+dad3dheads,4312.00000000,26.05422587,16.01567411,25.24680669,22.43890223,31.48241221,27.63033717,14.19032993,27.94221030,23.25429247,16.33815611,89.96634588,140.36053692,431.00000000,9.99536178

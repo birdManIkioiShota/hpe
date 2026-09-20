@@ -1,0 +1,121 @@
+{
+  "run_id": "vgg_ft",
+  "data_id": "vgg_data",
+  "device": "cuda:0",
+  "precision": "bf16",
+  "epochs": 20,
+  "head_warmup_epochs": 1,
+  "batch_size": 64,
+  "accumulation": 2,
+  "workers": 8,
+  "backbone_lr": 1e-05,
+  "head_lr": 0.0001,
+  "weight_decay": 0.0001,
+  "clip_norm": 1.0,
+  "checkpoint_interval_updates": 500,
+  "seed": 42,
+  "data_metadata": {
+    "schema": "vggheads",
+    "status": "completed",
+    "seed": 42,
+    "split_policy": "80/10/10 seeded group hash; all heads/source stems/exact and pHash<=3 duplicates stay together",
+    "pose_conversion": "R_hpe = R_flame.T @ diag(1,-1,-1); rotation slice 403:409; extended_bbox xywh",
+    "benchmarks": [
+      {
+        "dataset": "agora_hpe",
+        "manifest_sha256": "c4b70189a17ea4ad7d79112f66c2562672395c8dd969e85b1bd0804357c6abf2",
+        "image_lock_sha256": "d5fecd3e045d5b93ad3a7941b239ae2f4a05d36c3bfeee5be4bea67c0eacc5af"
+      },
+      {
+        "dataset": "aflw2000",
+        "manifest_sha256": "218f3dc212ccfe7b6f88475649febd0124a81670de462ad9caab5e9040e98470",
+        "image_lock_sha256": "d2f1fa927f0e0cf4708875de618af24c2af3bda608306f5a2ed0c693732631f9"
+      },
+      {
+        "dataset": "300w_lp",
+        "manifest_sha256": "9e425513d30747d1fc1c9d5e6fab93ced9c6d900ac0cc457d0d4d94c57cf1619",
+        "image_lock_sha256": "d9c71e941d6394dd19340f5b1549d17cd75eb272be25130837f2b32826c63ab2"
+      }
+    ],
+    "exclusions": {
+      "invalid_annotation_or_image": 5,
+      "benchmark_duplicate_candidate": 1,
+      "missing_or_ambiguous_image": 574,
+      "missing_annotation": 58327,
+      "excluded_contaminated_group_heads": 1
+    },
+    "splits": {
+      "train": {
+        "heads": 417055,
+        "groups": 189268,
+        "sha256": "087e644fa095374c730b0d10e38af8e8371556ffbb9c2d617aa1f5d3a644b394"
+      },
+      "dev": {
+        "heads": 51914,
+        "groups": 23795,
+        "sha256": "ba83be1e197275697e8919959519e4a5da314d460a34d5457ac9788f1a18d13b"
+      },
+      "holdout": {
+        "heads": 51677,
+        "groups": 23681,
+        "sha256": "0232f40eacde52115d66106ebfe3509635031048a27b4969fd0ec41a939ed95b"
+      }
+    },
+    "limitations": [
+      "Perceptual matching is conservative, not proof of provenance or subject-level disjointness.",
+      "Upstream source identities/conditioning-image provenance are not fully available. Undetected derived images remain possible.",
+      "VGGHeads pose annotations are generated estimates, not motion-capture truth.",
+      "Holdout is reserved and is not read by the training loop."
+    ]
+  },
+  "source_hashes": {
+    "src/hpe/__init__.py": "ec0a2fbbb51ddd54ccb40d230978fd93316db44d8d3bcae7021510306485c61e",
+    "src/hpe/cli.py": "14f5b493c2fc53ac9abf8ae320aaee75e59bf2e1b4a1d2f4a437f2ee328bf26c",
+    "src/hpe/data/__init__.py": "86e9054201a80da8ee426a7410a554d9de2ef4aafbdb2111b31f18b2951f0ae9",
+    "src/hpe/data/dataset.py": "40a6ee87902f41424cf4227b83db2a250d86d85cc1c340643dd6bae27c5684af",
+    "src/hpe/datasets/__init__.py": "9bf3fffa6031e045b453d6268554a181cafdba621a3f0169182c2ea3fc7b35fb",
+    "src/hpe/datasets/agora.py": "5ab485dc9a1d7894ffc75ebaace5cb128cfd8f27fae3acd87fcf67dcb8aca046",
+    "src/hpe/datasets/common.py": "ccb6e328ee698020b9941be7efd67956345a83c506cf744245a6bcbe4cde00a5",
+    "src/hpe/datasets/dad3dheads.py": "38a17b20f4a9b2b4c9786027648da7a94ea05d17f59b23863455d8f0d82ad46c",
+    "src/hpe/datasets/prepare.py": "1acfaf4f3d9c6bf63b3b5515cd34fb13e1adc06bd5fc7aca39d405d4288b6dd7",
+    "src/hpe/datasets/single_pose.py": "023f0f1e4ae480a44ca78df193ab71e5485583110090775ba6e79434078dbecf",
+    "src/hpe/evaluation/__init__.py": "364cb48aa13ba5613c19ff8903fb143cf6e7172bd37e307a2b8ba6e0b7515d8e",
+    "src/hpe/evaluation/comparison.py": "3dce9df6dea751b27f80361d2f934ef4a5ff561557d7a70e06f1bf6faa3e0f4a",
+    "src/hpe/evaluation/metrics.py": "7d87b40e1a5cfd67fc94ada361864dc6ea2a94aa36a71348e1f694153d1e14a5",
+    "src/hpe/evaluation/reporting.py": "fcd64ebd02555bea94e7a47cb116dc9e33b867d29098d525305e0487384e1302",
+    "src/hpe/evaluation/runner.py": "38d1d3350ba29be4c3973102bfdf20d8b74007ccc23f9d634e2d4a51a25d4227",
+    "src/hpe/geometry/__init__.py": "768fa1fc76cfdb9b5f567f9d04a1f1e6c7753fabebb28bf3d50ce86cefecb7a4",
+    "src/hpe/geometry/rotations.py": "232e605225ceba11e24de96d80ee7f784c2c50f4b114d914e2ac6c855b1722d6",
+    "src/hpe/models/__init__.py": "03156202c0434b4963ae2ae4eef5458be18e3b6aee5591d300a418e1e6c1e31f",
+    "src/hpe/models/checkpoint.py": "bdef13c0eb78bf3c325b1af94e8747c09fb0faf9031b6b799e03270daf210321",
+    "src/hpe/models/sixdrepnet360.py": "9e4ff8d9f4be26fd2aed4a7387bf128c4f242c8a9e9f4f4c513f0d01e90089a0",
+    "src/training/__init__.py": "4942223152c4ee440124ea43ddd724d6c5cacea182666c917e948c94d7f511f1",
+    "src/training/audit.py": "daf131751f6d2f6d8f927411aa8e8f4998a1b0f3c2aaf9ab77e633dc04c14421",
+    "src/training/evaluate.py": "8b2da315198c342fe4bc9a17811305a9d4f2ddac5cac97cc4ffe2cfc743775d0",
+    "src/training/evaluate_baseline.py": "b9c95905053a12c98919eda650c4b3f187c0d3c05ae0f618a394ca0745c97eb3",
+    "src/training/prepare_dad3dheads.py": "dc56a8cde3b9ca81e158923270fd9eb8d42588c85b02233e29dcada48a012894",
+    "src/training/prepare_data.py": "0ce77b3be938c77490f7cad771e0f5642da8dcd259f44da81ddf91494a54079b",
+    "src/training/train.py": "1381c14c65107c18f93b5a58ad04bec5546e25f04a101cd35afff81c0c56116e",
+    "src/training/vgg.py": "bbc6ad0c181425c01cd025be344a6a0426d562feba8a990a46f2691646d01717",
+    "pyproject.toml": "2338ae20725c3fb4863f37f93bf2cd5aa4ec83fd2d9d1c99c292e5bf91bf8715",
+    "uv.lock": "1d515fe6df02ce82c0f1ed660c31a7586d12e80322180507fcbbd49f27031364"
+  },
+  "training_source_hashes": {
+    "src/hpe/data/dataset.py": "40a6ee87902f41424cf4227b83db2a250d86d85cc1c340643dd6bae27c5684af",
+    "src/hpe/datasets/common.py": "ccb6e328ee698020b9941be7efd67956345a83c506cf744245a6bcbe4cde00a5",
+    "src/hpe/geometry/rotations.py": "232e605225ceba11e24de96d80ee7f784c2c50f4b114d914e2ac6c855b1722d6",
+    "src/hpe/models/checkpoint.py": "bdef13c0eb78bf3c325b1af94e8747c09fb0faf9031b6b799e03270daf210321",
+    "src/hpe/models/sixdrepnet360.py": "9e4ff8d9f4be26fd2aed4a7387bf128c4f242c8a9e9f4f4c513f0d01e90089a0",
+    "src/training/audit.py": "daf131751f6d2f6d8f927411aa8e8f4998a1b0f3c2aaf9ab77e633dc04c14421",
+    "src/training/prepare_data.py": "0ce77b3be938c77490f7cad771e0f5642da8dcd259f44da81ddf91494a54079b",
+    "src/training/train.py": "1381c14c65107c18f93b5a58ad04bec5546e25f04a101cd35afff81c0c56116e",
+    "src/training/vgg.py": "bbc6ad0c181425c01cd025be344a6a0426d562feba8a990a46f2691646d01717",
+    "pyproject.toml": "2338ae20725c3fb4863f37f93bf2cd5aa4ec83fd2d9d1c99c292e5bf91bf8715",
+    "uv.lock": "1d515fe6df02ce82c0f1ed660c31a7586d12e80322180507fcbbd49f27031364"
+  },
+  "checkpoint_sha256": "3ee08f1e04b8d452a6c4a40926a6f38051894ae6d0aaa6d191fe6d8bc6e4f9c6",
+  "torch_version": "2.9.0+cu128",
+  "gpu": "NVIDIA GeForce RTX 4090",
+  "effective_batch": 128,
+  "preflight_unique_images": 239364
+}

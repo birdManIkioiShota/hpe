@@ -23,11 +23,13 @@ Thumbs.db
 /.agents/
 /.codex/
 
-# Large inputs and generated experiment artifacts
+# Large inputs and model/checkpoint binaries
 /checkpoints/
 /datasets/
-/ft_runs/
-/eval/
+/eval/**/*.pth
+/eval/**/*.pt
+/ft_runs/**/*.pth
+/ft_runs/**/*.pt
 
 # Temporary files
 *.tmp
