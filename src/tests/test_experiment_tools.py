@@ -10,7 +10,11 @@ from scipy.spatial.transform import Rotation
 import torch
 
 from experiments.common.checkpoints import interpolate_state_dict
-from experiments.common.pose import forward_azimuth_degrees, pose_band
+from experiments.common.pose import (
+    UndefinedAzimuthError,
+    forward_azimuth_degrees,
+    pose_band,
+)
 from experiments.common.run_directory import ExperimentRun, experiment_run_path
 
 
@@ -73,6 +77,12 @@ class ExperimentRunTests(unittest.TestCase):
         self.assertEqual(pose_band(values[1]), "side_60_to_lt120")
         self.assertEqual(pose_band(values[2]), "rear_120_to_lt150")
         self.assertEqual(pose_band(values[3]), "rear_150_to_180")
+
+        vertical = Rotation.from_euler("x", 90, degrees=True).as_matrix()
+        with self.assertRaises(UndefinedAzimuthError):
+            forward_azimuth_degrees(vertical)
+        with self.assertRaisesRegex(ValueError, "orthonormal"):
+            forward_azimuth_degrees(np.diag([1.0, 1.0, 2.0]))
 
 
 if __name__ == "__main__":

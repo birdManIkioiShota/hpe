@@ -9,7 +9,12 @@ import json
 from pathlib import Path
 
 from hpe.datasets.common import sha256_file, write_json_atomic
-from experiments.common.pose import azimuth_side, forward_azimuth_degrees, pose_band
+from experiments.common.pose import (
+    UndefinedAzimuthError,
+    azimuth_side,
+    forward_azimuth_degrees,
+    pose_band,
+)
 from experiments.common.run_directory import ExperimentRun
 from training.prepare_data import prepared_data_path
 from training.vgg import read_jsonl
@@ -85,7 +90,7 @@ def main() -> None:
                     total[split] += 1
                     try:
                         azimuth = forward_azimuth_degrees(row["rotation_matrix"])
-                    except (KeyError, TypeError, ValueError):
+                    except UndefinedAzimuthError:
                         undefined[split] += 1
                         continue
                     band = pose_band(azimuth)
