@@ -1,0 +1,35 @@
+# Local Python environment and caches
+/.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Packaging output
+build/
+dist/
+*.egg-info/
+
+# Local editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local Codex workspace metadata
+/.agents/
+/.codex/
+
+# Large inputs and generated experiment artifacts
+/checkpoints/
+/datasets/
+/ft_runs/
+/eval/
+
+# Temporary files
+*.tmp
+*.part
+*.log
