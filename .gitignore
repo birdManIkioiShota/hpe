@@ -30,6 +30,8 @@ Thumbs.db
 /eval/**/*.pt
 /ft_runs/**/*.pth
 /ft_runs/**/*.pt
+/experiments/runs/**/*.pth
+/experiments/runs/**/*.pt
 
 # Temporary files
 *.tmp
