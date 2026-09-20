@@ -13,6 +13,10 @@ POSE_BANDS = (
 )
 
 
+class UndefinedAzimuthError(ValueError):
+    """Raised when a valid rotation has no stable horizontal head-forward direction."""
+
+
 def forward_azimuth_degrees(rotation_matrix: np.ndarray, *, eps: float = 1e-8) -> float:
     """Return full-range azimuth of the rotated local +Z head-forward axis.
 
@@ -23,10 +27,17 @@ def forward_azimuth_degrees(rotation_matrix: np.ndarray, *, eps: float = 1e-8) -
     rotation = np.asarray(rotation_matrix, dtype=np.float64)
     if rotation.shape != (3, 3) or not np.isfinite(rotation).all():
         raise ValueError("rotation_matrix must be a finite 3x3 matrix")
+    if not np.allclose(rotation.T @ rotation, np.eye(3), atol=1e-5, rtol=0):
+        raise ValueError("rotation_matrix is not orthonormal")
+    if not math.isclose(float(np.linalg.det(rotation)), 1.0, abs_tol=1e-5):
+        raise ValueError("rotation_matrix determinant is not +1")
+
     direction = rotation[:, 2]
     horizontal_norm = math.hypot(float(direction[0]), float(direction[2]))
     if horizontal_norm < eps:
-        raise ValueError("Head-forward azimuth is undefined for a near-vertical direction")
+        raise UndefinedAzimuthError(
+            "Head-forward azimuth is undefined for a near-vertical direction"
+        )
     return math.degrees(math.atan2(float(direction[0]), float(direction[2])))
 
 

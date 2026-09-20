@@ -32,6 +32,11 @@ def _safe_name(value: str, kind: str) -> str:
     return value
 
 
+def _project_path(value: str) -> Path:
+    path = Path(value)
+    return path if path.is_absolute() else ROOT / path
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run-id", required=True)
@@ -113,8 +118,8 @@ def main() -> None:
     image_hashes: dict[str, str] = {}
     for name in selected:
         entry = entries[name]
-        manifest = Path(entry["manifest"])
-        lock = Path(entry["image_lock"])
+        manifest = _project_path(entry["manifest"])
+        lock = _project_path(entry["image_lock"])
         result = next(row for row in baseline_run["datasets"] if row["dataset"] == name)
         if (
             sha256_file(manifest) != entry["manifest_sha256"]
