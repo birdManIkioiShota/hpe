@@ -14,7 +14,11 @@ import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from experiments.common.datasets import MultiPoseDataset, PoseManifestDataset
+from experiments.common.datasets import (
+    MultiPoseDataset,
+    PoseManifestDataset,
+    verify_manifest_partitions,
+)
 from experiments.common.run_directory import ExperimentRun
 from experiments.common.sampling import build_epoch_order, scan_pose_buckets
 from experiments.common.training import (
@@ -141,6 +145,7 @@ def main() -> None:
     if sha256_file(checkpoint) != BASE_SHA256:
         raise ValueError("Base checkpoint SHA-256 mismatch")
     train_manifests, dev_manifests = _manifest_set(args.vgg_data_id, args.dad_data_id)
+    partition_summary = verify_manifest_partitions(train_manifests, dev_manifests)
     buckets = scan_pose_buckets(train_manifests)
     if any(not buckets.rear[name] for name in buckets.rear):
         raise ValueError("All four rear azimuth buckets must contain training samples")
@@ -189,6 +194,7 @@ def main() -> None:
         "source_sha256": {
             path: sha256_file(ROOT / path) for path in SOURCE_FILES
         },
+        "partition_summary": partition_summary,
         "training_bucket_counts": {
             "retention": len(buckets.retention),
             **{name: len(values) for name, values in buckets.rear.items()},

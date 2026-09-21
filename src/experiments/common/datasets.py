@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import random
 from bisect import bisect_right
 from pathlib import Path
@@ -121,3 +122,57 @@ class MultiPoseDataset(Dataset):
     def close(self) -> None:
         for dataset in self.datasets:
             dataset.close()
+
+
+def verify_manifest_partitions(
+    train_manifests: list[Path],
+    dev_manifests: list[Path],
+) -> dict[str, Any]:
+    instance_membership: dict[str, str] = {}
+    image_membership: dict[str, str] = {}
+    group_membership: dict[str, str] = {}
+    counts = {"train": 0, "dev": 0}
+    datasets: dict[str, dict[str, int]] = {"train": {}, "dev": {}}
+
+    for split, manifests in (("train", train_manifests), ("dev", dev_manifests)):
+        for manifest in manifests:
+            with manifest.open(encoding="utf-8") as stream:
+                for line_number, line in enumerate(stream, 1):
+                    row = json.loads(line)
+                    dataset = str(row["dataset"])
+                    if dataset not in {"vggheads", "dad3dheads"}:
+                        raise ValueError(
+                            f"Unsupported dataset in {manifest}:{line_number}: {dataset}"
+                        )
+                    if row.get("split") != split:
+                        raise ValueError(
+                            f"Unexpected split in {manifest}:{line_number}: {row.get('split')}"
+                        )
+                    validate_rotation(row["rotation_matrix"])
+
+                    instance_key = f"{dataset}:{row['instance_id']}"
+                    if instance_key in instance_membership:
+                        previous = instance_membership[instance_key]
+                        if previous != split:
+                            raise ValueError(f"Instance crosses train/dev: {instance_key}")
+                        raise ValueError(f"Repeated instance ID in {split}: {instance_key}")
+                    instance_membership[instance_key] = split
+
+                    image_key = str(row["image_path"])
+                    previous_image = image_membership.setdefault(image_key, split)
+                    if previous_image != split:
+                        raise ValueError(f"Image crosses train/dev: {image_key}")
+
+                    group_id = row.get("group_id")
+                    if group_id is not None:
+                        group_key = f"{dataset}:{group_id}"
+                        previous_group = group_membership.setdefault(group_key, split)
+                        if previous_group != split:
+                            raise ValueError(f"Source group crosses train/dev: {group_key}")
+
+                    counts[split] += 1
+                    datasets[split][dataset] = datasets[split].get(dataset, 0) + 1
+
+    if min(counts.values()) == 0:
+        raise ValueError("Training and dev partitions must both be non-empty")
+    return {"counts": counts, "datasets": datasets}
