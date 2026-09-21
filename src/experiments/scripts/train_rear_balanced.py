@@ -326,7 +326,13 @@ def main() -> None:
         )
 
         baseline = evaluate_pose_model(student, dev_loader, device)
-        run.event("dev_baseline", rear=baseline.get("rear"), retention=baseline.get("retention"))
+        run.event(
+            "dev_baseline",
+            rear=baseline.get("rear"),
+            front=baseline.get("front"),
+            side=baseline.get("side"),
+            retention=baseline.get("retention"),
+        )
         required_selection_groups = {
             "front",
             "side",
@@ -549,6 +555,8 @@ def main() -> None:
             global_step=global_step,
             best_selection_score=list(best_score),
             best_rear=best_metrics["rear"],
+            best_front=best_metrics["front"],
+            best_side=best_metrics["side"],
             best_retention=best_metrics["retention"],
         )
     except BaseException as error:
