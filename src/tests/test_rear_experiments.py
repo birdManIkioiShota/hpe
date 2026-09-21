@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 import json
+import os
 from pathlib import Path
 import tarfile
 import tempfile
@@ -17,7 +18,9 @@ from torch import nn
 from experiments.common.datasets import verify_manifest_partitions
 from experiments.common.sampling import build_epoch_order, scan_pose_buckets
 from experiments.common.training import configure_update_scope, selection_score
+from experiments.common.run_directory import ExperimentRun
 from experiments.scripts.prepare_dad3dheads_train import extract_train, prepare
+from experiments.scripts.train_rear_balanced import _reset_failed_pretraining_run
 
 
 def _write_manifest(path: Path, yaws: list[float]) -> None:
@@ -68,6 +71,36 @@ def _make_dad_train_archive(path: Path, count: int = 30) -> None:
 
 
 class RearExperimentTests(unittest.TestCase):
+    def test_training_entrypoint_sets_cublas_workspace_config(self):
+        self.assertIn(
+            os.environ.get("CUBLAS_WORKSPACE_CONFIG"),
+            {":4096:8", ":16:8"},
+        )
+
+    def test_empty_failed_training_run_can_be_recreated(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            run = ExperimentRun.create(
+                root,
+                "failed_before_baseline",
+                config={"kind": "fixture"},
+                provenance={"source": "fixture"},
+            )
+            run.fail(RuntimeError("deterministic cuBLAS fixture"))
+            _reset_failed_pretraining_run(run.path)
+            self.assertFalse(run.path.exists())
+
+            protected = ExperimentRun.create(
+                root,
+                "failed_after_baseline",
+                config={"kind": "fixture"},
+                provenance={"source": "fixture"},
+            )
+            (protected.path / "checkpoints" / "best.pth").write_bytes(b"fixture")
+            protected.fail(RuntimeError("later failure"))
+            with self.assertRaisesRegex(FileExistsError, "contains training or baseline outputs"):
+                _reset_failed_pretraining_run(protected.path)
+
     def test_pose_balanced_epoch_order(self):
         with tempfile.TemporaryDirectory() as directory:
             manifest = Path(directory) / "train.jsonl"

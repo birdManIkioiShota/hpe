@@ -6,8 +6,20 @@ from datetime import datetime, timezone
 import json
 import math
 import os
+
+# PyTorch deterministic CUDA matmul requires this to be set before CUDA/cuBLAS
+# is initialized. Set it before importing torch in this entry-point module.
+_CUBLAS_WORKSPACE_CONFIGS = {":4096:8", ":16:8"}
+if "CUBLAS_WORKSPACE_CONFIG" not in os.environ:
+    os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
+elif os.environ["CUBLAS_WORKSPACE_CONFIG"] not in _CUBLAS_WORKSPACE_CONFIGS:
+    raise RuntimeError(
+        "CUBLAS_WORKSPACE_CONFIG must be ':4096:8' or ':16:8' for deterministic CUDA"
+    )
+
 from pathlib import Path
 import random
+import shutil
 
 import numpy as np
 import torch
@@ -19,7 +31,7 @@ from experiments.common.datasets import (
     PoseManifestDataset,
     verify_manifest_partitions,
 )
-from experiments.common.run_directory import ExperimentRun
+from experiments.common.run_directory import ExperimentRun, experiment_run_path
 from experiments.common.sampling import build_epoch_order, scan_pose_buckets
 from experiments.common.training import (
     autocast_context,
@@ -46,6 +58,40 @@ SOURCE_FILES = (
     "src/hpe/models/checkpoint.py",
     "src/hpe/models/sixdrepnet360.py",
 )
+
+
+def _reset_failed_pretraining_run(path: Path) -> None:
+    """Remove only an empty failed run that never reached baseline checkpointing."""
+    if not path.exists():
+        return
+    status_path = path / "status.json"
+    if not status_path.is_file():
+        raise FileExistsError(f"Experiment run already exists without status: {path}")
+    status = json.loads(status_path.read_text())
+    if status.get("status") not in {"failed", "interrupted"}:
+        raise FileExistsError(f"Experiment run already exists: {path}")
+
+    protected_outputs = (
+        path / "checkpoints" / "best.pth",
+        path / "checkpoints" / "last.pt",
+        path / "metrics" / "dev_baseline.json",
+        path / "metrics" / "train.jsonl",
+        path / "metrics" / "dev.jsonl",
+    )
+    if any(value.exists() for value in protected_outputs):
+        raise FileExistsError(
+            "Failed run contains training or baseline outputs; use a new run-id instead of "
+            f"overwriting it: {path}"
+        )
+
+    for directory_name in ("checkpoints", "metrics", "predictions", "artifacts"):
+        directory = path / directory_name
+        if directory.exists() and any(item.is_file() for item in directory.rglob("*")):
+            raise FileExistsError(
+                "Failed run contains diagnostic artifacts; use a new run-id instead of "
+                f"overwriting it: {path}"
+            )
+    shutil.rmtree(path)
 
 
 def _append_jsonl(path: Path, value: dict) -> None:
@@ -200,6 +246,8 @@ def main() -> None:
             **{name: len(values) for name, values in buckets.rear.items()},
         },
     }
+    run_path = experiment_run_path(ROOT, args.run_id)
+    _reset_failed_pretraining_run(run_path)
     run = ExperimentRun.create(ROOT, args.run_id, config=config, provenance=provenance)
     error_dir = run.path / "artifacts" / "image_read_errors"
     train_data = _make_dataset(train_manifests, augment=True, seed=args.seed, error_dir=error_dir)
