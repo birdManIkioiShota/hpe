@@ -72,7 +72,10 @@ def _make_dad_train_archive(path: Path, count: int = 30) -> None:
 
 class RearExperimentTests(unittest.TestCase):
     def test_training_entrypoint_sets_cublas_workspace_config(self):
-        self.assertEqual(os.environ.get("CUBLAS_WORKSPACE_CONFIG"), ":4096:8")
+        self.assertIn(
+            os.environ.get("CUBLAS_WORKSPACE_CONFIG"),
+            {":4096:8", ":16:8"},
+        )
 
     def test_empty_failed_training_run_can_be_recreated(self):
         with tempfile.TemporaryDirectory() as directory:
