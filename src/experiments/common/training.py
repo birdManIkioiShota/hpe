@@ -114,7 +114,11 @@ def grouped_metrics(errors: torch.Tensor, metadata: dict[str, Any]) -> dict[str,
         "rear_positive_150_to_180": rear_deep & (azimuth > 0),
     }
     for dataset in sorted(set(datasets)):
-        masks[f"dataset:{dataset}"] = torch.tensor([value == dataset for value in datasets])
+        dataset_mask = torch.tensor([value == dataset for value in datasets])
+        masks[f"dataset:{dataset}"] = dataset_mask
+        masks[f"dataset:{dataset}:front"] = dataset_mask & front
+        masks[f"dataset:{dataset}:side"] = dataset_mask & side
+        masks[f"dataset:{dataset}:rear"] = dataset_mask & rear
 
     result: dict[str, dict[str, float]] = {}
     for name, mask in masks.items():
@@ -180,12 +184,28 @@ def selection_score(
     retention_tolerance_deg: float,
 ) -> tuple[float, ...]:
     rear = metrics["rear"]
-    front_degradation = metrics["front"]["mean_deg"] - baseline["front"]["mean_deg"]
-    side_degradation = metrics["side"]["mean_deg"] - baseline["side"]["mean_deg"]
-    max_retention_degradation = max(front_degradation, side_degradation)
-    feasible = (
-        front_degradation <= retention_tolerance_deg
-        and side_degradation <= retention_tolerance_deg
+    front_mean_degradation = (
+        metrics["front"]["mean_deg"] - baseline["front"]["mean_deg"]
+    )
+    side_mean_degradation = (
+        metrics["side"]["mean_deg"] - baseline["side"]["mean_deg"]
+    )
+    front_p90_degradation = (
+        metrics["front"]["p90_deg"] - baseline["front"]["p90_deg"]
+    )
+    side_p90_degradation = (
+        metrics["side"]["p90_deg"] - baseline["side"]["p90_deg"]
+    )
+    retention_degradations = (
+        front_mean_degradation,
+        side_mean_degradation,
+        front_p90_degradation,
+        side_p90_degradation,
+    )
+    max_retention_degradation = max(retention_degradations)
+    feasible = all(
+        degradation <= retention_tolerance_deg
+        for degradation in retention_degradations
     )
     worst_rear_p90 = max(metrics[name]["p90_deg"] for name in REAR_SELECTION_GROUPS)
     worst_rear_over90 = max(
@@ -201,6 +221,8 @@ def selection_score(
             max_retention_degradation,
             metrics["front"]["mean_deg"],
             metrics["side"]["mean_deg"],
+            metrics["front"]["p90_deg"],
+            metrics["side"]["p90_deg"],
         )
     return (
         1.0,

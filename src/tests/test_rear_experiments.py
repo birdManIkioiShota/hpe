@@ -346,12 +346,25 @@ class RearExperimentTests(unittest.TestCase):
                 "rear_120_to_lt150",
                 "rear_150_to_180",
             ],
-            "dataset": ["fixture"] * 6,
+            "dataset": [
+                "vggheads",
+                "dad3dheads",
+                "vggheads",
+                "dad3dheads",
+                "vggheads",
+                "dad3dheads",
+            ],
         }
         metrics = grouped_metrics(errors, metadata)
         self.assertEqual(metrics["front"]["count"], 1)
         self.assertEqual(metrics["side"]["count"], 1)
         self.assertEqual(metrics["rear"]["count"], 4)
+        self.assertEqual(metrics["dataset:vggheads"]["count"], 3)
+        self.assertEqual(metrics["dataset:dad3dheads"]["count"], 3)
+        self.assertEqual(metrics["dataset:vggheads:front"]["count"], 1)
+        self.assertEqual(metrics["dataset:dad3dheads:side"]["count"], 1)
+        self.assertEqual(metrics["dataset:vggheads:rear"]["count"], 2)
+        self.assertEqual(metrics["dataset:dad3dheads:rear"]["count"], 2)
         for name in REAR_SELECTION_GROUPS:
             self.assertEqual(metrics[name]["count"], 1)
 
@@ -383,10 +396,17 @@ class RearExperimentTests(unittest.TestCase):
         self.assertTrue(any(name.startswith("layer4.") for name in trainable))
         self.assertTrue(any(name.startswith("linear_reg.") for name in trainable))
 
-        def metrics(front: float, side: float, rear_p90: float) -> dict:
+        def metrics(
+            front: float,
+            side: float,
+            rear_p90: float,
+            *,
+            front_p90: float = 60.0,
+            side_p90: float = 75.0,
+        ) -> dict:
             value = {
-                "front": {"mean_deg": front},
-                "side": {"mean_deg": side},
+                "front": {"mean_deg": front, "p90_deg": front_p90},
+                "side": {"mean_deg": side, "p90_deg": side_p90},
                 "rear": {
                     "p90_deg": rear_p90,
                     "over90_percent": 6.0,
@@ -402,15 +422,20 @@ class RearExperimentTests(unittest.TestCase):
             return value
 
         baseline = metrics(6.0, 8.0, 80.0)
-        better = metrics(5.9, 7.9, 70.0)
-        side_degraded = metrics(5.8, 8.2, 60.0)
+        better = metrics(5.9, 7.9, 70.0, front_p90=59.0, side_p90=74.0)
+        side_mean_degraded = metrics(5.8, 8.2, 60.0, front_p90=59.0, side_p90=74.0)
+        side_p90_degraded = metrics(5.8, 7.8, 60.0, front_p90=59.0, side_p90=76.0)
         base_score = selection_score(baseline, baseline, retention_tolerance_deg=0.0)
         self.assertLess(
             selection_score(better, baseline, retention_tolerance_deg=0.0),
             base_score,
         )
         self.assertGreater(
-            selection_score(side_degraded, baseline, retention_tolerance_deg=0.0),
+            selection_score(side_mean_degraded, baseline, retention_tolerance_deg=0.0),
+            base_score,
+        )
+        self.assertGreater(
+            selection_score(side_p90_degraded, baseline, retention_tolerance_deg=0.0),
             base_score,
         )
 
