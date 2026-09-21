@@ -35,6 +35,20 @@ uv run python -m experiments.scripts.analyze_pose_distribution \
 The script writes sample-level azimuths under `artifacts/` and aggregate counts under
 `metrics/`.
 
+Rear crops can be exported for direct annotation inspection with deterministic sampling:
+
+```bash
+uv run python -m experiments.scripts.export_pose_audit_samples \
+  --run-id vgg_rear_audit_samples \
+  --data-id vgg_data \
+  --split dev \
+  --samples-per-bucket 16
+```
+
+The four exported buckets are negative/positive 120–150 degrees and negative/positive
+150–180 degrees. Each crop is accompanied by its source path, crop coordinates,
+full-range azimuth, and rotation matrix.
+
 ## Horizontal-flip equivariance
 
 A compatible checkpoint can be checked for left/right equivariance on a prepared

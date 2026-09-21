@@ -52,6 +52,10 @@ def _make_dad_train_archive(path: Path, count: int = 30) -> None:
         }).encode()
     files["DAD-3DHeadsDataset/train/train.json"] = json.dumps(items).encode()
     with tarfile.open(path, "w") as stream:
+        for directory in ("DAD-3DHeadsDataset", "DAD-3DHeadsDataset/train"):
+            entry = tarfile.TarInfo(directory)
+            entry.type = tarfile.DIRTYPE
+            stream.addfile(entry)
         for name, raw in files.items():
             entry = tarfile.TarInfo(name)
             entry.size = len(raw)

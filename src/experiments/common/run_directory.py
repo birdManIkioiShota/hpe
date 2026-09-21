@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime, timezone
+import json
 from pathlib import Path
 from typing import Any
 
@@ -46,7 +48,18 @@ class ExperimentRun:
         write_json_atomic(path / "provenance.json", provenance)
         write_json_atomic(path / "status.json", {"status": "running"})
         (path / "events.jsonl").touch()
-        return cls(path)
+        run = cls(path)
+        run.event("started")
+        return run
+
+    def event(self, kind: str, **details: Any) -> None:
+        payload = {
+            "time_utc": datetime.now(timezone.utc).isoformat(),
+            "event": kind,
+            **details,
+        }
+        with (self.path / "events.jsonl").open("a", encoding="utf-8") as stream:
+            stream.write(json.dumps(payload, allow_nan=False) + "\n")
 
     def write_status(self, status: str, **details: Any) -> None:
         if status not in {"running", "completed", "failed", "interrupted"}:
@@ -55,9 +68,10 @@ class ExperimentRun:
 
     def complete(self, **details: Any) -> None:
         self.write_status("completed", **details)
+        self.event("completed", **details)
 
     def fail(self, error: BaseException) -> None:
-        self.write_status(
-            "interrupted" if isinstance(error, KeyboardInterrupt) else "failed",
-            error=f"{type(error).__name__}: {error}",
-        )
+        status = "interrupted" if isinstance(error, KeyboardInterrupt) else "failed"
+        details = {"error": f"{type(error).__name__}: {error}"}
+        self.write_status(status, **details)
+        self.event(status, **details)

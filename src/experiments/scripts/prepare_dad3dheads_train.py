@@ -21,13 +21,17 @@ from training.prepare_data import ROOT, prepared_data_path
 SCHEMA = "dad3dheads-train-v1"
 
 
-def _canonical_train_path(name: str) -> PurePosixPath | None:
+def _canonical_train_path(name: str, *, directory: bool) -> PurePosixPath | None:
     path = PurePosixPath(name)
     if path.is_absolute() or ".." in path.parts:
         raise ValueError(f"Unsafe archive path: {name}")
     if any(part.startswith("._") or part == "__MACOSX" for part in path.parts):
         return None
     positions = [index for index, part in enumerate(path.parts) if part == "train"]
+    if not positions:
+        if directory:
+            return None
+        raise ValueError(f"Archive file is outside train/: {name}")
     if len(positions) != 1:
         raise ValueError(f"Archive member is not uniquely under train/: {name}")
     return PurePosixPath(*path.parts[positions[0]:])
@@ -38,11 +42,11 @@ def extract_train(archive: Path, output: Path) -> None:
         selected: list[tuple[tarfile.TarInfo, PurePosixPath]] = []
         seen: set[PurePosixPath] = set()
         for member in source.getmembers():
-            canonical = _canonical_train_path(member.name)
-            if canonical is None:
-                continue
             if not (member.isfile() or member.isdir()):
                 raise ValueError(f"Archive links/special files are not supported: {member.name}")
+            canonical = _canonical_train_path(member.name, directory=member.isdir())
+            if canonical is None:
+                continue
             if canonical in seen:
                 raise ValueError(f"Repeated canonical archive member: {canonical}")
             seen.add(canonical)

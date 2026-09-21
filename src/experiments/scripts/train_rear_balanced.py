@@ -55,6 +55,11 @@ def _atomic_torch_save(path: Path, value: dict) -> None:
     os.replace(temporary, path)
 
 
+def _line_count(path: Path) -> int:
+    with path.open(encoding="utf-8") as stream:
+        return sum(1 for _ in stream)
+
+
 def _manifest_set(vgg_data_id: str, dad_data_id: str) -> tuple[list[Path], list[Path]]:
     vgg = prepared_data_path(ROOT, vgg_data_id)
     dad = prepared_data_path(ROOT, dad_data_id)
@@ -140,7 +145,7 @@ def main() -> None:
     if any(not buckets.rear[name] for name in buckets.rear):
         raise ValueError("All four rear azimuth buckets must contain training samples")
 
-    raw_samples = sum(sum(1 for _ in path.open(encoding="utf-8")) for path in train_manifests)
+    raw_samples = sum(_line_count(path) for path in train_manifests)
     effective_batch = args.batch_size * args.accumulation
     requested_samples = args.samples_per_epoch or raw_samples
     samples_per_epoch = (requested_samples // effective_batch) * effective_batch
@@ -235,6 +240,7 @@ def main() -> None:
         )
 
         baseline = evaluate_pose_model(student, dev_loader, device)
+        run.event("dev_baseline", rear=baseline.get("rear"), retention=baseline.get("retention"))
         if "rear" not in baseline or "retention" not in baseline:
             raise ValueError("Internal dev must contain both rear and retention samples")
         write_json_atomic(run.path / "metrics" / "dev_baseline.json", baseline)
@@ -384,6 +390,14 @@ def main() -> None:
             write_json_atomic(
                 run.path / "metrics" / f"epoch_{epoch + 1:03d}.json",
                 epoch_result,
+            )
+            run.event(
+                "epoch_completed",
+                epoch=epoch + 1,
+                global_step=global_step,
+                improved=improved,
+                rear=dev.get("rear"),
+                retention=dev.get("retention"),
             )
             _append_jsonl(run.path / "metrics" / "dev.jsonl", epoch_result)
             _atomic_torch_save(
