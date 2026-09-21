@@ -1,0 +1,47 @@
+{
+  "base_checkpoint": {
+    "path": "checkpoints/6DRepNet360_Full-Rotation_300W_LP+Panoptic.pth",
+    "sha256": "3ee08f1e04b8d452a6c4a40926a6f38051894ae6d0aaa6d191fe6d8bc6e4f9c6"
+  },
+  "train_manifests": {
+    "datasets/prepared/vgg_data/train.jsonl": "087e644fa095374c730b0d10e38af8e8371556ffbb9c2d617aa1f5d3a644b394",
+    "datasets/prepared/dad3dheads_train/train.jsonl": "52be88952ab12c96bfa34ee8eab352ced96ba2e4d5863e712db7efed0c4e4bb8"
+  },
+  "dev_manifests": {
+    "datasets/prepared/vgg_data/dev.jsonl": "ba83be1e197275697e8919959519e4a5da314d460a34d5457ac9788f1a18d13b",
+    "datasets/prepared/dad3dheads_train/dev.jsonl": "7fc2d709d300014470fd274e70e9d016b7be3232b5bd297550afef547254c018"
+  },
+  "source_sha256": {
+    "src/experiments/common/datasets.py": "2c5c28d04bd018f579bbc50ef8717cff05a7e0dfb874f96f3daf188444346d67",
+    "src/experiments/common/sampling.py": "8a4a2f3e7feace89afa7cebe268efff55eb269f3fe22dbdd5fead30351bf7002",
+    "src/experiments/common/training.py": "bc8cbe67807beb84e27b3c9c475d8cb920c23c26bc4387616e0f2103651ac4c3",
+    "src/experiments/scripts/train_rear_balanced.py": "41dad9d252af015ea609dfc5ebc7bd55c28613252197a02466a61c5764b01b7b",
+    "src/hpe/data/dataset.py": "92e4157e9bc766b240434e6caafded3d97668cea3b3eea753a9f18a5a954cc87",
+    "src/hpe/geometry/rotations.py": "232e605225ceba11e24de96d80ee7f784c2c50f4b114d914e2ac6c855b1722d6",
+    "src/hpe/models/checkpoint.py": "bdef13c0eb78bf3c325b1af94e8747c09fb0faf9031b6b799e03270daf210321",
+    "src/hpe/models/sixdrepnet360.py": "9e4ff8d9f4be26fd2aed4a7387bf128c4f242c8a9e9f4f4c513f0d01e90089a0"
+  },
+  "partition_summary": {
+    "counts": {
+      "train": 451090,
+      "dev": 55719
+    },
+    "datasets": {
+      "train": {
+        "vggheads": 417055,
+        "dad3dheads": 34035
+      },
+      "dev": {
+        "vggheads": 51914,
+        "dad3dheads": 3805
+      }
+    }
+  },
+  "training_bucket_counts": {
+    "retention": 443229,
+    "negative:rear_120_to_lt150": 1593,
+    "negative:rear_150_to_180": 2102,
+    "positive:rear_120_to_lt150": 1511,
+    "positive:rear_150_to_180": 2655
+  }
+}
