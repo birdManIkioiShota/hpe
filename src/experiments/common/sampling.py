@@ -32,6 +32,25 @@ class PoseBuckets:
     def rear_count(self) -> int:
         return sum(len(values) for values in self.rear.values())
 
+    @property
+    def total_count(self) -> int:
+        return self.rear_count + len(self.retention)
+
+    @property
+    def natural_rear_fraction(self) -> float:
+        return self.rear_count / self.total_count
+
+
+@dataclass(frozen=True)
+class EpochSamplePlan:
+    order: list[tuple[int, int]]
+    rear_fraction_requested: float
+    rear_fraction_observed: float
+    rear_bucket_policy: str
+    bucket_draws: dict[str, int]
+    unique_samples: int
+    repeated_draws: int
+
 
 def scan_pose_buckets(manifests: list[Path]) -> PoseBuckets:
     rear: dict[str, list[int]] = {name: [] for name in REAR_BUCKETS}
@@ -80,14 +99,36 @@ def _sample_indices(values: tuple[int, ...], count: int, generator: torch.Genera
     return result[:count]
 
 
-def build_epoch_order(
+def _allocate_rear_draws(
+    buckets: PoseBuckets,
+    rear_total: int,
+    policy: str,
+) -> dict[str, int]:
+    if policy not in {"equal", "proportional"}:
+        raise ValueError("rear bucket policy must be equal or proportional")
+    if policy == "equal":
+        weights = {name: 1.0 for name in REAR_BUCKETS}
+    else:
+        weights = {name: float(len(buckets.rear[name])) for name in REAR_BUCKETS}
+    denominator = sum(weights.values())
+    raw = {name: rear_total * weights[name] / denominator for name in REAR_BUCKETS}
+    result = {name: int(raw[name]) for name in REAR_BUCKETS}
+    remaining = rear_total - sum(result.values())
+    priority = sorted(REAR_BUCKETS, key=lambda name: (-(raw[name] - result[name]), name))
+    for name in priority[:remaining]:
+        result[name] += 1
+    return result
+
+
+def build_epoch_plan(
     buckets: PoseBuckets,
     *,
     num_samples: int,
     rear_fraction: float,
     seed: int,
     epoch: int,
-) -> list[tuple[int, int]]:
+    rear_bucket_policy: str = "equal",
+) -> EpochSamplePlan:
     if num_samples <= 0:
         raise ValueError("num_samples must be positive")
     if not 0.0 < rear_fraction < 1.0:
@@ -96,14 +137,40 @@ def build_epoch_order(
 
     rear_total = int(round(num_samples * rear_fraction))
     retention_total = num_samples - rear_total
-    base = rear_total // len(REAR_BUCKETS)
-    remainder = rear_total % len(REAR_BUCKETS)
+    bucket_draws = _allocate_rear_draws(buckets, rear_total, rear_bucket_policy)
 
     order: list[int] = []
-    for position, name in enumerate(REAR_BUCKETS):
-        count = base + (1 if position < remainder else 0)
-        order.extend(_sample_indices(buckets.rear[name], count, generator))
+    for name in REAR_BUCKETS:
+        order.extend(_sample_indices(buckets.rear[name], bucket_draws[name], generator))
     order.extend(_sample_indices(buckets.retention, retention_total, generator))
 
     permutation = torch.randperm(len(order), generator=generator).tolist()
-    return [(order[index], epoch) for index in permutation]
+    shuffled = [order[index] for index in permutation]
+    return EpochSamplePlan(
+        order=[(index, epoch) for index in shuffled],
+        rear_fraction_requested=rear_fraction,
+        rear_fraction_observed=rear_total / num_samples,
+        rear_bucket_policy=rear_bucket_policy,
+        bucket_draws=bucket_draws,
+        unique_samples=len(set(shuffled)),
+        repeated_draws=len(shuffled) - len(set(shuffled)),
+    )
+
+
+def build_epoch_order(
+    buckets: PoseBuckets,
+    *,
+    num_samples: int,
+    rear_fraction: float,
+    seed: int,
+    epoch: int,
+    rear_bucket_policy: str = "equal",
+) -> list[tuple[int, int]]:
+    return build_epoch_plan(
+        buckets,
+        num_samples=num_samples,
+        rear_fraction=rear_fraction,
+        seed=seed,
+        epoch=epoch,
+        rear_bucket_policy=rear_bucket_policy,
+    ).order

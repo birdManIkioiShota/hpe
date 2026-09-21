@@ -112,6 +112,54 @@ checkpoints are then ordered by the worst P90 among the four signed rear groups,
 overall rear P90, worst signed-group >90-degree rate, and rear mean. The protected
 benchmark datasets are not read by this training script.
 
+## Rear-sampling / flip-consistency search
+
+The fixed experiment matrix uses source-proportional rear buckets and evaluates three
+rear sampling levels (the manifest's natural rate, 5%, and 25%) against three
+flip-consistency weights (0, 0.2, and 1.0). All nine conditions start independently
+from the audited base checkpoint and run for ten epochs by default:
+
+```bash
+uv run python -m experiments.scripts.run_rear_flip_search \
+  --run-id rear_flip_search
+```
+
+Inspect the resolved matrix without creating output:
+
+```bash
+uv run python -m experiments.scripts.run_rear_flip_search \
+  --run-id rear_flip_search \
+  --dry-run
+```
+
+The experiment is one run at `experiments/runs/rear_flip_search/`. Individual
+conditions are stored below its `conditions/` directory. Re-running the same command
+skips completed conditions and resumes interrupted conditions from their last completed
+epoch. The aggregate fixed-epoch comparison is written to the parent run's `metrics/`
+directory. It does not read protected benchmarks.
+
+After all conditions complete, evaluate their final ten-epoch checkpoints explicitly:
+
+```bash
+uv run python -m experiments.scripts.evaluate_rear_flip_search \
+  --run-id rear_flip_search \
+  --baseline-run baseline_fp32
+```
+
+DAD official validation uses its independent baseline and a suffix so that both suites
+remain in the same evaluation directory:
+
+```bash
+uv run python -m experiments.scripts.evaluate_rear_flip_search \
+  --run-id rear_flip_search \
+  --baseline-run baseline_dad_fp32 \
+  --name-suffix _dad
+```
+
+External outputs are grouped under `eval/rear_flip_search/conditions/` and paired
+baseline comparisons under `eval/rear_flip_search/comparisons/`. External results are
+not fed back into checkpoint or hyperparameter selection.
+
 ## Checkpoint interpolation
 
 An unchanged SixDRepNet360 checkpoint can be created between the audited base weights

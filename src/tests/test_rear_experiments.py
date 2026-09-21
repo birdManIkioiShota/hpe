@@ -16,7 +16,12 @@ import torch
 from torch import nn
 
 from experiments.common.datasets import verify_manifest_partitions
-from experiments.common.sampling import build_epoch_order, scan_pose_buckets
+from experiments.common.rear_flip_search import search_conditions
+from experiments.common.sampling import (
+    build_epoch_order,
+    build_epoch_plan,
+    scan_pose_buckets,
+)
 from experiments.common.training import (
     REAR_SELECTION_GROUPS,
     configure_update_scope,
@@ -167,6 +172,44 @@ class RearExperimentTests(unittest.TestCase):
             self.assertEqual(order, build_epoch_order(
                 buckets, num_samples=40, rear_fraction=0.4, seed=7, epoch=3
             ))
+
+    def test_proportional_rear_sampling_and_search_conditions(self):
+        with tempfile.TemporaryDirectory() as directory:
+            manifest = Path(directory) / "train.jsonl"
+            _write_manifest(
+                manifest,
+                [-175, -165, -155, -140, -80, 0, 80, 130, 135, 140, 155, 165],
+            )
+            buckets = scan_pose_buckets([manifest])
+            plan = build_epoch_plan(
+                buckets,
+                num_samples=120,
+                rear_fraction=0.5,
+                seed=7,
+                epoch=0,
+                rear_bucket_policy="proportional",
+            )
+            self.assertEqual(sum(plan.bucket_draws.values()), 60)
+            self.assertEqual(
+                plan.bucket_draws,
+                {
+                    "negative:rear_120_to_lt150": 7,
+                    "negative:rear_150_to_180": 20,
+                    "positive:rear_120_to_lt150": 20,
+                    "positive:rear_150_to_180": 13,
+                },
+            )
+            conditions = search_conditions(buckets.natural_rear_fraction)
+            self.assertEqual(len(conditions), 9)
+            self.assertEqual(len({item.condition_id for item in conditions}), 9)
+            self.assertEqual(
+                {item.flip_consistency_weight for item in conditions},
+                {0.0, 0.2, 1.0},
+            )
+            self.assertEqual(
+                {item.rear_fraction_level for item in conditions},
+                {"natural", "0.05", "0.25"},
+            )
 
     def test_dad_train_preparation_is_separate_from_official_validation(self):
         with tempfile.TemporaryDirectory() as directory:

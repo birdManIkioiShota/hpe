@@ -15,7 +15,11 @@ from experiments.common.pose import (
     forward_azimuth_degrees,
     pose_band,
 )
-from experiments.common.run_directory import ExperimentRun, experiment_run_path
+from experiments.common.run_directory import (
+    ExperimentRun,
+    experiment_condition_path,
+    experiment_run_path,
+)
 
 
 class ExperimentRunTests(unittest.TestCase):
@@ -48,6 +52,14 @@ class ExperimentRunTests(unittest.TestCase):
         for invalid in ("", ".", "..", "../bad", "a/b", "comparisons"):
             with self.subTest(invalid=invalid), self.assertRaises(ValueError):
                 experiment_run_path(Path("/tmp"), invalid)
+
+    def test_condition_directory_is_nested_under_one_experiment(self):
+        root = Path("/workspace")
+        self.assertEqual(
+            experiment_condition_path(root, "rear_flip_search", "rear_005_flip_020"),
+            root
+            / "experiments/runs/rear_flip_search/conditions/rear_005_flip_020",
+        )
 
     def test_checkpoint_interpolation(self):
         left = {

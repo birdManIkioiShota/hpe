@@ -11,7 +11,11 @@ import numpy as np
 import torch
 from tqdm import tqdm
 
-from experiments.common.run_directory import experiment_run_path
+from experiments.common.run_directory import (
+    experiment_condition_path,
+    experiment_run_path,
+    validate_condition_id,
+)
 from hpe.datasets.common import sha256_file
 from hpe.evaluation import EvaluationConfig, compare_runs, evaluate
 from training.audit import BENCHMARKS
@@ -40,6 +44,8 @@ def _project_path(value: str) -> Path:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run-id", required=True)
+    parser.add_argument("--condition-id")
+    parser.add_argument("--checkpoint-choice", choices=("best", "final"), default="best")
     parser.add_argument("--baseline-run", required=True)
     parser.add_argument("--name")
     parser.add_argument("--device", default="cuda:0")
@@ -56,16 +62,32 @@ def main() -> None:
     if device.type != "cuda" or not torch.cuda.is_available():
         raise ValueError("CUDA is required")
 
-    run_dir = experiment_run_path(ROOT, args.run_id)
+    experiment_dir = experiment_run_path(ROOT, args.run_id)
+    if args.condition_id is None:
+        run_dir = experiment_dir
+    else:
+        validate_condition_id(args.condition_id)
+        run_dir = experiment_condition_path(ROOT, args.run_id, args.condition_id)
     status = json.loads((run_dir / "status.json").read_text())
     if status.get("status") != "completed":
         raise ValueError("Experiment run must be completed before final evaluation")
-    checkpoint = run_dir / "checkpoints" / "best.pth"
+    if args.checkpoint_choice == "best":
+        checkpoint = run_dir / "checkpoints" / "best.pth"
+    else:
+        condition_config = json.loads((run_dir / "config.json").read_text())
+        checkpoint = (
+            run_dir
+            / "checkpoints"
+            / f"epoch_{int(condition_config['epochs']):03d}.pth"
+        )
     if not checkpoint.is_file():
         raise FileNotFoundError(f"Experiment checkpoint not found: {checkpoint}")
 
     reference_name = _safe_name(args.baseline_run, "baseline-run")
-    evaluation_name = _safe_name(args.name or args.run_id, "evaluation name")
+    default_name = args.condition_id or args.run_id
+    if args.condition_id is not None and args.checkpoint_choice == "best":
+        default_name += "_best"
+    evaluation_name = _safe_name(args.name or default_name, "evaluation name")
     reference = ROOT / "eval" / reference_name
     reference_status = json.loads((reference / "status.json").read_text())
     if reference_status.get("status") != "completed" or reference_status.get("scope") != "full":
@@ -94,11 +116,20 @@ def main() -> None:
     if args.batch_size != baseline_run["settings"]["batch_size"]:
         raise ValueError("Comparison requires the same evaluation batch size as the baseline")
 
-    evaluation_root = ROOT / "eval"
+    evaluation_root = (
+        ROOT / "eval"
+        if args.condition_id is None
+        else ROOT / "eval" / args.run_id
+    )
+    candidate_output_root = (
+        evaluation_root
+        if args.condition_id is None
+        else evaluation_root / "conditions"
+    )
     comparison_name = f"{baseline_run['run_name']}_vs_{evaluation_name}"
     occupied = (
-        evaluation_root / evaluation_name,
-        evaluation_root / f".{evaluation_name}.partial",
+        candidate_output_root / evaluation_name,
+        candidate_output_root / f".{evaluation_name}.partial",
         evaluation_root / f"{evaluation_name}_events.jsonl",
         evaluation_root / "comparisons" / comparison_name,
     )
@@ -149,7 +180,7 @@ def main() -> None:
     torch.backends.cudnn.conv.fp32_precision = "ieee"
     torch.use_deterministic_algorithms(True)
 
-    evaluation_root.mkdir(parents=True, exist_ok=True)
+    candidate_output_root.mkdir(parents=True, exist_ok=True)
     log = EventLog(evaluation_root / f"{evaluation_name}_events.jsonl")
     try:
         result = evaluate(
@@ -157,7 +188,7 @@ def main() -> None:
                 project_root=ROOT,
                 checkpoint=checkpoint,
                 run_name=evaluation_name,
-                output_root=evaluation_root,
+                output_root=candidate_output_root,
                 datasets=selected,
                 device=args.device,
                 batch_size=args.batch_size,
