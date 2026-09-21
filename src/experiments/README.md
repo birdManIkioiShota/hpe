@@ -97,13 +97,20 @@ uv run python -m experiments.scripts.train_rear_balanced \
   --rear-fraction 0.25 \
   --backbone-lr 1e-6 \
   --head-lr 3e-5 \
-  --retain-distill-weight 1.0
+  --retain-distill-weight 1.0 \
+  --rear-flip-consistency-weight 0.0
 ```
 
-Checkpoint selection uses only the internal VGGHeads/DAD dev manifests. A candidate
-must satisfy the configured retention tolerance before rear P90, >90-degree rate, and
-rear mean are considered. The protected benchmark datasets are not read by this
-training script.
+The flip-consistency weight is required explicitly. Set it to `0.0` to reproduce the
+original rear-balanced distillation objective. A positive value adds an SO(3)
+consistency loss between each rear prediction and the restored prediction from the
+horizontally flipped view.
+
+Checkpoint selection uses only the internal VGGHeads/DAD dev manifests. Front and side
+means must independently satisfy the configured retention tolerance. Feasible
+checkpoints are then ordered by the worst P90 among the four signed rear groups,
+overall rear P90, worst signed-group >90-degree rate, and rear mean. The protected
+benchmark datasets are not read by this training script.
 
 ## Checkpoint interpolation
 
