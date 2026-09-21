@@ -93,8 +93,8 @@ def grouped_metrics(errors: torch.Tensor, metadata: dict[str, Any]) -> dict[str,
     azimuth = torch.as_tensor(metadata["azimuth_deg"], dtype=torch.float64)
     bands = list(metadata["pose_band"])
     datasets = list(metadata["dataset"])
-    front = torch.tensor([value == "front" for value in bands])
-    side = torch.tensor([value == "side" for value in bands])
+    front = torch.tensor([value == "front_lt60" for value in bands])
+    side = torch.tensor([value == "side_60_to_lt120" for value in bands])
     rear_near = torch.tensor([value == "rear_120_to_lt150" for value in bands])
     rear_deep = torch.tensor([value == "rear_150_to_180" for value in bands])
 

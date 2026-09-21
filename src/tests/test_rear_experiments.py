@@ -296,8 +296,8 @@ class RearExperimentTests(unittest.TestCase):
             "is_rear": [False, False, True, True, True, True],
             "azimuth_deg": [0.0, 90.0, -130.0, -170.0, 130.0, 170.0],
             "pose_band": [
-                "front",
-                "side",
+                "front_lt60",
+                "side_60_to_lt120",
                 "rear_120_to_lt150",
                 "rear_150_to_180",
                 "rear_120_to_lt150",
