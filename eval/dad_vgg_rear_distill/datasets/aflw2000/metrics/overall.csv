@@ -1,0 +1,2 @@
+count,pitch_error_deg_mean,yaw_error_deg_mean,roll_error_deg_mean,mean_axis_error_deg_mean,geodesic_error_deg_mean,vec1_error_deg_mean,vec2_error_deg_mean,vec3_error_deg_mean,vmae_deg_mean,geodesic_error_deg_median,geodesic_error_deg_p90,geodesic_error_deg_p95,geodesic_error_deg_gt90_count,geodesic_error_deg_gt90_percent
+1988,5.80686022,3.47007825,3.92886600,4.40193482,6.53599163,4.85568802,4.64112697,5.70489012,5.06723503,5.30915880,11.28536845,14.38222988,3,0.15090543
