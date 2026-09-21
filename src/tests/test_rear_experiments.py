@@ -6,6 +6,7 @@ from pathlib import Path
 import tarfile
 import tempfile
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 from PIL import Image
@@ -16,7 +17,7 @@ from torch import nn
 from experiments.common.datasets import verify_manifest_partitions
 from experiments.common.sampling import build_epoch_order, scan_pose_buckets
 from experiments.common.training import configure_update_scope, selection_score
-from experiments.scripts.prepare_dad3dheads_train import prepare
+from experiments.scripts.prepare_dad3dheads_train import extract_train, prepare
 
 
 def _write_manifest(path: Path, yaws: list[float]) -> None:
@@ -45,7 +46,10 @@ def _make_dad_train_archive(path: Path, count: int = 30) -> None:
             "img_path": f"DAD-3DHeadsDataset/train/images/{item_id}.png",
             "annotation_path": f"DAD-3DHeadsDataset/train/annotations/{item_id}.json",
             "bbox": [2, 3, 30, 30],
-            "attributes": {"pose": "atypical" if abs(yaw) >= 120 else "front"},
+            "attributes": {
+                "pose": "atypical" if abs(yaw) >= 120 else "front",
+                "quality_score": float("nan") if index == 5 else 1.0,
+            },
         })
         files[f"DAD-3DHeadsDataset/train/images/{item_id}.png"] = image.getvalue()
         files[f"DAD-3DHeadsDataset/train/annotations/{item_id}.json"] = json.dumps({
@@ -121,6 +125,76 @@ class RearExperimentTests(unittest.TestCase):
             metadata = json.loads((output / "metadata.json").read_text())
             self.assertEqual(metadata["role"], "experiment_training")
             self.assertEqual(metadata["source_split"], "train")
+            self.assertEqual(
+                metadata["optional_metadata_sanitization"]["nonfinite_attribute_values"],
+                1,
+            )
+            all_rows = train_rows + dev_rows
+            row_five = next(row for row in all_rows if row["instance_id"] == "5")
+            self.assertIsNone(row_five["attributes"]["quality_score"])
+
+    def test_nonfinite_derived_euler_is_recorded_as_null(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            archive = root / "train.tar"
+            _make_dad_train_archive(archive)
+            output = root / "datasets/prepared/dad_train"
+            output.parent.mkdir(parents=True)
+            with patch(
+                "experiments.scripts.prepare_dad3dheads_train.full_range_euler",
+                return_value=[float("nan"), 10.0, -20.0],
+            ):
+                train, dev = prepare(
+                    root,
+                    archive,
+                    output,
+                    seed=42,
+                    dev_fraction=0.2,
+                    expected_count=30,
+                )
+            rows = [
+                json.loads(line)
+                for path in (train, dev)
+                for line in path.read_text().splitlines()
+            ]
+            self.assertTrue(all(row["pitch_deg"] is None for row in rows))
+            metadata = json.loads((output / "metadata.json").read_text())
+            self.assertEqual(
+                metadata["optional_metadata_sanitization"]["nonfinite_euler_samples"],
+                30,
+            )
+
+    def test_failed_preparation_reuses_completed_extraction(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            archive = root / "train.tar"
+            _make_dad_train_archive(archive)
+            output = root / "datasets/prepared/dad_train"
+            output.parent.mkdir(parents=True)
+            output.mkdir()
+            extract_train(archive, output)
+            (output / "train.jsonl").write_text('{"partial": true}\n')
+            (output / "dev.jsonl").write_text('{"partial": true}\n')
+            (output / "status.json").write_text(json.dumps({
+                "status": "failed",
+                "error": "fixture",
+            }))
+            with patch(
+                "experiments.scripts.prepare_dad3dheads_train.extract_train",
+                side_effect=AssertionError("retry must not re-extract"),
+            ):
+                train, dev = prepare(
+                    root,
+                    archive,
+                    output,
+                    seed=42,
+                    dev_fraction=0.2,
+                    expected_count=30,
+                )
+            self.assertNotIn("partial", train.read_text())
+            self.assertNotIn("partial", dev.read_text())
+            status = json.loads((output / "status.json").read_text())
+            self.assertEqual(status["status"], "completed")
 
     def test_partition_verification_rejects_cross_split_sources(self):
         with tempfile.TemporaryDirectory() as directory:
