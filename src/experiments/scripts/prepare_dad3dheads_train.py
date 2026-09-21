@@ -18,7 +18,39 @@ from hpe.datasets.dad3dheads import REFERENCES, full_range_euler, rotation_from_
 from training.prepare_data import ROOT, prepared_data_path
 
 
-SCHEMA = "dad3dheads-train-v1"
+SCHEMA = "dad3dheads-train-v2"
+
+
+def _finite_or_none(value) -> float | None:
+    number = float(value)
+    return number if np.isfinite(number) else None
+
+
+def _json_safe(value):
+    """Convert non-finite optional metadata values to JSON null."""
+    if isinstance(value, dict):
+        result = {}
+        replacements = 0
+        for key, item in value.items():
+            safe, count = _json_safe(item)
+            result[str(key)] = safe
+            replacements += count
+        return result, replacements
+    if isinstance(value, (list, tuple)):
+        result = []
+        replacements = 0
+        for item in value:
+            safe, count = _json_safe(item)
+            result.append(safe)
+            replacements += count
+        return result, replacements
+    if isinstance(value, np.generic):
+        value = value.item()
+    if isinstance(value, float):
+        return (value, 0) if np.isfinite(value) else (None, 1)
+    if value is None or isinstance(value, (str, int, bool)):
+        return value, 0
+    raise TypeError(f"Unsupported metadata value for JSON serialization: {type(value).__name__}")
 
 
 def _canonical_train_path(name: str, *, directory: bool) -> PurePosixPath | None:
@@ -100,10 +132,61 @@ def prepare(
     if not output.is_relative_to(prepared_root) or output == prepared_root:
         raise ValueError("Prepared output must be a new directory inside datasets/prepared")
 
-    output.mkdir(parents=True, exist_ok=False)
-    write_json_atomic(output / "status.json", {"status": "running"})
+    archive_sha256 = sha256_file(archive)
+    retry_extracted = False
+    if output.exists():
+        status_path = output / "status.json"
+        if not status_path.is_file():
+            raise FileExistsError(f"Prepared output already exists without status: {output}")
+        previous_status = json.loads(status_path.read_text())
+        if previous_status.get("status") not in {"failed", "interrupted"}:
+            raise FileExistsError(f"Prepared output already exists: {output}")
+        previous_archive = previous_status.get("archive_sha256")
+        if previous_archive is not None and previous_archive != archive_sha256:
+            raise ValueError("Failed prepared output belongs to a different archive")
+        if not (output / "train/train.json").is_file():
+            raise FileExistsError(
+                "Failed output does not contain a completed extraction; remove it before retrying"
+            )
+        for generated in ("train.jsonl", "dev.jsonl", "metadata.json"):
+            (output / generated).unlink(missing_ok=True)
+        retry_extracted = True
+    else:
+        output.mkdir(parents=True)
+
+    phase = "preparing"
+    write_json_atomic(
+        output / "status.json",
+        {
+            "status": "running",
+            "phase": phase,
+            "archive_sha256": archive_sha256,
+            "retry_extracted": retry_extracted,
+        },
+    )
     try:
-        extract_train(archive, output)
+        if not retry_extracted:
+            phase = "extracting"
+            write_json_atomic(
+                output / "status.json",
+                {
+                    "status": "running",
+                    "phase": phase,
+                    "archive_sha256": archive_sha256,
+                    "retry_extracted": False,
+                },
+            )
+            extract_train(archive, output)
+        phase = "preparing"
+        write_json_atomic(
+            output / "status.json",
+            {
+                "status": "running",
+                "phase": phase,
+                "archive_sha256": archive_sha256,
+                "retry_extracted": retry_extracted,
+            },
+        )
         index = output / "train/train.json"
         items = json.loads(index.read_text())
         if not isinstance(items, list) or not items:
@@ -118,6 +201,10 @@ def prepare(
         counts = {"train": 0, "dev": 0}
         ids: set[str] = set()
         images: set[str] = set()
+        nonfinite_euler_samples = 0
+        nonfinite_euler_examples: list[str] = []
+        nonfinite_attribute_values = 0
+        nonfinite_attribute_examples: list[str] = []
         try:
             for item in tqdm(items, desc="Prepare DAD train", unit="head"):
                 item_id = str(item["item_id"])
@@ -130,7 +217,17 @@ def prepare(
                 annotation_path = _item_file(item, "annotation_path", "annotations", ".json", output)
                 annotation = json.loads(annotation_path.read_text())
                 rotation = rotation_from_model_view(annotation["model_view_matrix"])
-                pitch, yaw, roll = full_range_euler(rotation)
+                euler = [_finite_or_none(value) for value in full_range_euler(rotation)]
+                if any(value is None for value in euler):
+                    nonfinite_euler_samples += 1
+                    if len(nonfinite_euler_examples) < 20:
+                        nonfinite_euler_examples.append(item_id)
+                pitch, yaw, roll = euler
+                attributes, attribute_replacements = _json_safe(item.get("attributes", {}))
+                if attribute_replacements:
+                    nonfinite_attribute_values += attribute_replacements
+                    if len(nonfinite_attribute_examples) < 20:
+                        nonfinite_attribute_examples.append(item_id)
                 try:
                     azimuth = forward_azimuth_degrees(rotation)
                 except UndefinedAzimuthError:
@@ -173,7 +270,7 @@ def prepare(
                     "forward_azimuth_deg": azimuth,
                     "pose_band": "undefined" if azimuth is None else pose_band(azimuth),
                     "pose_source": "model_view_rotation_transpose",
-                    "attributes": item.get("attributes", {}),
+                    "attributes": attributes,
                 }
                 streams[split].write(json.dumps(row, allow_nan=False) + "\n")
                 counts[split] += 1
@@ -201,9 +298,16 @@ def prepare(
                 for split in ("train", "dev")
             },
             "archive": str(archive),
-            "archive_sha256": sha256_file(archive),
+            "archive_sha256": archive_sha256,
             "index_sha256": sha256_file(index),
             "rotation_conversion": "model_view_matrix[:3,:3].T",
+            "optional_metadata_sanitization": {
+                "nonfinite_euler_samples": nonfinite_euler_samples,
+                "nonfinite_euler_examples": nonfinite_euler_examples,
+                "nonfinite_attribute_values": nonfinite_attribute_values,
+                "nonfinite_attribute_examples": nonfinite_attribute_examples,
+                "replacement": "JSON null",
+            },
             "split_policy": "seeded hash of item_id; no subject/video identifier is exposed by DAD metadata",
             "references": REFERENCES,
             "limitations": [
@@ -212,13 +316,24 @@ def prepare(
             ],
         }
         write_json_atomic(output / "metadata.json", metadata)
-        write_json_atomic(output / "status.json", {"status": "completed", "splits": counts})
+        write_json_atomic(
+            output / "status.json",
+            {
+                "status": "completed",
+                "splits": counts,
+                "archive_sha256": archive_sha256,
+                "nonfinite_euler_samples": nonfinite_euler_samples,
+                "nonfinite_attribute_values": nonfinite_attribute_values,
+            },
+        )
         return output / "train.jsonl", output / "dev.jsonl"
     except BaseException as error:
         write_json_atomic(
             output / "status.json",
             {
                 "status": "interrupted" if isinstance(error, KeyboardInterrupt) else "failed",
+                "phase": phase,
+                "archive_sha256": archive_sha256,
                 "error": str(error),
             },
         )
