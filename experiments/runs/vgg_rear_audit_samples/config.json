@@ -1,0 +1,7 @@
+{
+  "kind": "pose_audit_sample_export",
+  "data_id": "vgg_data",
+  "split": "dev",
+  "samples_per_bucket": 16,
+  "seed": 0
+}

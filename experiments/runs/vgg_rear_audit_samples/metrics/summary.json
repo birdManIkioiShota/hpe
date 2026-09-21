@@ -1,0 +1,10 @@
+{
+  "exported": 64,
+  "bucket_counts": {
+    "negative:rear_120_to_lt150": 16,
+    "negative:rear_150_to_180": 16,
+    "positive:rear_120_to_lt150": 16,
+    "positive:rear_150_to_180": 16
+  },
+  "manifest": "experiments/runs/vgg_rear_audit_samples/artifacts/rear_samples.jsonl"
+}
