@@ -31,8 +31,13 @@ from experiments.common.datasets import (
     PoseManifestDataset,
     verify_manifest_partitions,
 )
-from experiments.common.run_directory import ExperimentRun, experiment_run_path
-from experiments.common.sampling import build_epoch_order, scan_pose_buckets
+from experiments.common.run_directory import (
+    ExperimentRun,
+    experiment_condition_path,
+    experiment_run_path,
+    validate_condition_id,
+)
+from experiments.common.sampling import build_epoch_plan, scan_pose_buckets
 from experiments.common.training import (
     REAR_SELECTION_GROUPS,
     autocast_context,
@@ -52,9 +57,13 @@ from training.prepare_data import ROOT, prepared_data_path
 
 SOURCE_FILES = (
     "src/experiments/common/datasets.py",
+    "src/experiments/common/pose.py",
+    "src/experiments/common/run_directory.py",
     "src/experiments/common/sampling.py",
     "src/experiments/common/training.py",
+    "src/experiments/common/rear_flip_search.py",
     "src/experiments/scripts/train_rear_balanced.py",
+    "src/experiments/scripts/run_rear_flip_search.py",
     "src/hpe/data/dataset.py",
     "src/hpe/geometry/rotations.py",
     "src/hpe/models/checkpoint.py",
@@ -62,7 +71,7 @@ SOURCE_FILES = (
 )
 
 
-def _reset_failed_pretraining_run(path: Path) -> None:
+def _reset_failed_pretraining_run(path: Path, *, allow_running: bool = False) -> None:
     """Remove only a failed run that has not completed any optimizer update."""
     if not path.exists():
         return
@@ -70,7 +79,10 @@ def _reset_failed_pretraining_run(path: Path) -> None:
     if not status_path.is_file():
         raise FileExistsError(f"Experiment run already exists without status: {path}")
     status = json.loads(status_path.read_text())
-    if status.get("status") not in {"failed", "interrupted"}:
+    allowed_statuses = {"failed", "interrupted"}
+    if allow_running:
+        allowed_statuses.add("running")
+    if status.get("status") not in allowed_statuses:
         raise FileExistsError(f"Experiment run already exists: {path}")
 
     last_checkpoint = path / "checkpoints" / "last.pt"
@@ -131,6 +143,33 @@ def _atomic_torch_save(path: Path, value: dict) -> None:
     os.replace(temporary, path)
 
 
+def _rng_state() -> dict:
+    numpy_state = np.random.get_state()
+    return {
+        "python": random.getstate(),
+        "numpy": [
+            numpy_state[0],
+            numpy_state[1].tolist(),
+            numpy_state[2],
+            numpy_state[3],
+            numpy_state[4],
+        ],
+        "torch": torch.get_rng_state(),
+        "cuda": torch.cuda.get_rng_state_all() if torch.cuda.is_available() else [],
+    }
+
+
+def _restore_rng(state: dict) -> None:
+    random.setstate(state["python"])
+    numpy_state = state["numpy"]
+    np.random.set_state(
+        (numpy_state[0], np.asarray(numpy_state[1], dtype=np.uint32), *numpy_state[2:])
+    )
+    torch.set_rng_state(state["torch"].cpu())
+    if state["cuda"]:
+        torch.cuda.set_rng_state_all([value.cpu() for value in state["cuda"]])
+
+
 def _line_count(path: Path) -> int:
     with path.open(encoding="utf-8") as stream:
         return sum(1 for _ in stream)
@@ -165,6 +204,8 @@ def _make_dataset(manifests: list[Path], *, augment: bool, seed: int, error_dir:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run-id", required=True)
+    parser.add_argument("--condition-id")
+    parser.add_argument("--resume", action="store_true")
     parser.add_argument("--vgg-data-id", default="vgg_data")
     parser.add_argument("--dad-data-id", default="dad3dheads_train")
     parser.add_argument("--device", default="cuda:0")
@@ -173,6 +214,11 @@ def main() -> None:
     parser.add_argument("--epochs", type=int, default=10)
     parser.add_argument("--samples-per-epoch", type=int)
     parser.add_argument("--rear-fraction", type=float, default=0.25)
+    parser.add_argument(
+        "--rear-bucket-policy",
+        choices=("equal", "proportional"),
+        default="equal",
+    )
     parser.add_argument("--batch-size", type=int, default=64)
     parser.add_argument("--accumulation", type=int, default=2)
     parser.add_argument("--workers", type=int, default=8)
@@ -233,6 +279,7 @@ def main() -> None:
 
     config = {
         "kind": "rear_balanced_distillation_training",
+        "condition_id": args.condition_id,
         "vgg_data_id": args.vgg_data_id,
         "dad_data_id": args.dad_data_id,
         "device": args.device,
@@ -241,6 +288,7 @@ def main() -> None:
         "epochs": args.epochs,
         "samples_per_epoch": samples_per_epoch,
         "rear_fraction": args.rear_fraction,
+        "rear_bucket_policy": args.rear_bucket_policy,
         "batch_size": args.batch_size,
         "accumulation": args.accumulation,
         "effective_batch": effective_batch,
@@ -278,9 +326,39 @@ def main() -> None:
             **{name: len(values) for name, values in buckets.rear.items()},
         },
     }
-    run_path = experiment_run_path(ROOT, args.run_id)
-    _reset_failed_pretraining_run(run_path)
-    run = ExperimentRun.create(ROOT, args.run_id, config=config, provenance=provenance)
+    if args.condition_id is None:
+        run_path = experiment_run_path(ROOT, args.run_id)
+    else:
+        validate_condition_id(args.condition_id)
+        parent = experiment_run_path(ROOT, args.run_id)
+        if not parent.is_dir():
+            raise FileNotFoundError(f"Parent experiment does not exist: {parent}")
+        run_path = experiment_condition_path(ROOT, args.run_id, args.condition_id)
+
+    resuming = False
+    if args.resume and run_path.exists():
+        existing_status = json.loads((run_path / "status.json").read_text())
+        if existing_status.get("status") == "completed":
+            raise ValueError(f"Condition is already completed: {run_path}")
+        last_checkpoint = run_path / "checkpoints" / "last.pt"
+        if last_checkpoint.is_file():
+            run = ExperimentRun.open(run_path)
+            stored_config = json.loads((run_path / "config.json").read_text())
+            stored_provenance = json.loads((run_path / "provenance.json").read_text())
+            if stored_config != config or stored_provenance != provenance:
+                raise ValueError("Condition config, inputs, or source changed; resume refused")
+            run.write_status("running", resumed=True)
+            resuming = True
+        else:
+            _reset_failed_pretraining_run(run_path, allow_running=True)
+    elif run_path.exists():
+        _reset_failed_pretraining_run(run_path)
+
+    if not resuming:
+        if args.condition_id is None:
+            run = ExperimentRun.create(ROOT, args.run_id, config=config, provenance=provenance)
+        else:
+            run = ExperimentRun.create_at(run_path, config=config, provenance=provenance)
     error_dir = run.path / "artifacts" / "image_read_errors"
     train_data = _make_dataset(train_manifests, augment=True, seed=args.seed, error_dir=error_dir)
     dev_data = _make_dataset(dev_manifests, augment=False, seed=args.seed, error_dir=error_dir)
@@ -325,14 +403,18 @@ def main() -> None:
             warmup_updates=args.warmup_updates,
         )
 
-        baseline = evaluate_pose_model(student, dev_loader, device)
-        run.event(
-            "dev_baseline",
-            rear=baseline.get("rear"),
-            front=baseline.get("front"),
-            side=baseline.get("side"),
-            retention=baseline.get("retention"),
-        )
+        baseline_path = run.path / "metrics" / "dev_baseline.json"
+        if resuming:
+            baseline = json.loads(baseline_path.read_text())
+        else:
+            baseline = evaluate_pose_model(student, dev_loader, device)
+            run.event(
+                "dev_baseline",
+                rear=baseline.get("rear"),
+                front=baseline.get("front"),
+                side=baseline.get("side"),
+                retention=baseline.get("retention"),
+            )
         required_selection_groups = {
             "front",
             "side",
@@ -346,38 +428,95 @@ def main() -> None:
                 "Internal dev is missing checkpoint-selection groups: "
                 + ", ".join(sorted(missing_selection_groups))
             )
-        write_json_atomic(run.path / "metrics" / "dev_baseline.json", baseline)
-        best_score = selection_score(
-            baseline,
-            baseline,
-            retention_tolerance_deg=args.retention_tolerance_deg,
-        )
-        best_metrics = baseline
-        _atomic_torch_save(
-            run.path / "checkpoints" / "best.pth",
-            {
-                "state_dict": student.state_dict(),
-                "epoch": 0,
-                "dev": baseline,
-                "selection_score": best_score,
-                "selection": config["selection"],
-            },
-        )
-
+        start_epoch = 0
         global_step = 0
-        for epoch in range(args.epochs):
+        if resuming:
+            state = torch.load(
+                run.path / "checkpoints" / "last.pt",
+                map_location="cpu",
+                weights_only=True,
+            )
+            if state.get("config") != config or state.get("schema") != 1:
+                raise ValueError("Resume checkpoint/config mismatch")
+            student.load_state_dict(state["state_dict"], strict=True)
+            optimizer.load_state_dict(state["optimizer"])
+            scheduler.load_state_dict(state["scheduler"])
+            start_epoch = int(state["epoch"])
+            global_step = int(state["global_step"])
+            best_score = tuple(float(value) for value in state["best_score"])
+            best_metrics = state["best_metrics"]
+            best_epoch = int(state["best_epoch"])
+            _restore_rng(state["rng"])
+            best_checkpoint_path = run.path / "checkpoints" / "best.pth"
+            best_checkpoint = torch.load(
+                best_checkpoint_path,
+                map_location="cpu",
+                weights_only=True,
+            )
+            if int(best_checkpoint["epoch"]) != best_epoch:
+                if best_epoch != start_epoch:
+                    raise ValueError("Resume checkpoint and best checkpoint disagree")
+                _atomic_torch_save(
+                    best_checkpoint_path,
+                    {
+                        "state_dict": student.state_dict(),
+                        "epoch": best_epoch,
+                        "dev": best_metrics,
+                        "selection_score": best_score,
+                        "selection": config["selection"],
+                    },
+                )
+            run.event("resumed", next_epoch=start_epoch + 1, global_step=global_step)
+        else:
+            write_json_atomic(baseline_path, baseline)
+            best_score = selection_score(
+                baseline,
+                baseline,
+                retention_tolerance_deg=args.retention_tolerance_deg,
+            )
+            best_metrics = baseline
+            best_epoch = 0
+            _atomic_torch_save(
+                run.path / "checkpoints" / "best.pth",
+                {
+                    "state_dict": student.state_dict(),
+                    "epoch": 0,
+                    "dev": baseline,
+                    "selection_score": best_score,
+                    "selection": config["selection"],
+                },
+            )
+            _atomic_torch_save(
+                run.path / "checkpoints" / "last.pt",
+                {
+                    "schema": 1,
+                    "state_dict": student.state_dict(),
+                    "optimizer": optimizer.state_dict(),
+                    "scheduler": scheduler.state_dict(),
+                    "epoch": 0,
+                    "global_step": 0,
+                    "config": config,
+                    "best_score": best_score,
+                    "best_metrics": best_metrics,
+                    "best_epoch": best_epoch,
+                    "rng": _rng_state(),
+                },
+            )
+
+        for epoch in range(start_epoch, args.epochs):
             training_mode(student, args.update_scope)
-            order = build_epoch_order(
+            sample_plan = build_epoch_plan(
                 buckets,
                 num_samples=samples_per_epoch,
                 rear_fraction=args.rear_fraction,
                 seed=args.seed,
                 epoch=epoch,
+                rear_bucket_policy=args.rear_bucket_policy,
             )
             loader = DataLoader(
                 train_data,
                 batch_size=args.batch_size,
-                sampler=order,
+                sampler=sample_plan.order,
                 num_workers=args.workers,
                 pin_memory=True,
                 drop_last=False,
@@ -388,7 +527,9 @@ def main() -> None:
                 "loss": 0.0,
                 "supervised": 0.0,
                 "distill": 0.0,
+                "distill_weighted": 0.0,
                 "flip_consistency": 0.0,
+                "flip_consistency_weighted": 0.0,
                 "rear_samples": 0,
             }
             bar = tqdm(loader, desc=f"Train {epoch + 1}/{args.epochs}", unit="batch")
@@ -447,8 +588,16 @@ def main() -> None:
                 totals["loss"] += float(loss.detach()) * len(images)
                 totals["supervised"] += float(supervised.detach()) * len(images)
                 totals["distill"] += float(distill.detach()) * len(images)
+                totals["distill_weighted"] += (
+                    args.retain_distill_weight * float(distill.detach()) * len(images)
+                )
                 totals["flip_consistency"] += (
                     float(flip_consistency.detach()) * len(images)
+                )
+                totals["flip_consistency_weighted"] += (
+                    args.rear_flip_consistency_weight
+                    * float(flip_consistency.detach())
+                    * len(images)
                 )
 
                 if (batch_index + 1) % args.accumulation == 0:
@@ -472,8 +621,14 @@ def main() -> None:
                                 "loss_rad": totals["loss"] / totals["samples"],
                                 "supervised_rad": totals["supervised"] / totals["samples"],
                                 "distill_rad": totals["distill"] / totals["samples"],
+                                "distill_weighted_rad": (
+                                    totals["distill_weighted"] / totals["samples"]
+                                ),
                                 "flip_consistency_rad": (
                                     totals["flip_consistency"] / totals["samples"]
+                                ),
+                                "flip_consistency_weighted_rad": (
+                                    totals["flip_consistency_weighted"] / totals["samples"]
                                 ),
                                 "rear_fraction_observed": totals["rear_samples"] / totals["samples"],
                                 "gradient_norm": float(norm),
@@ -495,16 +650,7 @@ def main() -> None:
             if improved:
                 best_score = score
                 best_metrics = dev
-                _atomic_torch_save(
-                    run.path / "checkpoints" / "best.pth",
-                    {
-                        "state_dict": student.state_dict(),
-                        "epoch": epoch + 1,
-                        "dev": dev,
-                        "selection_score": score,
-                        "selection": config["selection"],
-                    },
-                )
+                best_epoch = epoch + 1
             epoch_result = {
                 "epoch": epoch + 1,
                 "global_step": global_step,
@@ -513,10 +659,24 @@ def main() -> None:
                     "loss_rad": totals["loss"] / totals["samples"],
                     "supervised_rad": totals["supervised"] / totals["samples"],
                     "distill_rad": totals["distill"] / totals["samples"],
+                    "distill_weighted_rad": (
+                        totals["distill_weighted"] / totals["samples"]
+                    ),
                     "flip_consistency_rad": (
                         totals["flip_consistency"] / totals["samples"]
                     ),
+                    "flip_consistency_weighted_rad": (
+                        totals["flip_consistency_weighted"] / totals["samples"]
+                    ),
                     "rear_fraction_observed": totals["rear_samples"] / totals["samples"],
+                    "sampling": {
+                        "rear_fraction_requested": sample_plan.rear_fraction_requested,
+                        "rear_fraction_planned": sample_plan.rear_fraction_observed,
+                        "rear_bucket_policy": sample_plan.rear_bucket_policy,
+                        "rear_bucket_draws": sample_plan.bucket_draws,
+                        "unique_samples": sample_plan.unique_samples,
+                        "repeated_draws": sample_plan.repeated_draws,
+                    },
                 },
                 "dev": dev,
                 "selection_score": score,
@@ -540,6 +700,7 @@ def main() -> None:
             _atomic_torch_save(
                 run.path / "checkpoints" / "last.pt",
                 {
+                    "schema": 1,
                     "state_dict": student.state_dict(),
                     "optimizer": optimizer.state_dict(),
                     "scheduler": scheduler.state_dict(),
@@ -547,12 +708,47 @@ def main() -> None:
                     "global_step": global_step,
                     "config": config,
                     "best_score": best_score,
+                    "best_metrics": best_metrics,
+                    "best_epoch": best_epoch,
+                    "rng": _rng_state(),
                 },
             )
+            if improved:
+                _atomic_torch_save(
+                    run.path / "checkpoints" / "best.pth",
+                    {
+                        "state_dict": student.state_dict(),
+                        "epoch": best_epoch,
+                        "dev": best_metrics,
+                        "selection_score": best_score,
+                        "selection": config["selection"],
+                    },
+                )
 
+        final_metrics = json.loads(
+            (run.path / "metrics" / f"epoch_{args.epochs:03d}.json").read_text()
+        )
+        final_checkpoint = run.path / "checkpoints" / f"epoch_{args.epochs:03d}.pth"
+        _atomic_torch_save(
+            final_checkpoint,
+            {
+                "state_dict": student.state_dict(),
+                "epoch": args.epochs,
+                "dev": final_metrics["dev"],
+                "selection_score": final_metrics["selection_score"],
+                "selection": config["selection"],
+            },
+        )
+        best_checkpoint = torch.load(
+            run.path / "checkpoints" / "best.pth",
+            map_location="cpu",
+            weights_only=True,
+        )
         run.complete(
             epochs=args.epochs,
             global_step=global_step,
+            best_epoch=int(best_checkpoint["epoch"]),
+            final_checkpoint=str(final_checkpoint.relative_to(ROOT)),
             best_selection_score=list(best_score),
             best_rear=best_metrics["rear"],
             best_front=best_metrics["front"],
