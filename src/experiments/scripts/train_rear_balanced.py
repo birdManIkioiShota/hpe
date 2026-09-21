@@ -100,9 +100,17 @@ def _reset_failed_pretraining_run(path: Path) -> None:
                 f"of overwriting it: {path}"
             )
 
+    allowed_baseline_files = {best_checkpoint.resolve(), baseline_metrics.resolve()}
     for directory_name in ("checkpoints", "metrics", "predictions", "artifacts"):
         directory = path / directory_name
-        if directory.exists() and any(item.is_file() for item in directory.rglob("*")):
+        if not directory.exists():
+            continue
+        unexpected = [
+            item
+            for item in directory.rglob("*")
+            if item.is_file() and item.resolve() not in allowed_baseline_files
+        ]
+        if unexpected:
             raise FileExistsError(
                 "Failed run contains diagnostic artifacts; use a new run-id instead of "
                 f"overwriting it: {path}"
