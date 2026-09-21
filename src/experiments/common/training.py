@@ -93,15 +93,25 @@ def grouped_metrics(errors: torch.Tensor, metadata: dict[str, Any]) -> dict[str,
     azimuth = torch.as_tensor(metadata["azimuth_deg"], dtype=torch.float64)
     bands = list(metadata["pose_band"])
     datasets = list(metadata["dataset"])
+    front = torch.tensor([value == "front" for value in bands])
+    side = torch.tensor([value == "side" for value in bands])
+    rear_near = torch.tensor([value == "rear_120_to_lt150" for value in bands])
+    rear_deep = torch.tensor([value == "rear_150_to_180" for value in bands])
 
     masks: dict[str, torch.Tensor] = {
         "overall": torch.ones(len(errors), dtype=torch.bool),
+        "front": front,
+        "side": side,
         "rear": rear,
         "retention": ~rear,
         "rear_negative": rear & (azimuth < 0),
         "rear_positive": rear & (azimuth > 0),
-        "rear_120_to_lt150": torch.tensor([value == "rear_120_to_lt150" for value in bands]),
-        "rear_150_to_180": torch.tensor([value == "rear_150_to_180" for value in bands]),
+        "rear_120_to_lt150": rear_near,
+        "rear_150_to_180": rear_deep,
+        "rear_negative_120_to_lt150": rear_near & (azimuth < 0),
+        "rear_negative_150_to_180": rear_deep & (azimuth < 0),
+        "rear_positive_120_to_lt150": rear_near & (azimuth > 0),
+        "rear_positive_150_to_180": rear_deep & (azimuth > 0),
     }
     for dataset in sorted(set(datasets)):
         masks[f"dataset:{dataset}"] = torch.tensor([value == dataset for value in datasets])
@@ -155,6 +165,14 @@ def evaluate_pose_model(model: nn.Module, loader, device: torch.device) -> dict[
     return grouped_metrics(torch.cat(errors), metadata_rows)
 
 
+REAR_SELECTION_GROUPS = (
+    "rear_negative_120_to_lt150",
+    "rear_negative_150_to_180",
+    "rear_positive_120_to_lt150",
+    "rear_positive_150_to_180",
+)
+
+
 def selection_score(
     metrics: dict[str, dict[str, float]],
     baseline: dict[str, dict[str, float]],
@@ -162,25 +180,53 @@ def selection_score(
     retention_tolerance_deg: float,
 ) -> tuple[float, ...]:
     rear = metrics["rear"]
-    retention = metrics["retention"]
-    baseline_retention = baseline["retention"]["mean_deg"]
-    degradation = retention["mean_deg"] - baseline_retention
-    feasible = degradation <= retention_tolerance_deg
+    front_degradation = metrics["front"]["mean_deg"] - baseline["front"]["mean_deg"]
+    side_degradation = metrics["side"]["mean_deg"] - baseline["side"]["mean_deg"]
+    max_retention_degradation = max(front_degradation, side_degradation)
+    feasible = (
+        front_degradation <= retention_tolerance_deg
+        and side_degradation <= retention_tolerance_deg
+    )
+    worst_rear_p90 = max(metrics[name]["p90_deg"] for name in REAR_SELECTION_GROUPS)
+    worst_rear_over90 = max(
+        metrics[name]["over90_percent"] for name in REAR_SELECTION_GROUPS
+    )
     if feasible:
         return (
             0.0,
+            worst_rear_p90,
             rear["p90_deg"],
-            rear["over90_percent"],
+            worst_rear_over90,
             rear["mean_deg"],
-            retention["mean_deg"],
+            max_retention_degradation,
+            metrics["front"]["mean_deg"],
+            metrics["side"]["mean_deg"],
         )
     return (
         1.0,
-        degradation,
+        max_retention_degradation,
+        worst_rear_p90,
         rear["p90_deg"],
-        rear["over90_percent"],
+        worst_rear_over90,
         rear["mean_deg"],
     )
+
+
+def restore_horizontal_flip_rotation(rotation: torch.Tensor) -> torch.Tensor:
+    mirror = torch.diag(
+        torch.tensor([-1.0, 1.0, 1.0], dtype=rotation.dtype, device=rotation.device)
+    )
+    return mirror @ rotation @ mirror
+
+
+def flip_consistency_loss_rad(
+    original_prediction: torch.Tensor,
+    flipped_prediction: torch.Tensor,
+) -> torch.Tensor:
+    if original_prediction.shape != flipped_prediction.shape:
+        raise ValueError("Flip-consistency predictions must have identical shapes")
+    restored = restore_horizontal_flip_rotation(flipped_prediction)
+    return rotation_loss_rad(original_prediction, restored)
 
 
 def autocast_context(device: torch.device, precision: str):
