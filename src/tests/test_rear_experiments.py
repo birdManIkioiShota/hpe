@@ -17,7 +17,14 @@ from torch import nn
 
 from experiments.common.datasets import verify_manifest_partitions
 from experiments.common.sampling import build_epoch_order, scan_pose_buckets
-from experiments.common.training import configure_update_scope, selection_score
+from experiments.common.training import (
+    REAR_SELECTION_GROUPS,
+    configure_update_scope,
+    flip_consistency_loss_rad,
+    grouped_metrics,
+    restore_horizontal_flip_rotation,
+    selection_score,
+)
 from experiments.common.run_directory import ExperimentRun
 from experiments.scripts.prepare_dad3dheads_train import extract_train, prepare
 from experiments.scripts.train_rear_balanced import _reset_failed_pretraining_run
@@ -283,6 +290,41 @@ class RearExperimentTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "Source group crosses"):
                 verify_manifest_partitions([train], [dev])
 
+    def test_grouped_metrics_include_retention_and_crossed_rear_groups(self):
+        errors = torch.tensor([5.0, 7.0, 20.0, 30.0, 40.0, 50.0])
+        metadata = {
+            "is_rear": [False, False, True, True, True, True],
+            "azimuth_deg": [0.0, 90.0, -130.0, -170.0, 130.0, 170.0],
+            "pose_band": [
+                "front",
+                "side",
+                "rear_120_to_lt150",
+                "rear_150_to_180",
+                "rear_120_to_lt150",
+                "rear_150_to_180",
+            ],
+            "dataset": ["fixture"] * 6,
+        }
+        metrics = grouped_metrics(errors, metadata)
+        self.assertEqual(metrics["front"]["count"], 1)
+        self.assertEqual(metrics["side"]["count"], 1)
+        self.assertEqual(metrics["rear"]["count"], 4)
+        for name in REAR_SELECTION_GROUPS:
+            self.assertEqual(metrics[name]["count"], 1)
+
+    def test_flip_consistency_restores_mirrored_rotation(self):
+        original = torch.tensor(
+            Rotation.from_euler("xyz", [15.0, 135.0, -20.0], degrees=True).as_matrix(),
+            dtype=torch.float32,
+        ).unsqueeze(0)
+        mirrored = restore_horizontal_flip_rotation(original)
+        restored = restore_horizontal_flip_rotation(mirrored)
+        self.assertTrue(torch.allclose(restored, original, atol=1e-6, rtol=0))
+        loss = flip_consistency_loss_rad(original, mirrored)
+        self.assertLess(float(loss.max()), 1e-5)
+        with self.assertRaisesRegex(ValueError, "identical shapes"):
+            flip_consistency_loss_rad(original, mirrored.repeat(2, 1, 1))
+
     def test_update_scope_and_selection_constraint(self):
         class Tiny(nn.Module):
             def __init__(self):
@@ -298,21 +340,36 @@ class RearExperimentTests(unittest.TestCase):
         self.assertTrue(any(name.startswith("layer4.") for name in trainable))
         self.assertTrue(any(name.startswith("linear_reg.") for name in trainable))
 
-        baseline = {
-            "rear": {"p90_deg": 80.0, "over90_percent": 8.0, "mean_deg": 38.0},
-            "retention": {"mean_deg": 6.0},
-        }
-        better = {
-            "rear": {"p90_deg": 70.0, "over90_percent": 6.0, "mean_deg": 34.0},
-            "retention": {"mean_deg": 5.9},
-        }
-        degraded = {
-            "rear": {"p90_deg": 60.0, "over90_percent": 4.0, "mean_deg": 30.0},
-            "retention": {"mean_deg": 6.2},
-        }
+        def metrics(front: float, side: float, rear_p90: float) -> dict:
+            value = {
+                "front": {"mean_deg": front},
+                "side": {"mean_deg": side},
+                "rear": {
+                    "p90_deg": rear_p90,
+                    "over90_percent": 6.0,
+                    "mean_deg": 34.0,
+                },
+            }
+            for index, name in enumerate(REAR_SELECTION_GROUPS):
+                value[name] = {
+                    "p90_deg": rear_p90 + index,
+                    "over90_percent": 5.0 + index,
+                    "mean_deg": 30.0 + index,
+                }
+            return value
+
+        baseline = metrics(6.0, 8.0, 80.0)
+        better = metrics(5.9, 7.9, 70.0)
+        side_degraded = metrics(5.8, 8.2, 60.0)
         base_score = selection_score(baseline, baseline, retention_tolerance_deg=0.0)
-        self.assertLess(selection_score(better, baseline, retention_tolerance_deg=0.0), base_score)
-        self.assertGreater(selection_score(degraded, baseline, retention_tolerance_deg=0.0), base_score)
+        self.assertLess(
+            selection_score(better, baseline, retention_tolerance_deg=0.0),
+            base_score,
+        )
+        self.assertGreater(
+            selection_score(side_degraded, baseline, retention_tolerance_deg=0.0),
+            base_score,
+        )
 
 
 if __name__ == "__main__":
