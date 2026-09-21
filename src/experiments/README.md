@@ -107,10 +107,12 @@ consistency loss between each rear prediction and the restored prediction from t
 horizontally flipped view.
 
 Checkpoint selection uses only the internal VGGHeads/DAD dev manifests. Front and side
-means must independently satisfy the configured retention tolerance. Feasible
-checkpoints are then ordered by the worst P90 among the four signed rear groups,
-overall rear P90, worst signed-group >90-degree rate, and rear mean. The protected
-benchmark datasets are not read by this training script.
+mean and P90 metrics must each independently satisfy the configured retention tolerance.
+Feasible checkpoints are then ordered by the worst P90 among the four signed rear
+groups, overall rear P90, worst signed-group >90-degree rate, and rear mean. Internal
+metrics also include dataset-specific front, side, and rear groups for VGGHeads and
+DAD-3DHeads diagnostics. The protected benchmark datasets are not read by this training
+script.
 
 ## Rear-sampling / flip-consistency search
 
