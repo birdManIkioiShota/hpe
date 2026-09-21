@@ -34,6 +34,7 @@ from experiments.common.datasets import (
 from experiments.common.run_directory import ExperimentRun, experiment_run_path
 from experiments.common.sampling import build_epoch_order, scan_pose_buckets
 from experiments.common.training import (
+    REAR_SELECTION_GROUPS,
     autocast_context,
     evaluate_pose_model,
     flip_consistency_loss_rad,
@@ -326,8 +327,19 @@ def main() -> None:
 
         baseline = evaluate_pose_model(student, dev_loader, device)
         run.event("dev_baseline", rear=baseline.get("rear"), retention=baseline.get("retention"))
-        if "rear" not in baseline or "retention" not in baseline:
-            raise ValueError("Internal dev must contain both rear and retention samples")
+        required_selection_groups = {
+            "front",
+            "side",
+            "rear",
+            "retention",
+            *REAR_SELECTION_GROUPS,
+        }
+        missing_selection_groups = required_selection_groups.difference(baseline)
+        if missing_selection_groups:
+            raise ValueError(
+                "Internal dev is missing checkpoint-selection groups: "
+                + ", ".join(sorted(missing_selection_groups))
+            )
         write_json_atomic(run.path / "metrics" / "dev_baseline.json", baseline)
         best_score = selection_score(
             baseline,
