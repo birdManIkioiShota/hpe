@@ -61,7 +61,7 @@ SOURCE_FILES = (
 
 
 def _reset_failed_pretraining_run(path: Path) -> None:
-    """Remove only an empty failed run that never reached baseline checkpointing."""
+    """Remove only a failed run that has not completed any optimizer update."""
     if not path.exists():
         return
     status_path = path / "status.json"
@@ -71,18 +71,34 @@ def _reset_failed_pretraining_run(path: Path) -> None:
     if status.get("status") not in {"failed", "interrupted"}:
         raise FileExistsError(f"Experiment run already exists: {path}")
 
-    protected_outputs = (
-        path / "checkpoints" / "best.pth",
-        path / "checkpoints" / "last.pt",
-        path / "metrics" / "dev_baseline.json",
-        path / "metrics" / "train.jsonl",
-        path / "metrics" / "dev.jsonl",
-    )
-    if any(value.exists() for value in protected_outputs):
+    last_checkpoint = path / "checkpoints" / "last.pt"
+    train_log = path / "metrics" / "train.jsonl"
+    dev_log = path / "metrics" / "dev.jsonl"
+    epoch_metrics = list((path / "metrics").glob("epoch_*.json"))
+    if last_checkpoint.exists() or train_log.exists() or dev_log.exists() or epoch_metrics:
         raise FileExistsError(
-            "Failed run contains training or baseline outputs; use a new run-id instead of "
-            f"overwriting it: {path}"
+            "Failed run contains optimizer-update or epoch outputs; use a new run-id instead "
+            f"of overwriting it: {path}"
         )
+
+    best_checkpoint = path / "checkpoints" / "best.pth"
+    baseline_metrics = path / "metrics" / "dev_baseline.json"
+    if best_checkpoint.exists() or baseline_metrics.exists():
+        if not (best_checkpoint.is_file() and baseline_metrics.is_file()):
+            raise FileExistsError(
+                "Failed run has an incomplete baseline snapshot; use a new run-id instead "
+                f"of overwriting it: {path}"
+            )
+        baseline_checkpoint = torch.load(
+            best_checkpoint,
+            map_location="cpu",
+            weights_only=True,
+        )
+        if baseline_checkpoint.get("epoch") != 0:
+            raise FileExistsError(
+                "Failed run contains a non-baseline best checkpoint; use a new run-id instead "
+                f"of overwriting it: {path}"
+            )
 
     for directory_name in ("checkpoints", "metrics", "predictions", "artifacts"):
         directory = path / directory_name
@@ -350,7 +366,7 @@ def main() -> None:
                 retention_mask = ~rear_mask
                 teacher_prediction = None
                 if retention_mask.any() and args.retain_distill_weight:
-                    with torch.inference_mode(), torch.autocast(
+                    with torch.no_grad(), torch.autocast(
                         device_type=device.type, enabled=False
                     ):
                         teacher_prediction = teacher(images[retention_mask])
