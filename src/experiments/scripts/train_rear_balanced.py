@@ -36,6 +36,7 @@ from experiments.common.sampling import build_epoch_order, scan_pose_buckets
 from experiments.common.training import (
     autocast_context,
     evaluate_pose_model,
+    flip_consistency_loss_rad,
     make_optimizer,
     make_scheduler,
     rotation_loss_rad,
@@ -182,6 +183,7 @@ def main() -> None:
     parser.add_argument("--rear-supervised-weight", type=float, default=1.0)
     parser.add_argument("--replay-supervised-weight", type=float, default=1.0)
     parser.add_argument("--retain-distill-weight", type=float, default=1.0)
+    parser.add_argument("--rear-flip-consistency-weight", type=float, required=True)
     parser.add_argument("--retention-tolerance-deg", type=float, default=0.0)
     parser.add_argument("--seed", type=int, default=42)
     args = parser.parse_args()
@@ -199,6 +201,7 @@ def main() -> None:
         or args.rear_supervised_weight < 0
         or args.replay_supervised_weight < 0
         or args.retain_distill_weight < 0
+        or args.rear_flip_consistency_weight < 0
         or args.retention_tolerance_deg < 0
     ):
         raise ValueError("Invalid training hyperparameter")
@@ -249,9 +252,13 @@ def main() -> None:
         "rear_supervised_weight": args.rear_supervised_weight,
         "replay_supervised_weight": args.replay_supervised_weight,
         "retain_distill_weight": args.retain_distill_weight,
+        "rear_flip_consistency_weight": args.rear_flip_consistency_weight,
         "retention_tolerance_deg": args.retention_tolerance_deg,
         "seed": args.seed,
-        "selection": "retention constraint, then rear p90, >90 rate, mean",
+        "selection": (
+            "front/side retention constraints, then worst rear-group p90, "
+            "rear p90, worst rear-group >90 rate, rear mean"
+        ),
     }
     provenance = {
         "base_checkpoint": {"path": BASE_CHECKPOINT, "sha256": BASE_SHA256},
@@ -363,6 +370,7 @@ def main() -> None:
                 "loss": 0.0,
                 "supervised": 0.0,
                 "distill": 0.0,
+                "flip_consistency": 0.0,
                 "rear_samples": 0,
             }
             bar = tqdm(loader, desc=f"Train {epoch + 1}/{args.epochs}", unit="batch")
@@ -395,7 +403,21 @@ def main() -> None:
                         ).mean()
                     else:
                         distill = prediction.sum() * 0.0
-                    loss = supervised + args.retain_distill_weight * distill
+                    if rear_mask.any() and args.rear_flip_consistency_weight:
+                        flipped_prediction = student(
+                            torch.flip(images[rear_mask], dims=[3])
+                        )
+                        flip_consistency = flip_consistency_loss_rad(
+                            prediction[rear_mask],
+                            flipped_prediction,
+                        ).mean()
+                    else:
+                        flip_consistency = prediction.sum() * 0.0
+                    loss = (
+                        supervised
+                        + args.retain_distill_weight * distill
+                        + args.rear_flip_consistency_weight * flip_consistency
+                    )
                     scaled_loss = loss / args.accumulation
 
                 if not torch.isfinite(loss):
@@ -407,6 +429,9 @@ def main() -> None:
                 totals["loss"] += float(loss.detach()) * len(images)
                 totals["supervised"] += float(supervised.detach()) * len(images)
                 totals["distill"] += float(distill.detach()) * len(images)
+                totals["flip_consistency"] += (
+                    float(flip_consistency.detach()) * len(images)
+                )
 
                 if (batch_index + 1) % args.accumulation == 0:
                     norm = torch.nn.utils.clip_grad_norm_(
@@ -429,6 +454,9 @@ def main() -> None:
                                 "loss_rad": totals["loss"] / totals["samples"],
                                 "supervised_rad": totals["supervised"] / totals["samples"],
                                 "distill_rad": totals["distill"] / totals["samples"],
+                                "flip_consistency_rad": (
+                                    totals["flip_consistency"] / totals["samples"]
+                                ),
                                 "rear_fraction_observed": totals["rear_samples"] / totals["samples"],
                                 "gradient_norm": float(norm),
                                 "lr": [group["lr"] for group in optimizer.param_groups],
@@ -467,6 +495,9 @@ def main() -> None:
                     "loss_rad": totals["loss"] / totals["samples"],
                     "supervised_rad": totals["supervised"] / totals["samples"],
                     "distill_rad": totals["distill"] / totals["samples"],
+                    "flip_consistency_rad": (
+                        totals["flip_consistency"] / totals["samples"]
+                    ),
                     "rear_fraction_observed": totals["rear_samples"] / totals["samples"],
                 },
                 "dev": dev,
@@ -483,6 +514,8 @@ def main() -> None:
                 global_step=global_step,
                 improved=improved,
                 rear=dev.get("rear"),
+                front=dev.get("front"),
+                side=dev.get("side"),
                 retention=dev.get("retention"),
             )
             _append_jsonl(run.path / "metrics" / "dev.jsonl", epoch_result)
