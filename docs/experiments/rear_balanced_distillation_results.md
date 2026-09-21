@@ -6,7 +6,7 @@ SixDRepNet360-ResNet50のモデル構造を変更せず、後方姿勢のSO(3)�
 
 本レポートでは、rear-balanced distillationによる学習結果、base modelのhorizontal-flip equivariance、VGGHeads後方サンプルの監査用export、学習後checkpointの外部評価をまとめます。
 
-評価の中心はVGGHeads・DAD-3DHeadsのdev、および実写系benchmarkであるAFLW2000と300W-LPです。AGORA-HPEはCGであり、評価対象の75.3%でhead sizeが64 px未満となるため、後方姿勢を含む補助評価として扱います。
+評価の中心はVGGHeads・DAD-3DHeadsのdev、および既存性能確認の主要benchmarkであるAFLW2000と300W-LPです。AGORA-HPEはCGであり、評価対象の75.3%でhead sizeが64 px未満となるため、後方姿勢を含む補助評価として扱います。
 
 ## 対象モデルとcheckpoint
 
@@ -222,7 +222,7 @@ best checkpointは、base modelの保存済みFP32評価と同じmanifest、imag
 | paired bootstrap | 1,000 repetitions |
 | bootstrap seed | 0 |
 
-### 実写系benchmarkの全体性能
+### 主要benchmarkの全体性能
 
 AFLW2000と300W-LPの全体SO(3) meanは次の結果です。
 
@@ -233,7 +233,7 @@ AFLW2000と300W-LPの全体SO(3) meanは次の結果です。
 
 両データセットとも全体meanはbaseよりわずかに低下しています。今回の学習で、AFLW2000または300W-LPのデータセット全体に大きな性能退行は発生していません。
 
-### 実写系benchmarkのyaw帯
+### 主要benchmarkのyaw帯
 
 AFLW2000ではfrontがほぼ同値で、sideが改善しています。
 
@@ -341,7 +341,7 @@ AGORA-HPEのocclusion binでは、4 groupすべてでSO(3) meanが低下して�
 - devのGT metricsは、符号と120–150° / 150–180°を交差させた4 groupでは保存されていません。
 - VGGHeads後方監査runは64件のcropをexportしていますが、画像とannotationの目視一致を自動評価していません。
 - DAD-3DHeads official validationは今回のcandidate checkpointに対して評価されていません。
-- AFLW2000と300W-LPの保存済み評価にはrear groupがなく、実写系外部benchmarkによる`|yaw| >= 120°`の直接検証はありません。
+- AFLW2000と300W-LPの保存済み評価にはrear groupがなく、AFLW2000・300W-LPによる`|yaw| >= 120°`の直接検証はありません。
 - AGORA-HPEは補助評価として使用しており、devの`azimuth`とAGORA-HPEのsource yawは異なる定義です。
 - horizontal-flip equivarianceはモデル自己整合性のmetricであり、GT accuracyそのものではありません。
 - 符号非対称性とflip-equivariance低下の共存は確認できますが、両者の因果関係はこの実験だけでは確定できません。
@@ -356,7 +356,7 @@ AFLW2000と300W-LPのデータセット全体のSO(3) meanはbaseと同等以上
 
 符号非対称性は学習前のbase modelから存在します。devのGT誤差ではpositive rearがnegative rearより大きく、horizontal-flip equivarianceでもrear-deepのpositive側で大きな不一致が確認されています。rear-balanced training後はdevの符号別mean差が11.376°から5.200°へ縮小しています。
 
-今回の結果から、後方精度とtail errorの大幅な改善、既存実写系benchmark全体の性能保持、符号非対称性の縮小を同時に確認できます。一方、300W-LP sideの局所退行、後方の符号差、AGORA-HPEの一部yaw binの退行は残っています。
+今回の結果から、後方精度とtail errorの大幅な改善、主要benchmark全体の性能保持、符号非対称性の縮小を同時に確認できます。一方、300W-LP sideの局所退行、後方の符号差、AGORA-HPEの一部yaw binの退行は残っています。
 
 ## 保存された成果物
 
