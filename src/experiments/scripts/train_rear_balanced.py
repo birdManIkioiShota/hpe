@@ -9,7 +9,13 @@ import os
 
 # PyTorch deterministic CUDA matmul requires this to be set before CUDA/cuBLAS
 # is initialized. Set it before importing torch in this entry-point module.
-os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
+_CUBLAS_WORKSPACE_CONFIGS = {":4096:8", ":16:8"}
+if "CUBLAS_WORKSPACE_CONFIG" not in os.environ:
+    os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
+elif os.environ["CUBLAS_WORKSPACE_CONFIG"] not in _CUBLAS_WORKSPACE_CONFIGS:
+    raise RuntimeError(
+        "CUBLAS_WORKSPACE_CONFIG must be ':4096:8' or ':16:8' for deterministic CUDA"
+    )
 
 from pathlib import Path
 import random
