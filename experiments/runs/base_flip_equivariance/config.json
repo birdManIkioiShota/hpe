@@ -1,0 +1,9 @@
+{
+  "kind": "horizontal_flip_equivariance",
+  "checkpoint": "/home/hoge/learn/hpe/checkpoints/6DRepNet360_Full-Rotation_300W_LP+Panoptic.pth",
+  "data_id": "vgg_data",
+  "split": "dev",
+  "batch_size": 256,
+  "workers": 8,
+  "device": "cuda:0"
+}

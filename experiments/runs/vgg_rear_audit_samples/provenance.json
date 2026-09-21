@@ -1,0 +1,4 @@
+{
+  "manifest": "datasets/prepared/vgg_data/dev.jsonl",
+  "manifest_sha256": "ba83be1e197275697e8919959519e4a5da314d460a34d5457ac9788f1a18d13b"
+}
