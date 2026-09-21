@@ -110,11 +110,21 @@ def main() -> None:
 
         groups: dict[str, list[float]] = {}
         for row in rows:
-            names = (
+            names = [
                 "overall",
                 row["pose_band"],
                 f"{row['azimuth_side']}:{row['pose_band']}",
-            )
+            ]
+            if row["pose_band"].startswith("rear_"):
+                names.extend(
+                    [
+                        "rear",
+                        (
+                            f"rear_{row['azimuth_side']}_"
+                            f"{row['pose_band'].removeprefix('rear_')}"
+                        ),
+                    ]
+                )
             for name in names:
                 groups.setdefault(name, []).append(row["equivariance_error_deg"])
         summary = {}
