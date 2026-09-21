@@ -1,0 +1,2 @@
+head_size_bin,count,pitch_error_deg_mean,yaw_error_deg_mean,roll_error_deg_mean,mean_axis_error_deg_mean,geodesic_error_deg_mean,vec1_error_deg_mean,vec2_error_deg_mean,vec3_error_deg_mean,vmae_deg_mean,geodesic_error_deg_median,geodesic_error_deg_p90,geodesic_error_deg_p95,geodesic_error_deg_gt90_count,geodesic_error_deg_gt90_percent
+ge128,122217,4.73778654,4.27914465,3.94585560,4.32092893,5.94811529,5.08034752,3.39045701,5.31885053,4.59655168,5.37734472,9.83662122,11.69796760,31,0.02536472
