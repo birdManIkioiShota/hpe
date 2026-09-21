@@ -12,7 +12,7 @@ import numpy as np
 from PIL import Image
 from tqdm import tqdm
 
-from experiments.common.pose import forward_azimuth_degrees, pose_band
+from experiments.common.pose import UndefinedAzimuthError, forward_azimuth_degrees, pose_band
 from hpe.datasets.common import sha256_file, write_json_atomic
 from hpe.datasets.dad3dheads import REFERENCES, full_range_euler, rotation_from_model_view
 from training.prepare_data import ROOT, prepared_data_path
@@ -131,7 +131,10 @@ def prepare(
                 annotation = json.loads(annotation_path.read_text())
                 rotation = rotation_from_model_view(annotation["model_view_matrix"])
                 pitch, yaw, roll = full_range_euler(rotation)
-                azimuth = forward_azimuth_degrees(rotation)
+                try:
+                    azimuth = forward_azimuth_degrees(rotation)
+                except UndefinedAzimuthError:
+                    azimuth = None
 
                 box = np.asarray(item["bbox"], dtype=np.float64)
                 if box.shape != (4,) or not np.isfinite(box).all() or min(box[2:]) <= 0:
@@ -168,7 +171,7 @@ def prepare(
                     "yaw_deg": yaw,
                     "roll_deg": roll,
                     "forward_azimuth_deg": azimuth,
-                    "pose_band": pose_band(azimuth),
+                    "pose_band": "undefined" if azimuth is None else pose_band(azimuth),
                     "pose_source": "model_view_rotation_transpose",
                     "attributes": item.get("attributes", {}),
                 }
