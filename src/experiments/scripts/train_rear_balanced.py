@@ -293,6 +293,14 @@ def main() -> None:
                 target = target.to(device, non_blocking=True)
                 rear_mask = torch.as_tensor(metadata["is_rear"], device=device, dtype=torch.bool)
 
+                retention_mask = ~rear_mask
+                teacher_prediction = None
+                if retention_mask.any() and args.retain_distill_weight:
+                    with torch.inference_mode(), torch.autocast(
+                        device_type=device.type, enabled=False
+                    ):
+                        teacher_prediction = teacher(images[retention_mask])
+
                 with autocast_context(device, args.precision):
                     prediction = student(images)
                     supervised_each = rotation_loss_rad(prediction, target)
@@ -302,11 +310,11 @@ def main() -> None:
                         torch.full_like(supervised_each, args.replay_supervised_weight),
                     )
                     supervised = (supervised_each * weights).mean()
-                    with torch.inference_mode():
-                        teacher_prediction = teacher(images)
-                    distill_each = rotation_loss_rad(prediction, teacher_prediction)
-                    if (~rear_mask).any():
-                        distill = distill_each[~rear_mask].mean()
+                    if teacher_prediction is not None:
+                        distill = rotation_loss_rad(
+                            prediction[retention_mask],
+                            teacher_prediction,
+                        ).mean()
                     else:
                         distill = prediction.sum() * 0.0
                     loss = supervised + args.retain_distill_weight * distill

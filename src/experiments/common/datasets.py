@@ -10,7 +10,12 @@ import torch
 from torch.utils.data import Dataset
 from torchvision.transforms import functional as TF
 
-from experiments.common.pose import azimuth_side, forward_azimuth_degrees, pose_band
+from experiments.common.pose import (
+    UndefinedAzimuthError,
+    azimuth_side,
+    forward_azimuth_degrees,
+    pose_band,
+)
 from hpe.data.dataset import ManifestDataset, evaluation_transform, read_rgb_image
 
 
@@ -72,15 +77,22 @@ class PoseManifestDataset(ManifestDataset):
             for operation in (TF.adjust_brightness, TF.adjust_contrast, TF.adjust_saturation):
                 image = operation(image, rng.uniform(0.8, 1.2))
 
-        azimuth = forward_azimuth_degrees(target.double().numpy())
-        band = pose_band(azimuth)
+        try:
+            azimuth = forward_azimuth_degrees(target.double().numpy())
+        except UndefinedAzimuthError:
+            azimuth = float("nan")
+            band = "undefined"
+            side = "undefined"
+        else:
+            band = pose_band(azimuth)
+            side = azimuth_side(azimuth)
         metadata = {
             "dataset": dataset,
             "instance_id": str(record["instance_id"]),
             "image_path": str(record["image_path"]),
             "azimuth_deg": float(azimuth),
             "pose_band": band,
-            "azimuth_side": azimuth_side(azimuth),
+            "azimuth_side": side,
             "is_rear": band.startswith("rear_"),
         }
         return self.transform(image), target, metadata

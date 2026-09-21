@@ -84,7 +84,8 @@ def main() -> None:
                         error_dir=run.path / "artifacts" / "image_read_errors",
                     )
                     crop = image.crop(tuple(int(value) for value in row["crop_xyxy"]))
-                    output = bucket_dir / f"{position:03d}_{row['instance_id'].replace('/', '_')}.png"
+                    safe_id = hashlib.sha256(str(row["instance_id"]).encode()).hexdigest()[:12]
+                    output = bucket_dir / f"{position:03d}_{safe_id}.png"
                     crop.save(output)
                     record = {
                         "bucket": bucket,

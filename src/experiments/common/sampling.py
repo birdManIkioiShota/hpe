@@ -7,7 +7,12 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from experiments.common.pose import azimuth_side, forward_azimuth_degrees, pose_band
+from experiments.common.pose import (
+    UndefinedAzimuthError,
+    azimuth_side,
+    forward_azimuth_degrees,
+    pose_band,
+)
 
 
 REAR_BUCKETS = (
@@ -36,7 +41,14 @@ def scan_pose_buckets(manifests: list[Path]) -> PoseBuckets:
         with manifest.open(encoding="utf-8") as stream:
             for line in stream:
                 row = json.loads(line)
-                azimuth = forward_azimuth_degrees(np.asarray(row["rotation_matrix"], dtype=np.float64))
+                try:
+                    azimuth = forward_azimuth_degrees(
+                        np.asarray(row["rotation_matrix"], dtype=np.float64)
+                    )
+                except UndefinedAzimuthError:
+                    retention.append(global_index)
+                    global_index += 1
+                    continue
                 band = pose_band(azimuth)
                 if band.startswith("rear_"):
                     side = azimuth_side(azimuth)
