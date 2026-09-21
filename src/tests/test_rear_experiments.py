@@ -90,16 +90,45 @@ class RearExperimentTests(unittest.TestCase):
             _reset_failed_pretraining_run(run.path)
             self.assertFalse(run.path.exists())
 
-            protected = ExperimentRun.create(
+            baseline_only = ExperimentRun.create(
                 root,
                 "failed_after_baseline",
                 config={"kind": "fixture"},
                 provenance={"source": "fixture"},
             )
-            (protected.path / "checkpoints" / "best.pth").write_bytes(b"fixture")
+            torch.save(
+                {"state_dict": {}, "epoch": 0},
+                baseline_only.path / "checkpoints" / "best.pth",
+            )
+            (baseline_only.path / "metrics" / "dev_baseline.json").write_text("{}")
+            baseline_only.fail(RuntimeError("first training batch failed"))
+            _reset_failed_pretraining_run(baseline_only.path)
+            self.assertFalse(baseline_only.path.exists())
+
+            protected = ExperimentRun.create(
+                root,
+                "failed_after_update",
+                config={"kind": "fixture"},
+                provenance={"source": "fixture"},
+            )
+            torch.save(
+                {"state_dict": {}, "epoch": 0},
+                protected.path / "checkpoints" / "best.pth",
+            )
+            (protected.path / "metrics" / "dev_baseline.json").write_text("{}")
+            torch.save({}, protected.path / "checkpoints" / "last.pt")
             protected.fail(RuntimeError("later failure"))
-            with self.assertRaisesRegex(FileExistsError, "contains training or baseline outputs"):
+            with self.assertRaisesRegex(FileExistsError, "optimizer-update or epoch outputs"):
                 _reset_failed_pretraining_run(protected.path)
+
+    def test_no_grad_teacher_output_can_participate_in_student_backward(self):
+        student = torch.randn(2, 3, 3, requires_grad=True)
+        with torch.no_grad():
+            teacher = torch.eye(3).repeat(2, 1, 1)
+        loss = (student @ teacher).sum()
+        loss.backward()
+        self.assertIsNotNone(student.grad)
+        self.assertTrue(torch.isfinite(student.grad).all())
 
     def test_pose_balanced_epoch_order(self):
         with tempfile.TemporaryDirectory() as directory:
