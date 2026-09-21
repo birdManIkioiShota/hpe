@@ -82,6 +82,8 @@ def summarize_search(run_dir: Path) -> tuple[Path, Path, Path]:
             "rear_over90_percent": _metric(final, "rear", "over90_percent"),
             "front_mean_deg": _metric(final, "front", "mean_deg"),
             "side_mean_deg": _metric(final, "side", "mean_deg"),
+            "front_p90_deg": _metric(final, "front", "p90_deg"),
+            "side_p90_deg": _metric(final, "side", "p90_deg"),
             "front_delta_deg": (
                 _metric(final, "front", "mean_deg")
                 - float(baseline["front"]["mean_deg"])
@@ -89,6 +91,14 @@ def summarize_search(run_dir: Path) -> tuple[Path, Path, Path]:
             "side_delta_deg": (
                 _metric(final, "side", "mean_deg")
                 - float(baseline["side"]["mean_deg"])
+            ),
+            "front_p90_delta_deg": (
+                _metric(final, "front", "p90_deg")
+                - float(baseline["front"]["p90_deg"])
+            ),
+            "side_p90_delta_deg": (
+                _metric(final, "side", "p90_deg")
+                - float(baseline["side"]["p90_deg"])
             ),
             "best_epoch": status["best_epoch"],
         }
@@ -111,6 +121,8 @@ def summarize_search(run_dir: Path) -> tuple[Path, Path, Path]:
                     ),
                     "front_mean_deg": _metric(epoch_result, "front", "mean_deg"),
                     "side_mean_deg": _metric(epoch_result, "side", "mean_deg"),
+                    "front_p90_deg": _metric(epoch_result, "front", "p90_deg"),
+                    "side_p90_deg": _metric(epoch_result, "side", "p90_deg"),
                     "front_delta_deg": (
                         _metric(epoch_result, "front", "mean_deg")
                         - float(baseline["front"]["mean_deg"])
@@ -118,6 +130,14 @@ def summarize_search(run_dir: Path) -> tuple[Path, Path, Path]:
                     "side_delta_deg": (
                         _metric(epoch_result, "side", "mean_deg")
                         - float(baseline["side"]["mean_deg"])
+                    ),
+                    "front_p90_delta_deg": (
+                        _metric(epoch_result, "front", "p90_deg")
+                        - float(baseline["front"]["p90_deg"])
+                    ),
+                    "side_p90_delta_deg": (
+                        _metric(epoch_result, "side", "p90_deg")
+                        - float(baseline["side"]["p90_deg"])
                     ),
                 }
             )
@@ -198,7 +218,12 @@ def summarize_search(run_dir: Path) -> tuple[Path, Path, Path]:
             for flip_weight in flip_levels:
                 row = by_key[(rear_level, flip_weight)]
                 value = (
-                    max(row["front_delta_deg"], row["side_delta_deg"])
+                    max(
+                        row["front_delta_deg"],
+                        row["side_delta_deg"],
+                        row["front_p90_delta_deg"],
+                        row["side_p90_delta_deg"],
+                    )
                     if key == "retention_degradation"
                     else row[key]
                 )
