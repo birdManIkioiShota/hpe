@@ -13,6 +13,7 @@ from scipy.spatial.transform import Rotation
 import torch
 from torch import nn
 
+from experiments.common.datasets import verify_manifest_partitions
 from experiments.common.sampling import build_epoch_order, scan_pose_buckets
 from experiments.common.training import configure_update_scope, selection_score
 from experiments.scripts.prepare_dad3dheads_train import prepare
@@ -120,6 +121,31 @@ class RearExperimentTests(unittest.TestCase):
             metadata = json.loads((output / "metadata.json").read_text())
             self.assertEqual(metadata["role"], "experiment_training")
             self.assertEqual(metadata["source_split"], "train")
+
+    def test_partition_verification_rejects_cross_split_sources(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            train = root / "train.jsonl"
+            dev = root / "dev.jsonl"
+            rotation = np.eye(3).tolist()
+            train.write_text(json.dumps({
+                "dataset": "vggheads",
+                "split": "train",
+                "instance_id": "a#0",
+                "image_path": "datasets/VGGHeads/a.png",
+                "group_id": "source-a",
+                "rotation_matrix": rotation,
+            }) + "\n")
+            dev.write_text(json.dumps({
+                "dataset": "vggheads",
+                "split": "dev",
+                "instance_id": "b#0",
+                "image_path": "datasets/VGGHeads/b.png",
+                "group_id": "source-a",
+                "rotation_matrix": rotation,
+            }) + "\n")
+            with self.assertRaisesRegex(ValueError, "Source group crosses"):
+                verify_manifest_partitions([train], [dev])
 
     def test_update_scope_and_selection_constraint(self):
         class Tiny(nn.Module):
