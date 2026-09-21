@@ -305,7 +305,7 @@ def main() -> None:
         "retention_tolerance_deg": args.retention_tolerance_deg,
         "seed": args.seed,
         "selection": (
-            "front/side retention constraints, then worst rear-group p90, "
+            "front/side mean and p90 retention constraints, then worst rear-group p90, "
             "rear p90, worst rear-group >90 rate, rear mean"
         ),
     }
