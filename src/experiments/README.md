@@ -21,6 +21,13 @@ The source tree must not encode conversational history, temporary phase numbers,
 experiment conclusions in module, class, or function names. Run conditions belong in
 configuration/provenance files and generated run directories.
 
+## Project terminology
+
+Experiment documentation and CLI help use two project-specific terms.
+
+- `audited base checkpoint` means `checkpoints/6DRepNet360_Full-Rotation_300W_LP+Panoptic.pth` with SHA-256 `3ee08f1e04b8d452a6c4a40926a6f38051894ae6d0aaa6d191fe6d8bc6e4f9c6`, loaded by the fixed SixDRepNet360-ResNet50 architecture after the baseline audit described in the repository README.
+- `protected benchmark` means an external evaluation dataset that is not read by experiment training or checkpoint selection. Current protected evaluations are AGORA-HPE, AFLW2000, 300W-LP, and DAD-3DHeads official validation when the corresponding baseline run is supplied. Their results are produced only by explicit evaluation commands after training.
+
 ## Pose-distribution audit
 
 Prepared rotation-matrix manifests can be audited with a full-range head-forward
