@@ -158,12 +158,24 @@ def main() -> None:
     args = parser.parse_args()
     dataset_root = (ROOT / args.dataset_root).resolve()
     corrections = (ROOT / args.corrections).resolve() if args.corrections else None
-    manifest = prepare(
-        ROOT,
-        dataset_root=dataset_root,
-        output=prepared_data_path(ROOT, args.data_id),
-        corrections_path=corrections,
-    )
+    output = prepared_data_path(ROOT, args.data_id)
+    try:
+        manifest = prepare(
+            ROOT,
+            dataset_root=dataset_root,
+            output=output,
+            corrections_path=corrections,
+        )
+    except BaseException as error:
+        if output.is_dir():
+            write_json_atomic(
+                output / "status.json",
+                {
+                    "status": "interrupted" if isinstance(error, KeyboardInterrupt) else "failed",
+                    "error": f"{type(error).__name__}: {error}",
+                },
+            )
+        raise
     print(manifest.relative_to(ROOT))
 
 
