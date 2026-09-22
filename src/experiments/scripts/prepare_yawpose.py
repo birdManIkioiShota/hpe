@@ -104,6 +104,7 @@ def prepare(
             "image_path": relative_image,
             "image_sha256": sha256_file(image_path),
             "source": source,
+            "label_source": str(row.get("label_source", "")),
             "original_yaw_deg": signed_yaw_degrees(original_raw),
             "canonical_yaw_deg": canonical,
             "human_corrected": correction is not None,
