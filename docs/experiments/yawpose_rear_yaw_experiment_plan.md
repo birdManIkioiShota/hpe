@@ -4,11 +4,13 @@
 
 本実験の目的は、合成Head Pose EstimationデータセットであるYawPoseを追加学習データとして利用し、SixDRepNet360-ResNet50の後方姿勢におけるyaw推定精度を改善できるかを検証することです。
 
-YawPoseはyaw推定を主目的として構成された合成データセットです。pitchは一部サンプルにのみ存在し、roll教師はありません。本実験ではこの不完全な姿勢教師を補完せず、YawPose由来サンプルからはyawだけを学習対象とします。VGGHeadsおよびDAD-3DHeads由来の既存HPE学習データについては、従来どおりyaw・pitch・rollを含む完全な姿勢教師を使用します。
+YawPoseはyaw推定を主目的として構成された合成データセットです。pitchは一部サンプルにのみ存在し、roll教師はありません。本実験ではこの不完全な姿勢教師を補完せず、YawPose由来サンプルからはyawだけを学習対象とします。VGGHeadsおよびDAD-3DHeads由来の既存HPE学習データについては、yaw・pitch・rollを含む完全な姿勢教師を使用します。
 
-YawPoseには、画像の左右反転とyawアノテーションの不一致、ならびに画像内容とyawアノテーションの角度ずれが相当数含まれることが手動確認で判明しています。特に後方帯では、目視確認した範囲で3〜4割程度に何らかの問題が見つかっています。また、YawPose全体をyaw教師として追加した先行実験ではAFLW2000の評価性能低下が確認されています。
+YawPoseには、画像の左右反転とyawアノテーションの不一致、ならびに画像内容とyawアノテーションの角度ずれが含まれることが手動確認で判明しています。後方帯について行った限定的な目視確認では、確認対象の3〜4割程度に何らかの問題が見つかっています。この比率は系統的な無作為抽出による推定値ではなく、データ品質上の問題を把握するための観察値です。
 
-このため、本実験ではYawPoseを一律に教師データとして使用しません。複数の既存HPEモデルを固定teacherとして使用し、YawPoseの元yawラベルをどの程度信頼できるかを相対順位として事前計算します。その順位の上位20%、40%、60%、80%、100%をそれぞれ独立した学習条件として比較し、後方yaw改善と既存性能保持の関係を評価します。
+また、YawPoseの全角度帯をyaw教師として追加したローカル先行実験ではAFLW2000の評価性能低下が確認されています。この先行実験は本リポジトリの正式な実験成果物には含まれておらず、本計画の後方限定・信頼度選択条件とも異なるため、YawPoseを無条件に追加した場合のリスクを示す動機としてのみ扱います。
+
+このため、本実験ではYawPoseを一律に教師データとして使用しません。複数の既存HPEモデルを固定teacherとして使用し、YawPoseのcanonical yawをどの程度信頼できるかを相対順位として学習前に事前計算します。その順位の上位20%、40%、60%、80%、100%をそれぞれ独立した学習条件として比較し、後方yaw改善と既存性能保持の関係を評価します。
 
 teacherの予測yawは擬似GTとして使用しません。teacherはYawPoseラベルの採否を決めるための信頼度導出にのみ使用します。
 
@@ -16,33 +18,46 @@ teacherの予測yawは擬似GTとして使用しません。teacherはYawPoseラ
 
 ### 2.1 対象モデル
 
-対象モデルはSixDRepNet360-ResNet50です。モデル構造は変更せず、既存の後方改善実験と同様にResNet50の`layer4`とrotation regression headを更新対象とします。
+対象モデルはSixDRepNet360-ResNet50です。モデル構造は変更せず、ResNet50の`layer4`とrotation regression headを更新対象とします。
 
-初期checkpointには、既存のrear sampling / flip-consistency比較実験と同じ配布checkpointを使用します。
+初期checkpointには次の配布checkpointを使用します。
+
+| 項目 | 値 |
+|---|---|
+| path | `checkpoints/6DRepNet360_Full-Rotation_300W_LP+Panoptic.pth` |
+| SHA-256 | `3ee08f1e04b8d452a6c4a40926a6f38051894ae6d0aaa6d191fe6d8bc6e4f9c6` |
+
+このcheckpointは`docs/experiments/rear_sampling_flip_consistency_tradeoff.md`で比較した9条件と同じ初期checkpointです。
 
 ### 2.2 既存HPE学習データ
 
-基礎学習データにはVGGHeadsとDAD-3DHeads trainを使用します。これらのデータでは完全な回転行列教師が存在するため、従来どおりSO(3) geodesic lossで学習します。
+基礎学習データにはVGGHeadsとDAD-3DHeads trainを使用します。これらのデータでは完全な回転行列教師が存在するため、SO(3) geodesic lossで学習します。
 
-既存のrear sampling / flip-consistency比較結果は`docs/experiments/rear_sampling_flip_consistency_tradeoff.md`に記録されています。この実験では、VGGHeadsとDAD-3DHeads trainを合わせた学習データにおける自然な後方比率は1.743%でした。
+rear samplingとflip-consistencyの比較結果は`docs/experiments/rear_sampling_flip_consistency_tradeoff.md`に記録されています。この実験では、VGGHeadsとDAD-3DHeads trainを合わせた学習データにおける自然な後方比率は1.743%でした。
 
-自然後方比率にSO(3) flip-consistency重み0.2を組み合わせた条件では、AGORA-HPE後方の平均SO(3) geodesic errorが37.900°から34.819°へ改善しました。一方、既存rearを5%または25%までoversamplingするとAGORA-HPE後方はさらに改善しましたが、AGORA-HPE正面や300W-LP側面の退行量も増加しました。
+自然後方比率にSO(3) flip-consistency重み0.2を組み合わせた条件では、AGORA-HPE後方の平均SO(3) geodesic errorが37.900°から34.819°へ低下しました。一方、既存rearを5%または25%までoversamplingするとAGORA-HPE後方はさらに低下しましたが、AGORA-HPE正面や300W-LP側面の誤差増加も確認されました。
 
 YawPose自体が追加の後方学習信号になるため、本実験では既存HPEデータ側のrear samplingを自然比率1.743%に固定します。
 
 ### 2.3 YawPose
 
-YawPoseは約4万件規模の合成頭部画像を含む、yaw推定を主目的としたデータセットです。pitchは部分的に存在しますが、本実験では使用しません。roll教師は存在せず、本実験でも生成しません。
+YawPoseはPINTO0309/YawNetで公開されている、約4万件規模の合成頭部画像を含むyaw中心のデータセットです。
 
-YawPoseの手動修正には次の補助ツールを使用できます。
+- upstream repository: https://github.com/PINTO0309/YawNet
+- dataset documentation: https://github.com/PINTO0309/YawNet/blob/main/docs/yawpose_dataset.md
 
-https://github.com/birdManIkioiShota/yawpose-annotator
+YawPoseには部分的なpitch情報がありますが、本実験では使用しません。roll教師は存在せず、本実験でも生成しません。
 
-ただし、全件を人手修正することはデータ件数上現実的ではないため、本実験の基本方針は自動修正ではなく、信頼度順位に基づくサンプル選択とします。
+YawPoseの手動修正には次の補助ツールを使用します。
+
+- annotator repository: https://github.com/birdManIkioiShota/yawpose-annotator
+- manual correction output: `manual_corrections.jsonl`
+
+全件を人手修正することはデータ件数上現実的ではないため、本実験の基本方針は自動再ラベルではなく、信頼度順位に基づくサンプル選択とします。
 
 ## 3. 実験仮説
 
-本実験で検証する中心仮説は、YawPose後方データによる性能低下の一因がyawラベルノイズであり、複数teacherとYawPose GTの整合度から相対的に信頼できるサンプルを優先して学習へ投入することで、YawPoseの後方画像をrear yaw改善へ利用できるというものです。
+本実験で検証する中心仮説は、YawPose後方データによる性能低下の一因がyawラベルノイズであり、複数teacherとYawPose canonical yawの整合度から相対的に信頼できるサンプルを優先して学習へ投入することで、YawPoseの後方画像をrear yaw改善へ利用できるというものです。
 
 この仮説を検証するため、teacher予測による再ラベルは行わず、YawPose yaw lossの重み、既存HPE学習条件、optimizer、epoch数を固定します。主に変更する変数は、事前計算した信頼度順位のどこまでを学習へ採用するかという上位割合です。
 
@@ -53,22 +68,40 @@ https://github.com/birdManIkioiShota/yawpose-annotator
 | 用語 | 定義 |
 |---|---|
 | existing HPE data | VGGHeadsおよびDAD-3DHeads train由来の学習データです。完全な回転行列教師を使用します。 |
-| YawPose rear candidate | YawPoseのうち、共通yaw規約へ変換後に`|yaw| >= 120°`となるサンプルです。 |
-| teacher | YawPoseの学習には使用せず、YawPose GTの信頼度導出にのみ使用する固定済みHPEモデルです。 |
+| YawPose rear candidate | YawPoseのうち、canonical yawが共通yaw規約で`|yaw| >= 120°`となるサンプルです。 |
+| teacher | YawPoseの学習には使用せず、YawPose canonical yawの信頼度導出にのみ使用する固定済みHPEモデルです。 |
 | canonical yaw | 学習時にYawPoseサンプルへ適用するyaw教師です。人手修正が存在する場合は修正値を使用し、それ以外はYawPoseの元yawを使用します。 |
-| reliability ranking | teacherとcanonical yawの整合度から事前計算する、YawPose rear candidate間の相対順位です。確率ではありません。 |
+| reliability metric | teacher予測とcanonical yawの整合度、ならびにteacher間の一致度を表す事前計算値です。 |
+| reliability score | 複数のreliability metricの相対順位を統合した0〜1の順位scoreです。確率ではなく、小さいほど相対的に信頼度が高い値とします。 |
+| reliability ranking | reliability scoreの昇順でYawPose rear candidateを並べた相対順位です。 |
 | adoption ratio | reliability rankingの上位から学習へ採用する割合です。本実験では20%、40%、60%、80%、100%を比較します。 |
 | retention | 後方性能改善によって正面・側面性能を悪化させないための保持条件です。 |
 
-## 5. 姿勢区分
+## 5. yaw規約と姿勢区分
 
-### 5.1 YawPoseの学習対象
+### 5.1 共通yaw規約
 
-YawPoseでは後方帯だけを学習対象とします。共通のsigned yawへ変換した後、`|yaw| >= 120°`をYawPose rear candidateとします。
+本実験では、モデルの回転行列からhead-localの`+Z`軸をhead-forward vectorとして取り出します。
+
+`v = R * [0, 0, 1]^T`
+
+`v = [v_x, v_y, v_z]^T`としたとき、yawに相当するhead-forward azimuthを次式で定義します。
+
+`yaw = atan2(v_x, v_z)`
+
+値域は`[-180°, 180°]`へ正規化します。正のyawはhead-forward vectorの`+X`方向への回転、負のyawは`-X`方向への回転として扱います。
+
+teacherがEuler yawなど別の規約を出力する場合は、この規約へ変換した後に比較します。変換の正当性は、正面、左右側面、左右後方の既知姿勢サンプルで事前確認します。
+
+### 5.2 YawPoseの学習対象
+
+YawPoseでは後方帯だけを学習対象とします。canonical yawを共通yaw規約へ変換した後、`|yaw| >= 120°`をYawPose rear candidateとします。
 
 前方および側面のYawPoseサンプルは本実験では使用しません。
 
-### 5.2 後方診断区分
+rear candidateの判定自体もcanonical yawに依存するため、canonical yawが大きく誤っている場合には、本来rearではないサンプルが候補へ入る、または本来rearであるサンプルが候補から外れる可能性があります。teacherによる再ラベルを行わない本実験では、この点を既知の制約として扱います。
+
+### 5.3 後方診断区分
 
 後方内部の偏りを確認するため、YawPose rear candidateを4区分に分けて統計を記録します。
 
@@ -102,7 +135,7 @@ YawPose由来データにはflip-consistencyを適用しません。yaw-only fli
 
 ## 7. YawPose yaw loss
 
-SixDRepNet360の出力形式は変更しません。モデルが出力した回転行列`R_pred`からhead-localの`+Z`方向をhead-forward vectorとして取り出し、そのXZ平面上のazimuthを予測yawとして使用します。
+SixDRepNet360の出力形式は変更しません。モデルが出力した回転行列`R_pred`から第5.1節と同じhead-forward azimuthを求め、予測yawとして使用します。
 
 予測yawを`y_pred`、canonical yawを`y_gt`としたとき、周期境界を考慮した角度差を次式で求めます。
 
@@ -120,13 +153,13 @@ YawPoseサンプルからpitchおよびroll targetは生成しません。YawPos
 
 ### 8.1 目的
 
-teacher ensembleの目的はYawPose GTを書き換えることではなく、各YawPose rear candidateのcanonical yawが相対的にどの程度信頼できるかを評価することです。
+teacher ensembleの目的はYawPose canonical yawを書き換えることではなく、各YawPose rear candidateのcanonical yawが相対的にどの程度信頼できるかを評価することです。
 
 ### 8.2 teacher構成
 
 3〜5種類のfull-rangeまたはwide-range HPEモデルを使用します。teacher間の誤差相関を下げるため、可能な範囲でarchitecture、学習データ、pose representationが異なるモデルを組み合わせます。
 
-teacher集合は信頼度事前計算を開始する前に固定します。各teacherについてモデル名、実装revision、checkpoint、checkpoint hash、入力前処理、yaw変換規約を記録します。
+teacher集合は信頼度事前計算を開始する前に固定します。各teacherについてモデル名、実装revision、checkpoint、checkpoint hash、入力前処理、yaw変換規約を記録します。teacher集合が確定する前に信頼度計算またはYawPose学習runを開始しません。
 
 YawPoseを学習データとして使用してfine-tuneされたモデルは、独立teacherとしては使用しません。
 
@@ -134,7 +167,7 @@ YawPoseを学習データとして使用してfine-tuneされたモデルは、�
 
 teacherごとにyawの符号、範囲、Euler角の定義が異なる可能性があるため、teacher出力を直接比較しません。
 
-各teacherの出力は事前に本プロジェクトの共通signed yaw規約へ変換し、少数の既知姿勢サンプルで正面、左右側面、左右後方の対応を確認します。
+各teacherの出力は第5.1節の共通yaw規約へ変換し、少数の既知姿勢サンプルで正面、左右側面、左右後方の対応を確認します。
 
 ## 9. 信頼度の事前計算
 
@@ -142,7 +175,7 @@ teacherごとにyawの符号、範囲、Euler角の定義が異なる可能性�
 
 信頼度導出は学習前に一度だけ実施します。
 
-全YawPose rear candidateについて固定teacher ensembleによる推論を完了し、その結果からreliability rankingを作成します。
+全YawPose rear candidateについて固定teacher ensembleによる推論を完了し、その結果からreliability scoreとreliability rankingを作成します。
 
 学習中にteacher推論を実行しません。studentの予測、学習loss、epoch、checkpointによって信頼度を更新することもありません。
 
@@ -171,32 +204,41 @@ YawPose sample `i`のcanonical yawを`y_i`、teacher `j`のyaw予測を`p_ij`と
 
 teacher ensembleの平均yaw、median yaw、その他の集約yawを学習用GTとして使用しません。
 
-## 10. reliability ranking
+## 10. reliability scoreとranking
 
 ### 10.1 性質
 
-reliability rankingは確率ではありません。YawPose rear candidateを「canonical yawを相対的に信頼しやすい順」に並べるための順序です。
+reliability scoreは確率ではありません。異なる単位・分布を持つ複数のreliability metricを、YawPose rear candidate集合内の相対順位へ変換して統合するためのscoreです。
 
-### 10.2 順位規則
+### 10.2 metricごとのpercentile rank
 
-基本順位は次の辞書式ソートで決定します。
+`gt_median_error`、`teacher_dispersion`、`gt_max_error`について、YawPose rear candidate全体の中で小さい値を高信頼側としてpercentile rankへ変換します。
 
-1. `gt_median_error`が小さいサンプルを上位とします。
-2. `gt_median_error`が同値の場合は`teacher_dispersion`が小さいサンプルを上位とします。
-3. さらに同値の場合は`gt_max_error`が小さいサンプルを上位とします。
-4. すべて同値の場合はsample IDで決定し、順位を再現可能にします。
+各percentile rankを`r_median`、`r_dispersion`、`r_max`とし、値域を`[0, 1]`とします。0に近いほど、そのmetricについて相対的に良好なサンプルです。
 
-この規則により、複数teacherがcanonical yawと近く、かつteacher同士も一致しているサンプルが上位になります。
+### 10.3 score
 
-最終順位は全rear candidate数に対するpercentileとしても保存します。このpercentileは信頼確率ではなく、単なる順位位置です。
+reliability scoreは次式で定義します。
+
+`reliability_score = (r_median + r_dispersion + r_max) / 3`
+
+3指標を等重みとし、teacherとcanonical yawの典型的な一致度、teacher同士の一致度、単一teacherの大きな外れを同時にrankingへ反映します。
+
+`agree_10`、`agree_20`、`agree_30`はscoreには含めず、rankingの診断指標として保存します。
+
+### 10.4 ranking
+
+reliability rankingは`reliability_score`の昇順で決定します。同一scoreの場合は`gt_median_error`、`teacher_dispersion`、`gt_max_error`、sample IDの順でtie-breakし、順位を再現可能にします。
+
+最終順位は全rear candidate数に対するranking percentileとしても保存します。このpercentileも信頼確率ではなく、単なる順位位置です。
 
 ## 11. 人手修正データ
 
-`yawpose-annotator`で人手修正済みのサンプルについては、修正後yawをcanonical yawとして使用します。
+`yawpose-annotator`で人手修正済みのサンプルについては、`manual_corrections.jsonl`の修正後yawをcanonical yawとして使用します。
 
 人手修正済みサンプルもteacher ensembleによる同じ事前計算を行い、自動的にranking最上位へ配置する特別処理は行いません。
 
-人手修正済みサンプルは、reliability rankingと実際のラベル品質の関係を診断するためにも使用します。rankingの上位割合ごとに、人手修正前後のyaw差や問題サンプル含有率を集計します。
+人手修正済み集合は、主として問題が疑われたサンプルを含む可能性があるため、YawPose全体のclean/noisy比率を推定する代表標本とはみなしません。rankingの上位割合ごとに、人手修正前後のyaw差や既知問題サンプルがどの順位へ配置されたかを診断するために使用します。
 
 ## 12. 事前計算成果物
 
@@ -219,13 +261,17 @@ reliability rankingは確率ではありません。YawPose rear candidateを「
 - `agree_10`
 - `agree_20`
 - `agree_30`
+- `r_median`
+- `r_dispersion`
+- `r_max`
+- reliability score
 - reliability rank
 - reliability percentile
 
 事前計算runのprovenanceには少なくとも次の情報を保存します。
 
 - YawPose入力manifest hash
-- manual correction file hash
+- `manual_corrections.jsonl` hash
 - teacher一覧
 - teacher checkpoint hash
 - teacher実装revision
@@ -251,7 +297,7 @@ reliability rankingは確率ではありません。YawPose rear candidateを「
 
 subsetは必ずnested subsetにします。
 
-`Y_top20 subset Y_top40 subset Y_top60 subset Y_top80 subset Y_top100`
+`Y_top20 ⊂ Y_top40 ⊂ Y_top60 ⊂ Y_top80 ⊂ Y_top100`
 
 この構造により、順位の低い20%区間を追加するたびに性能がどのように変化するかを比較できます。
 
@@ -261,11 +307,13 @@ subsetは必ずnested subsetにします。
 
 existing HPE dataとYawPoseは別streamとして扱います。
 
-各optimizer updateではexisting HPE batchから従来損失を計算し、YawPoseを使用する条件では別のYawPose batchからyaw-only lossを計算します。
+各micro-batchではexisting HPE dataから64サンプルを取得します。YawPoseを使用する条件では、同時に選択済みYawPose subsetから64サンプルを取得し、yaw-only lossを計算します。
 
-概念的には次式になります。
+概念的には各micro-batchで次式を計算します。
 
-`L_step = L_original_batch + 0.2 * L_yawpose_batch`
+`L_micro = L_original_batch + 0.2 * L_yawpose_batch`
+
+gradient accumulationを2とするため、1 optimizer updateあたりのeffective sample数はexisting HPE dataが128、YawPoseを使用する条件ではYawPoseも128です。
 
 YawPose batch内では`L_yawpose`をmean reductionします。
 
@@ -296,7 +344,9 @@ YawPose batch内では`L_yawpose`をmean reductionします。
 - teacher予測yawへのpseudo-label置換を行いません。
 - teacher予測だけを根拠にした自動yaw修正を行いません。
 - teacher予測だけを根拠にした左右反転修正を行いません。
-- 学習中にreliability rankingを更新しません。
+- 学習中にreliability scoreまたはrankingを更新しません。
+
+YawPoseにyaw-only flip-consistencyを適用しない理由は、今回の主変数を信頼度順位に限定するためです。また、yaw-only flip-consistencyには0°および±180°付近の予測でも整合性lossを小さくできる固定点があり、後方yaw分布を±180°付近へ圧縮する作用と信頼度filteringの効果が混在する可能性があります。
 
 ## 16. 共通学習条件
 
@@ -305,14 +355,16 @@ YawPose採用割合以外の主要条件を固定します。
 | 項目 | 設定 |
 |---|---|
 | model | SixDRepNet360-ResNet50 |
-| initial checkpoint | rear sampling / flip-consistency既存実験と同一 |
+| initial checkpoint | `checkpoints/6DRepNet360_Full-Rotation_300W_LP+Panoptic.pth` |
 | existing train data | VGGHeads + DAD-3DHeads train |
 | existing rear sampling | 自然比率1.743% |
 | update scope | ResNet50 `layer4` + regression head |
 | epochs | 10 |
-| batch size | 64 |
+| existing HPE micro-batch size | 64 |
+| YawPose micro-batch size | 64 |
 | gradient accumulation | 2 |
-| effective batch size | 128 |
+| existing HPE effective batch size | 128 |
+| YawPose effective batch size | 128 |
 | precision | BF16 |
 | optimizer | AdamW |
 | backbone learning rate | `1e-6` |
@@ -332,7 +384,7 @@ YawPose採用割合以外の主要条件を固定します。
 
 `Y_base`はYawPose対応後の同一コードパスでYawPose streamを無効化して実行します。
 
-`Y_base`が既存の自然後方比率・flip-consistency重み0.2条件と整合することを確認し、YawPose対応実装そのものによる性能変化とYawPose追加による性能変化を分離します。
+`Y_base`が`docs/experiments/rear_sampling_flip_consistency_tradeoff.md`の自然後方比率・flip-consistency重み0.2条件と整合することを確認し、YawPose対応実装そのものによる性能変化とYawPose追加による性能変化を分離します。
 
 ## 18. checkpoint比較
 
@@ -340,9 +392,11 @@ YawPose採用割合以外の主要条件を固定します。
 
 条件ごとに異なるbest epochを主比較へ使用すると、YawPose採用割合の効果とcheckpoint選択時期の効果が混在するためです。
 
-内部best checkpointは補助成果物として既存のselection規則に従って保存します。
+内部best checkpointは補助成果物として第19節のselection規則に従って保存します。
 
 ## 19. 内部checkpoint selection
+
+内部development splitにはVGGHeadsおよびDAD-3DHeads trainから分離した既存developmentデータを使用します。rear sampling / flip-consistency比較実験と同じsplitを再利用し、YawPoseを内部developmentへ混入させません。
 
 学習開始前baselineに対して、候補checkpointには次のretention条件を要求します。
 
@@ -377,9 +431,11 @@ internal development splitおよびAGORA-HPEでは少なくとも次の指標を
 - rear 4区分ごとのyaw mean
 - rear 4区分ごとのyaw P90
 
+internal developmentでは回転行列から第5.1節のhead-forward azimuthを算出します。外部benchmarkでは各評価manifestに保存されたsource yawを使用するため、internal developmentのazimuthと外部source yawは数値規約が完全に一致するとは限りません。両者は同一サンプル単位の角度値として直接比較せず、それぞれのデータセット内でcandidateとbaselineを比較します。
+
 ### 20.2 rotation全体の評価
 
-yaw改善がpitch・rollを含む回転全体の悪化を伴っていないかを確認するため、従来のSO(3)指標も記録します。
+yaw改善がpitch・rollを含む回転全体の悪化を伴っていないかを確認するため、SO(3)指標も記録します。
 
 - rear geodesic mean
 - rear geodesic P90
@@ -400,6 +456,8 @@ yaw改善がpitch・rollを含む回転全体の悪化を伴っていないか�
 
 DAD-3DHeads validationのrearサンプル数は少ないため、rear単独値は補助結果として扱います。
 
+外部評価データは学習、信頼度計算、checkpoint selectionには使用しません。
+
 ## 21. YawPose subset診断
 
 各採用条件について、学習前にsubset自体の統計を保存します。
@@ -413,6 +471,7 @@ DAD-3DHeads validationのrearサンプル数は少ないため、rear単独値�
 | `gt_median_error`分布 | teacherとcanonical yawの一致度を確認します。 |
 | `teacher_dispersion`分布 | teacher間一致度を確認します。 |
 | `gt_max_error`分布 | 一部teacherだけが大きく外れるケースを確認します。 |
+| `reliability_score`分布 | 各採用条件がどの順位範囲を含むかを確認します。 |
 | manual correctionとの関係 | rankingが既知のラベル問題をどの程度下位へ送れているかを確認します。 |
 
 上位割合を絞ることで特定yaw帯や特定sourceだけが残っていないかも確認します。
@@ -440,9 +499,10 @@ DAD-3DHeads validationのrearサンプル数は少ないため、rear単独値�
 - teacher ensemble manifest
 - teacher checkpoint hashes
 - YawPose input manifest hash
-- manual correction hash
+- `manual_corrections.jsonl` hash
 - sample-level teacher predictions
 - sample-level reliability metrics
+- sample-level reliability score
 - final reliability ranking
 - adoption ratioごとのsubset manifest
 - subset summary
