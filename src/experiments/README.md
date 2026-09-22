@@ -197,3 +197,112 @@ uv run python -m experiments.scripts.evaluate_candidate \
 
 Final benchmark output remains under `eval/<run-id>/`, with paired comparisons under
 `eval/comparisons/`.
+
+
+## YawPose rear-yaw reliability search
+
+YawPose rear-yaw training is split into dataset preparation, fixed teacher inference,
+reliability precomputation, training, and protected external evaluation. Teacher inference
+is completed before any training run; training conditions only read immutable ranked
+subset manifests.
+
+Prepare the rear-only YawPose manifest from the local dataset:
+
+```bash
+uv run python -m experiments.scripts.prepare_yawpose \
+  --data-id yawpose_rear \
+  --dataset-root datasets/yawpose
+```
+
+If `datasets/yawpose/manual_corrections.jsonl` does not exist, preparation records an
+empty correction snapshot. Source YawPose files are never modified.
+
+Generate the fixed SemiUHPE EfficientNetV2-S predictions after checking out the revision
+recorded in `docs/experiments/yawpose_rear_yaw_experiment_plan.md` and downloading the
+published `DAD-WildHead-EffNetV2-S-best.pth` checkpoint:
+
+```bash
+uv run python -m experiments.scripts.infer_yawpose_semiuhpe \
+  --data-id yawpose_rear \
+  --repo /path/to/SemiUHPE \
+  --checkpoint /path/to/DAD-WildHead-EffNetV2-S-best.pth
+```
+
+WHENet keeps its TensorFlow/Keras environment separate from this project's PyTorch
+environment. Run the standalone adapter with the Python interpreter for the fixed WHENet
+checkout:
+
+```bash
+/path/to/whenet/python src/experiments/scripts/infer_yawpose_whenet.py \
+  --repo /path/to/HeadPoseEstimation-WHENet \
+  --checkpoint /path/to/WHENet.h5
+```
+
+Both external teacher adapters write a prediction JSONL and a sidecar
+`.manifest.json` containing the fixed implementation revision, checkpoint SHA-256,
+preprocessing description, yaw adapter, and data-based yaw-sign calibration result.
+
+Precompute SixDRepNet360 predictions, the three-teacher reliability score, ranking, and
+all five nested subset manifests in one immutable experiment run:
+
+```bash
+uv run python -m experiments.scripts.precompute_yawpose_reliability \
+  --run-id yawpose_reliability \
+  --data-id yawpose_rear \
+  --semiuhpe-predictions datasets/prepared/yawpose_teachers/semiuhpe_effnetv2s.jsonl \
+  --whenet-predictions datasets/prepared/yawpose_teachers/whenet.jsonl
+```
+
+The resulting sample-level ranking and `top020`, `top040`, `top060`, `top080`,
+and `top100` manifests are stored under
+`experiments/runs/yawpose_reliability/predictions/`. Teacher models are not loaded
+during subsequent training.
+
+Inspect the fixed six-condition search matrix without starting training:
+
+```bash
+uv run python -m experiments.scripts.run_yawpose_rear_search \
+  --run-id yawpose_rear_search \
+  --reliability-run yawpose_reliability \
+  --dry-run
+```
+
+Run the baseline plus five adoption-ratio conditions:
+
+```bash
+uv run python -m experiments.scripts.run_yawpose_rear_search \
+  --run-id yawpose_rear_search \
+  --reliability-run yawpose_reliability
+```
+
+The condition runs are stored below
+`experiments/runs/yawpose_rear_search/conditions/`. The existing VGGHeads and
+DAD-3DHeads stream keeps natural rear sampling, base-model non-rear distillation, and
+SO(3) rear flip consistency. YawPose uses a separate same-sized stream with yaw-only
+circular loss and no horizontal flip.
+
+After all six conditions complete, evaluate the fixed final checkpoint against the
+existing protected baselines:
+
+```bash
+uv run python -m experiments.scripts.evaluate_yawpose_rear_search \
+  --run-id yawpose_rear_search \
+  --baseline-run baseline_fp32
+
+uv run python -m experiments.scripts.evaluate_yawpose_rear_search \
+  --run-id yawpose_rear_search \
+  --baseline-run baseline_dad_fp32 \
+  --name-suffix _dad
+```
+
+Normal SO(3) evaluation continues to use `evaluate_candidate`. The YawPose evaluation
+wrapper additionally computes full-range yaw error from the saved prediction rotation
+matrices and writes paired yaw summaries under `eval/yawpose_rear_search/`.
+
+
+The YawPose-specific unit checks are intentionally limited to yaw periodicity/loss,
+reliability ranking with nested subsets, and the fixed six-condition matrix:
+
+```bash
+uv run python -m unittest discover -s src/tests -p test_yawpose_experiment.py -v
+```
