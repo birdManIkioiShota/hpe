@@ -13,6 +13,7 @@ from tqdm import tqdm
 
 from experiments.common.run_directory import experiment_run_path
 from hpe.datasets.common import write_json_atomic
+from hpe.evaluation import compare_runs
 from training.prepare_data import ROOT
 
 
@@ -233,6 +234,7 @@ def main() -> None:
     )
     if not baseline.is_dir():
         raise FileNotFoundError(baseline)
+    baseline_metadata = json.loads((baseline / "run.json").read_text())
     yaw_root = output_root / "yaw_comparisons"
     yaw_root.mkdir(exist_ok=True)
 
@@ -257,7 +259,20 @@ def main() -> None:
             / "conditions"
             / evaluation_name
         )
-        if not result_dir.is_dir():
+        comparison_name = f"{baseline_metadata['run_name']}_vs_{evaluation_name}"
+        comparison_dir = output_root / "comparisons" / comparison_name
+        if result_dir.is_dir() and not comparison_dir.exists():
+            compare_runs(
+                baseline,
+                result_dir,
+                output_root,
+                name=comparison_name,
+            )
+        elif comparison_dir.exists() and not result_dir.is_dir():
+            raise FileNotFoundError(
+                f"comparison exists without evaluation result: {comparison_dir}"
+            )
+        elif not result_dir.is_dir():
             subprocess.run(
                 [
                     sys.executable,
