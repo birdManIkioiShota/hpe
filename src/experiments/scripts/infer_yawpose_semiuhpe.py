@@ -127,6 +127,9 @@ def main() -> None:
             rows.extend({"instance_id": str(instance_id), "yaw_deg": float(value), "valid": True} for instance_id, value in zip(instance_ids, yaw))
 
     output = (ROOT / args.output).resolve() if not Path(args.output).is_absolute() else Path(args.output).resolve()
+    sidecar_path = output.with_suffix(".manifest.json")
+    if output.exists() or sidecar_path.exists():
+        raise FileExistsError(f"teacher output already exists: {output}")
     output.parent.mkdir(parents=True, exist_ok=True)
     write_jsonl_atomic(output, rows)
     sidecar = {
@@ -144,7 +147,7 @@ def main() -> None:
         "prediction_sha256": sha256_file(output),
         "count": len(rows),
     }
-    write_json_atomic(output.with_suffix(".manifest.json"), sidecar)
+    write_json_atomic(sidecar_path, sidecar)
     print(output)
 
 
