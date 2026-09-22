@@ -50,6 +50,7 @@ def _load_external_teacher(
     teacher_id: str,
     required_revision: str,
     expected_ids: set[str],
+    candidate_manifest_sha256: str,
 ) -> tuple[dict[str, float], dict]:
     if not prediction_path.is_file():
         raise FileNotFoundError(prediction_path)
@@ -63,6 +64,8 @@ def _load_external_teacher(
         raise ValueError(f"teacher manifest ID mismatch for {teacher_id}")
     if manifest.get("implementation_revision") != required_revision:
         raise ValueError(f"unexpected {teacher_id} implementation revision")
+    if manifest.get("candidate_manifest_sha256") != candidate_manifest_sha256:
+        raise ValueError(f"{teacher_id} predictions were generated from a different candidate manifest")
     checkpoint_sha = str(manifest.get("checkpoint_sha256", ""))
     if len(checkpoint_sha) != 64 or any(ch not in "0123456789abcdef" for ch in checkpoint_sha.lower()):
         raise ValueError(f"invalid {teacher_id} checkpoint SHA-256")
@@ -215,17 +218,20 @@ def main() -> None:
 
     semi_path = Path(args.semiuhpe_predictions).resolve()
     whenet_path = Path(args.whenet_predictions).resolve()
+    candidate_sha256 = sha256_file(candidate_manifest)
     semi, semi_manifest = _load_external_teacher(
         semi_path,
         teacher_id="semiuhpe_effnetv2s",
         required_revision=SEMIUHPE_REVISION,
         expected_ids=expected_ids,
+        candidate_manifest_sha256=candidate_sha256,
     )
     whenet, whenet_manifest = _load_external_teacher(
         whenet_path,
         teacher_id="whenet",
         required_revision=WHENET_REVISION,
         expected_ids=expected_ids,
+        candidate_manifest_sha256=candidate_sha256,
     )
 
     config = {
