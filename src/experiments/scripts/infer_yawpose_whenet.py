@@ -103,6 +103,9 @@ def main() -> None:
             rows.append({"instance_id": str(row["instance_id"]), "yaw_deg": _signed(float(value)), "valid": True})
 
     output = (ROOT / args.output).resolve() if not Path(args.output).is_absolute() else Path(args.output).resolve()
+    sidecar_path = output.with_suffix(".manifest.json")
+    if output.exists() or sidecar_path.exists():
+        raise FileExistsError(f"teacher output already exists: {output}")
     _write_jsonl(output, rows)
     fixture = []
     for yaw in FIXTURE_YAWS:
@@ -125,7 +128,7 @@ def main() -> None:
         "prediction_sha256": _sha256(output),
         "count": len(rows),
     }
-    _write_json(output.with_suffix(".manifest.json"), sidecar)
+    _write_json(sidecar_path, sidecar)
     print(output)
 
 
