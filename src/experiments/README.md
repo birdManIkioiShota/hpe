@@ -298,3 +298,11 @@ uv run python -m experiments.scripts.evaluate_yawpose_rear_search \
 Normal SO(3) evaluation continues to use `evaluate_candidate`. The YawPose evaluation
 wrapper additionally computes full-range yaw error from the saved prediction rotation
 matrices and writes paired yaw summaries under `eval/yawpose_rear_search/`.
+
+
+The YawPose-specific unit checks are intentionally limited to yaw periodicity/loss,
+reliability ranking with nested subsets, and the fixed six-condition matrix:
+
+```bash
+uv run python -m unittest discover -s src/tests -p test_yawpose_experiment.py -v
+```
