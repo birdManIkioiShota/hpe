@@ -1,6 +1,6 @@
 # Head-pose evaluation
 
-6DRepNet360 のベース重みとファインチューニング後の重みを、同一条件で評価・比較するためのツールです。実装は `src/` に集約します。FT実験のスクリプトは `src/training/`、FTの実行結果だけを `ft_runs/` に保存します。前処理済みデータは `datasets/prepared/`、すべての評価結果は `eval/` に保存します。
+6DRepNet360のベース重みと学習後重みを固定条件で評価・比較し、後方姿勢を含むHead Pose Estimation実験を再現可能な形で実行するためのリポジトリです。共通の学習・評価実装は`src/training/`、実験専用のorchestrationは`src/experiments/`に配置します。基本FTの実行結果は`ft_runs/`、実験runは`experiments/runs/`、前処理済みデータは`datasets/prepared/`、外部評価結果は`eval/`に保存します。
 
 ## 環境
 
@@ -208,40 +208,16 @@ uv run python -m unittest discover -s src/tests -p test_vgg_training.py -v
 
 テストは `uv run python -m unittest discover -s src/tests -v` で実行できます。合成画像の結合テストでは実ベンチマーク推論は行いません。従来のテストには、手元の重みのstrict loadとAFLW2000の1画像読み込みが含まれます。
 
-## ベースライン評価
+## 実験ドキュメント
 
-```bash
-uv run hpe evaluate \
-  --checkpoint checkpoints/6DRepNet360_Full-Rotation_300W_LP+Panoptic.pth \
-  --run-name baseline
-```
+実験の目的、条件、結果、制約は`docs/experiments/`に保存します。各結果レポートは、会話履歴やPR本文を参照しなくても使用モデル、入力データ、姿勢区分、評価条件、主要結果を追跡できることを前提とします。
 
-既定では AGORA-HPE、AFLW2000、300W-LP を、batch size 256、8 workers、FP16 autocastで評価します。短い動作確認には `--max-samples` を使用できます。CPUを明示して確認する場合だけ `--device cpu --no-amp` を指定します。
+| 文書 | 内容 |
+|---|---|
+| `docs/experiments/vgg_pose_distribution_weight_interpolation.md` | VGGHeads姿勢分布監査とweight-space interpolation |
+| `docs/experiments/rear_balanced_distillation_results.md` | rear-balanced distillationと外部評価 |
+| `docs/experiments/rear_flip_consistency_results.md` | 後方姿勢に対するhorizontal-flip consistency |
+| `docs/experiments/rear_sampling_flip_consistency_tradeoff.md` | rear sampling率とflip-consistency重みの3×3比較 |
+| `docs/experiments/yawpose_rear_yaw_experiment_plan.md` | YawPose後方yaw追加学習の実験計画 |
 
-評価中はデータセットごとにtqdmのプログレスバーを表示し、処理済み頭部数、経過時間、処理速度、残り時間を確認できます。比較処理でもデータセット単位の進捗を表示します。
-
-## FT後の評価と比較
-
-```bash
-uv run hpe evaluate \
-  --checkpoint checkpoints/finetuned.pth \
-  --run-name finetuned
-
-uv run hpe compare \
-  --baseline eval/baseline \
-  --candidate eval/finetuned
-```
-
-比較はインスタンス単位で対応付け、候補値－ベースライン値の差とpaired bootstrap 95%信頼区間を出力します。差が負なら改善です。評価プロトコル、マニフェスト、対象サンプル数が一致しないrun同士は比較を拒否します。
-
-## 出力
-
-各runには次を保存します。
-
-- `run.json`: 重みとマニフェストのSHA-256、前処理、実行環境、速度
-- `summary.csv` / `summary.json`: データセット別の総合集計
-- `predictions/*.csv.gz`: インスタンス単位の正解、予測、各誤差
-- `datasets/*/metrics/`: overall、yaw帯、30度yaw bin、頭部サイズ、occlusion別の集計
-- `datasets/*/plots/`: yaw bin別の誤差図
-
-主要指標はSO(3)測地距離です。補助指標としてpitch/yaw/rollの循環MAE、3軸の平均MAE、Vec1/Vec2/Vec3/VMAEを保存します。後方帯は元アノテーションの `|yaw| >= 120°` で区分します。後方姿勢ではEuler角に等価表現が存在するため、軸別MAEは正解・予測の回転行列を同じ正規Euler表現へ変換してから計算します。
+実験専用CLIと生成物の配置規則は`src/experiments/README.md`と`experiments/README.md`に記載します。基準評価の正規経路は本READMEの「固定モデルの監査と基準評価」、基本FTの評価経路は「VGGHeadsによる基本FT」に記載した`training.evaluate_baseline`および`training.evaluate`です。
