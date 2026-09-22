@@ -41,19 +41,28 @@ YawPose自体が追加の後方学習信号になるため、本実験では既�
 
 ### 2.3 YawPose
 
-YawPoseはPINTO0309/YawNetで公開されている、約4万件規模の合成頭部画像を含むyaw中心のデータセットです。
+YawPoseは`PINTO0309/YawNet`の`resources` releaseで公開されている合成頭部yawデータセットです。本実験では、次の公開アーカイブを入力データの基準とします。
 
-- upstream repository: https://github.com/PINTO0309/YawNet
-- dataset documentation: https://github.com/PINTO0309/YawNet/blob/main/docs/yawpose_dataset.md
+| 項目 | 値 |
+|---|---|
+| upstream repository | `https://github.com/PINTO0309/YawNet` |
+| dataset documentation revision | `4af7fa9d73e94790688c518376d3be7c41c74cc3` |
+| release | `resources` |
+| archive | `yawpose.tar.gz` |
+| archive SHA-256 | `08df8f2e5df8d2c5c0509475688cf1366c69b96b393f1cbbbf87aeb9ced9118a` |
+| published cleaned labels | `labels_fixed.jsonl`、42,135件 |
+| image crops | 43,258件 |
+| image size | 320×320 |
 
-YawPoseには部分的なpitch情報がありますが、本実験では使用しません。roll教師は存在せず、本実験でも生成しません。
+YawPoseの公開yawは`yaw_deg ∈ [0, 360)`で、0°が正面、+90°がviewer-leftです。公開データは`synthetic_001`から`synthetic_006`までの生成sourceを含みます。本計画でいう`YawPose生成source`または`source`は、この公開source区分を指します。
 
-YawPoseの手動修正には次の補助ツールを使用します。
+本実験の未修正ラベルの基準値には`labels_fixed.jsonl`の`yaw_deg`を使用します。公開`labels_fixed.jsonl`にはYawNet側で実施されたラベルcleaningが既に反映されており、`synthetic_001`の`intent_rear` 5,890件のうち2,655件は公開データ作成時にDINOv3 teacherで再ラベルされています。この上流処理は公開データセットのprovenanceとして扱い、本実験のteacher ensembleによる追加のラベル置換とは区別します。本実験では`teacher_yaw`または`yaw_deg_orig`を用いて公開ラベルを再置換しません。
 
-- annotator repository: https://github.com/birdManIkioiShota/yawpose-annotator
-- manual correction output: `manual_corrections.jsonl`
+人手修正は`birdManIkioiShota/yawpose-annotator`が生成する`manual_corrections.jsonl`として公開ラベルとは別に保持します。信頼度事前計算を開始する時点で使用するcorrection manifestを固定し、SHA-256をprovenanceへ保存します。correction manifestが空の場合も空manifestを明示的に入力として固定します。
 
-全件を人手修正することはデータ件数上現実的ではないため、本実験の基本方針は自動再ラベルではなく、信頼度順位に基づくサンプル選択とします。
+YawPoseにはpitch情報を持つサンプルがありますが、本実験では使用しません。YawPose streamから学習に使用する教師信号はcanonical yawだけです。
+
+公開データセットの仕様は`https://github.com/PINTO0309/YawNet/blob/4af7fa9d73e94790688c518376d3be7c41c74cc3/docs/yawpose_dataset.md`を参照します。手動修正ツールは`https://github.com/birdManIkioiShota/yawpose-annotator`です。
 
 ## 3. 実験仮説
 
@@ -88,17 +97,19 @@ YawPoseの手動修正には次の補助ツールを使用します。
 
 ### 5.1 共通yaw規約
 
-本実験では、モデルの回転行列からhead-localの`+Z`軸をhead-forward vectorとして取り出します。
+YawPoseの公開`yaw_deg`を本実験のsigned yawへ変換する規則を固定します。
+
+`yaw_signed = ((yaw_deg + 180) mod 360) - 180`
+
+値域は`[-180°, 180°)`です。0°は正面、+90°はviewer-left、-90°はviewer-rightです。公開YawPoseの`yaw_deg`を使用する場合、この変換以外の符号反転やオフセット補正を追加しません。
+
+SixDRepNet360など回転行列を出力するモデルでは、head-localの`+Z`軸をhead-forward vectorとして取り出します。
 
 `v = R * [0, 0, 1]^T`
 
-`v = [v_x, v_y, v_z]^T`としたとき、yawに相当するhead-forward azimuthを次式で定義します。
+`v = [v_x, v_y, v_z]^T`としたとき、raw azimuthを`atan2(v_x, v_z)`で求めます。teacher adapterは、このraw azimuthまたは各モデル固有のyaw出力をYawPoseのsigned yaw規約へ変換します。
 
-`yaw = atan2(v_x, v_z)`
-
-値域は`[-180°, 180°]`へ正規化します。正のyawはhead-forward vectorの`+X`方向への回転、負のyawは`-X`方向への回転として扱います。
-
-teacherがEuler yawなど別の規約を出力する場合は、この規約へ変換した後に比較します。変換の正当性は、正面、左右側面、左右後方の既知姿勢サンプルで事前確認します。
+teacherごとのadapterは、少なくとも0°、+90°、-90°、+150°、-150°の既知姿勢fixtureで符号と周期境界を検証します。fixtureと変換結果をteacher manifestへ保存し、YawPose signed yawとの方向対応が確認できないteacherは信頼度事前計算へ使用しません。
 
 ### 5.2 YawPoseの学習対象
 
@@ -138,7 +149,7 @@ rear candidateの判定自体もcanonical yawに依存するため、canonical y
 
 YawPose yaw lossの重み`lambda_yawpose`は0.2に固定します。この0.2はYawPoseサンプルを20%採用することを意味せず、YawPose yaw lossを総損失へ加える際の損失重み係数です。
 
-YawPose由来データにはflip-consistencyを適用しません。yaw-only flip-consistencyも使用しません。
+YawPose streamから計算する損失は`L_yawpose`だけです。既存HPE dataに適用するSO(3) supervised loss、retention distillation、rear flip-consistencyはYawPose sampleには適用しません。
 
 ## 7. YawPose yaw loss
 
@@ -164,11 +175,17 @@ teacher ensembleの目的はYawPose canonical yawを書き換えることでは�
 
 ### 8.2 teacher構成
 
-3〜5種類のfull-rangeまたはwide-range HPEモデルを使用します。teacher間の誤差相関を下げるため、可能な範囲でarchitecture、学習データ、pose representationが異なるモデルを組み合わせます。
+信頼度事前計算に使用するteacher ensembleは3モデルに固定します。YawPoseで学習されたモデルは、監査対象ラベルとの独立性を保つためteacher ensembleへ含めません。
 
-teacher集合は信頼度事前計算を開始する前に固定します。各teacherについてモデル名、実装revision、checkpoint、checkpoint hash、入力前処理、yaw変換規約を記録します。teacher集合が確定する前に信頼度計算またはYawPose学習runを開始しません。
+| teacher ID | モデル | 固定する実装 | checkpoint |
+|---|---|---|---|
+| `sixdrepnet360_base` | SixDRepNet360-ResNet50 | 本リポジトリの評価実装 | `checkpoints/6DRepNet360_Full-Rotation_300W_LP+Panoptic.pth`、SHA-256 `3ee08f1e04b8d452a6c4a40926a6f38051894ae6d0aaa6d191fe6d8bc6e4f9c6` |
+| `semiuhpe_effnetv2s` | SemiUHPE EfficientNetV2-S full-range | `hnuzhy/SemiUHPE@c8f67102bf5aba8869b3f23453ac67599f21aa1f` | upstream公開名 `DAD-WildHead-EffNetV2-S-best.pth` |
+| `whenet` | WHENet | `Ascend-Research/HeadPoseEstimation-WHENet@a0d7bdfb5e2ac97ae6b0ae3eef79fdcf4075ab82` | upstream `WHENet.h5` |
 
-YawPoseを学習データとして使用してfine-tuneされたモデルは、独立teacherとしては使用しません。
+SemiUHPEとWHENetのcheckpointは取得後にSHA-256を計算し、teacher manifestへ固定します。信頼度事前計算は、3モデルすべての実装revision、checkpoint SHA-256、入力前処理、yaw adapter、fixture検証結果がmanifestへ記録されるまで開始しません。以後の全YawPose条件は同じteacher manifestを使用します。
+
+3モデルは、6D rotation regression、SemiUHPEのfull-range unconstrained HPE、WHENetのwide-range Euler yawという異なるモデル系統を含めます。reliability scoreはこの3モデルの出力を同一重みで扱います。
 
 ### 8.3 座標規約
 
@@ -241,11 +258,13 @@ reliability rankingは`reliability_score`の昇順で決定します。同一sco
 
 ## 11. 人手修正データ
 
-`yawpose-annotator`で人手修正済みのサンプルについては、`manual_corrections.jsonl`の修正後yawをcanonical yawとして使用します。
+canonical yawは、公開`labels_fixed.jsonl`の`yaw_deg`を第5.1節の規約へ変換した値を基準とし、固定した`manual_corrections.jsonl`に同一sampleのyaw修正がある場合だけ修正後yawで上書きします。
 
 人手修正済みサンプルもteacher ensembleによる同じ事前計算を行い、自動的にranking最上位へ配置する特別処理は行いません。
 
 人手修正済み集合は、主として問題が疑われたサンプルを含む可能性があるため、YawPose全体のclean/noisy比率を推定する代表標本とはみなしません。rankingの上位割合ごとに、人手修正前後のyaw差や既知問題サンプルがどの順位へ配置されたかを診断するために使用します。
+
+公開`labels_fixed.jsonl`、固定した`manual_corrections.jsonl`、両者を統合して生成するcanonical manifestのSHA-256をすべて保存し、学習条件間でcanonical yawが変化しないことを検査します。
 
 ## 12. 事前計算成果物
 
@@ -339,23 +358,7 @@ YawPose batch内では`L_yawpose`をmean reductionします。
 - rear bucket別draw数
 - source別draw数
 
-## 15. YawPoseで使用しない処理
-
-本実験ではYawPose由来データに対して次の処理を行いません。
-
-- pitch教師を使用しません。
-- roll教師を生成しません。
-- SO(3) supervised lossを使用しません。
-- SO(3) flip-consistencyを使用しません。
-- yaw-only flip-consistencyを使用しません。
-- teacher予測yawへのpseudo-label置換を行いません。
-- teacher予測だけを根拠にした自動yaw修正を行いません。
-- teacher予測だけを根拠にした左右反転修正を行いません。
-- 学習中にreliability scoreまたはrankingを更新しません。
-
-YawPoseにyaw-only flip-consistencyを適用しない理由は、今回の主変数を信頼度順位に限定するためです。また、yaw-only flip-consistencyには0°および±180°付近の予測でも整合性lossを小さくできる固定点があり、後方yaw分布を±180°付近へ圧縮する作用と信頼度filteringの効果が混在する可能性があります。
-
-## 16. 共通学習条件
+## 15. 共通学習条件
 
 YawPose採用割合以外の主要条件を固定します。
 
@@ -387,21 +390,21 @@ YawPose採用割合以外の主要条件を固定します。
 
 すべての条件は同一の初期checkpointから独立に開始します。
 
-## 17. baseline条件
+## 16. baseline条件
 
 `Y_base`はYawPose対応後の同一コードパスでYawPose streamを無効化して実行します。
 
 `Y_base`が`docs/experiments/rear_sampling_flip_consistency_tradeoff.md`の自然後方比率・flip-consistency重み0.2条件と整合することを確認し、YawPose対応実装そのものによる性能変化とYawPose追加による性能変化を分離します。
 
-## 18. checkpoint比較
+## 17. checkpoint比較
 
 主比較には全条件の固定epoch 10 checkpointを使用します。
 
 条件ごとに異なるbest epochを主比較へ使用すると、YawPose採用割合の効果とcheckpoint選択時期の効果が混在するためです。
 
-内部best checkpointは補助成果物として第19節のselection規則に従って保存します。
+内部best checkpointは補助成果物として第18節のselection規則に従って保存します。
 
-## 19. 内部checkpoint selection
+## 18. 内部checkpoint selection
 
 内部development splitにはVGGHeadsおよびDAD-3DHeads trainから分離した既存developmentデータを使用します。rear sampling / flip-consistency比較実験と同じsplitを再利用し、YawPoseを内部developmentへ混入させません。
 
@@ -421,9 +424,9 @@ YawPose採用割合以外の主要条件を固定します。
 
 外部benchmarkはcheckpoint selectionには使用しません。
 
-## 20. 評価
+## 19. 評価
 
-### 20.1 rear yaw評価
+### 19.1 rear yaw評価
 
 YawPoseはyawだけを追加教師として使用するため、SO(3) geodesic errorだけではなくyaw errorを独立して記録します。
 
@@ -440,7 +443,7 @@ internal development splitおよびAGORA-HPEでは少なくとも次の指標を
 
 internal developmentでは回転行列から第5.1節のhead-forward azimuthを算出します。外部benchmarkでは各評価manifestに保存されたsource yawを使用するため、internal developmentのazimuthと外部source yawは数値規約が完全に一致するとは限りません。両者は同一サンプル単位の角度値として直接比較せず、それぞれのデータセット内でcandidateとbaselineを比較します。
 
-### 20.2 rotation全体の評価
+### 19.2 rotation全体の評価
 
 yaw改善がpitch・rollを含む回転全体の悪化を伴っていないかを確認するため、SO(3)指標も記録します。
 
@@ -450,7 +453,7 @@ yaw改善がpitch・rollを含む回転全体の悪化を伴っていないか�
 - front mean / P90
 - side mean / P90
 
-### 20.3 外部評価データ
+### 19.3 外部評価データ
 
 外部評価には次のデータセットを使用します。
 
@@ -465,7 +468,7 @@ DAD-3DHeads validationのrearサンプル数は少ないため、rear単独値�
 
 外部評価データは学習、信頼度計算、checkpoint selectionには使用しません。
 
-## 21. YawPose subset診断
+## 20. YawPose subset診断
 
 各採用条件について、学習前にsubset自体の統計を保存します。
 
@@ -474,7 +477,7 @@ DAD-3DHeads validationのrearサンプル数は少ないため、rear単独値�
 | selected sample count | 採用データ量を確認します。 |
 | rear bucket別件数 | 角度帯の偏りを確認します。 |
 | positive / negative比率 | 左右方向の偏りを確認します。 |
-| source別件数 | 特定生成sourceへの偏りを確認します。 |
+| source別件数 | `synthetic_001`〜`synthetic_006`の公開生成sourceへの偏りを確認します。 |
 | `gt_median_error`分布 | teacherとcanonical yawの一致度を確認します。 |
 | `teacher_dispersion`分布 | teacher間一致度を確認します。 |
 | `gt_max_error`分布 | 一部teacherだけが大きく外れるケースを確認します。 |
@@ -483,7 +486,7 @@ DAD-3DHeads validationのrearサンプル数は少ないため、rear単独値�
 
 上位割合を絞ることで特定yaw帯や特定sourceだけが残っていないかも確認します。
 
-## 22. 結果の比較方法
+## 21. 結果の比較方法
 
 主要比較対象は`Y_base`、`Y_top20`、`Y_top40`、`Y_top60`、`Y_top80`、`Y_top100`の固定epoch 10 checkpointです。
 
@@ -497,7 +500,7 @@ DAD-3DHeads validationのrearサンプル数は少ないため、rear単独値�
 
 `Y_top20`が`Y_base`より悪化した場合は、yawラベル品質だけでは説明できず、合成画像domain shift、YawPose exposure、loss weightなどを別要因として切り分けます。
 
-## 23. 実験成果物
+## 22. 実験成果物
 
 本実験では少なくとも次の成果物を保存します。
 
@@ -532,7 +535,7 @@ DAD-3DHeads validationのrearサンプル数は少ないため、rear単独値�
 - DAD-3DHeads validation evaluation
 - baselineとのpaired comparison
 
-## 24. 判定対象
+## 23. 判定対象
 
 本実験では、単一の数値で採用条件を自動決定しません。
 
