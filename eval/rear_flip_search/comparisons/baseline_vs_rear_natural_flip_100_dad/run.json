@@ -1,0 +1,14 @@
+{
+  "comparison_name": "baseline_vs_rear_natural_flip_100_dad",
+  "baseline": "/home/hoge/learn/hpe/eval/baseline_dad_fp32/evaluations/baseline",
+  "baseline_checkpoint_sha256": "3ee08f1e04b8d452a6c4a40926a6f38051894ae6d0aaa6d191fe6d8bc6e4f9c6",
+  "candidate": "/home/hoge/learn/hpe/eval/rear_flip_search/conditions/rear_natural_flip_100_dad",
+  "candidate_checkpoint_sha256": "e19c5654f3633117e5aa7d26d0c3fadef78390860326fe69553fd8ae85920868",
+  "datasets": [
+    "dad3dheads"
+  ],
+  "bootstrap_repetitions": 1000,
+  "bootstrap_sample_limit": 10000,
+  "seed": 0,
+  "delta_definition": "candidate minus baseline; negative is improvement"
+}

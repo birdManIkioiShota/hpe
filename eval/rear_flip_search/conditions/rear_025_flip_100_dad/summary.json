@@ -1,0 +1,20 @@
+[
+  {
+    "dataset": "dad3dheads",
+    "count": 4312.0,
+    "pitch_error_deg_mean": 25.03931864576498,
+    "yaw_error_deg_mean": 13.914962953982654,
+    "roll_error_deg_mean": 23.778838125719854,
+    "mean_axis_error_deg_mean": 20.911039908489162,
+    "geodesic_error_deg_mean": 29.154889351477586,
+    "vec1_error_deg_mean": 25.728163456018276,
+    "vec2_error_deg_mean": 12.337622405206782,
+    "vec3_error_deg_mean": 26.290527847706436,
+    "vmae_deg_mean": 21.45210456964383,
+    "geodesic_error_deg_median": 14.315835389429784,
+    "geodesic_error_deg_p90": 82.91587396675614,
+    "geodesic_error_deg_p95": 133.94535322369967,
+    "geodesic_error_deg_gt90_count": 397.0,
+    "geodesic_error_deg_gt90_percent": 9.20686456400742
+  }
+]
