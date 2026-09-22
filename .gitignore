@@ -33,6 +33,27 @@ Thumbs.db
 /experiments/runs/**/*.pth
 /experiments/runs/**/*.pt
 
+# Sample-level and redundant generated artifacts. Aggregate JSON metrics,
+# comparisons, provenance, configurations, epoch metrics, and plots stay tracked.
+/eval/**/predictions/
+/eval/**/input_lock/
+/eval/**/*.csv
+/eval/**/*.csv.gz
+/eval/**/events.jsonl
+/eval/**/*_events.jsonl
+/eval/**/status*.json
+/ft_runs/*_interrupted/
+/ft_runs/**/events.jsonl
+/ft_runs/**/*_events.jsonl
+/ft_runs/**/status*.json
+/experiments/runs/**/predictions/
+/experiments/runs/**/*.csv
+/experiments/runs/**/*.csv.gz
+/experiments/runs/**/events.jsonl
+/experiments/runs/**/*_events.jsonl
+/experiments/runs/**/status*.json
+/experiments/runs/**/artifacts/pose_samples.csv.gz
+
 # Temporary files
 *.tmp
 *.part
