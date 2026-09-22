@@ -111,6 +111,8 @@ SixDRepNet360など回転行列を出力するモデルでは、head-localの`+Z
 
 teacherごとのadapterは、少なくとも0°、+90°、-90°、+150°、-150°の既知姿勢fixtureで符号と周期境界を検証します。fixtureと変換結果をteacher manifestへ保存し、YawPose signed yawとの方向対応が確認できないteacherは信頼度事前計算へ使用しません。
 
+SemiUHPEとWHENetのyaw符号較正には、生成時の方向QAを通過した`synthetic_004`と`synthetic_005`（label sourceは`intent_s004`、`intent_s005）のうち、`120° <= |yaw| <= 165°`のサンプルだけを使用します。ラベルノイズの大きい`intent_rear`は較正から除外します。
+
 ### 5.2 YawPoseの学習対象
 
 YawPoseでは後方帯だけを学習対象とします。canonical yawを共通yaw規約へ変換した後、`|yaw| >= 120°`をYawPose rear candidateとします。

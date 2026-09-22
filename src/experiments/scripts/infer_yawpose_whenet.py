@@ -19,7 +19,7 @@ from tqdm import tqdm
 
 
 REQUIRED_REVISION = "a0d7bdfb5e2ac97ae6b0ae3eef79fdcf4075ab82"
-CALIBRATION_LABEL_SOURCE = "intent_operator_promoted"
+CALIBRATION_LABEL_SOURCES = ("intent_s004", "intent_s005")
 MIN_CALIBRATION_SAMPLES = 20
 CALIBRATION_MAX_ABS_YAW = 165.0
 ROOT = Path(__file__).resolve().parents[3]
@@ -49,13 +49,14 @@ def _calibrate_sign(
     calibration = [
         row
         for row in rows
-        if row.get("label_source") == CALIBRATION_LABEL_SOURCE
+        if row.get("label_source") in CALIBRATION_LABEL_SOURCES
         and 120.0 <= abs(float(row["canonical_yaw_deg"])) <= CALIBRATION_MAX_ABS_YAW
     ]
     if len(calibration) < MIN_CALIBRATION_SAMPLES:
         raise ValueError(
             f"WHENet yaw calibration requires at least {MIN_CALIBRATION_SAMPLES} "
-            f"operator-verified rear samples; found {len(calibration)}"
+            "direction-verified synthetic rear samples from "
+            f"{', '.join(CALIBRATION_LABEL_SOURCES)}; found {len(calibration)}"
         )
     target = np.asarray(
         [float(row["canonical_yaw_deg"]) for row in calibration],
@@ -74,8 +75,8 @@ def _calibrate_sign(
     sign = 1 if plus_error < minus_error else -1
     return sign, {
         "passed": True,
-        "method": "operator-verified YawPose rear samples",
-        "label_source": CALIBRATION_LABEL_SOURCE,
+        "method": "direction-verified synthetic YawPose rear samples",
+        "label_sources": list(CALIBRATION_LABEL_SOURCES),
         "count": len(calibration),
         "positive_count": int(np.sum(target > 0.0)),
         "negative_count": int(np.sum(target < 0.0)),

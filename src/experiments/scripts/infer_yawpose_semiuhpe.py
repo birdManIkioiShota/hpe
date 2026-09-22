@@ -22,7 +22,7 @@ from training.prepare_data import ROOT, prepared_data_path
 
 
 REQUIRED_REVISION = "c8f67102bf5aba8869b3f23453ac67599f21aa1f"
-CALIBRATION_LABEL_SOURCE = "intent_operator_promoted"
+CALIBRATION_LABEL_SOURCES = ("intent_s004", "intent_s005")
 MIN_CALIBRATION_SAMPLES = 20
 CALIBRATION_MAX_ABS_YAW = 165.0
 
@@ -98,13 +98,14 @@ def _calibrate_sign(
     calibration = [
         row
         for row in rows
-        if row.get("label_source") == CALIBRATION_LABEL_SOURCE
+        if row.get("label_source") in CALIBRATION_LABEL_SOURCES
         and 120.0 <= abs(float(row["canonical_yaw_deg"])) <= CALIBRATION_MAX_ABS_YAW
     ]
     if len(calibration) < MIN_CALIBRATION_SAMPLES:
         raise ValueError(
             f"SemiUHPE yaw calibration requires at least {MIN_CALIBRATION_SAMPLES} "
-            f"operator-verified rear samples; found {len(calibration)}"
+            "direction-verified synthetic rear samples from "
+            f"{', '.join(CALIBRATION_LABEL_SOURCES)}; found {len(calibration)}"
         )
     target = np.asarray(
         [float(row["canonical_yaw_deg"]) for row in calibration],
@@ -123,8 +124,8 @@ def _calibrate_sign(
     sign = 1 if plus_error < minus_error else -1
     return sign, {
         "passed": True,
-        "method": "operator-verified YawPose rear samples",
-        "label_source": CALIBRATION_LABEL_SOURCE,
+        "method": "direction-verified synthetic YawPose rear samples",
+        "label_sources": list(CALIBRATION_LABEL_SOURCES),
         "count": len(calibration),
         "positive_count": int(np.sum(target > 0.0)),
         "negative_count": int(np.sum(target < 0.0)),

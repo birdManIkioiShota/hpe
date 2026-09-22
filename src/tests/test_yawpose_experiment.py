@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import math
+import sys
 import unittest
+from unittest import mock
 
 import torch
 
@@ -13,6 +15,14 @@ from experiments.common.yawpose import (
     yaw_loss_rad,
 )
 from experiments.common.yawpose_search import yawpose_conditions
+from experiments.scripts.infer_yawpose_semiuhpe import (
+    _calibrate_sign as calibrate_semiuhpe_sign,
+)
+
+with mock.patch.dict(sys.modules, {"cv2": mock.MagicMock()}):
+    from experiments.scripts.infer_yawpose_whenet import (
+        _calibrate_sign as calibrate_whenet_sign,
+    )
 
 
 class YawPoseExperimentTests(unittest.TestCase):
@@ -104,6 +114,44 @@ class YawPoseExperimentTests(unittest.TestCase):
                 ("Y_top100", "top100", 1.0),
             ],
         )
+
+    def test_teacher_sign_calibration_uses_direction_verified_sources(self):
+        rows = []
+        predictions = {}
+        for index in range(10):
+            for source, yaw in (
+                ("intent_s004", 150.0),
+                ("intent_s005", -150.0),
+            ):
+                instance_id = f"{source}_{index}"
+                rows.append(
+                    {
+                        "instance_id": instance_id,
+                        "label_source": source,
+                        "canonical_yaw_deg": yaw,
+                    }
+                )
+                predictions[instance_id] = yaw
+
+        rows.append(
+            {
+                "instance_id": "excluded_operator_label",
+                "label_source": "intent_operator_promoted",
+                "canonical_yaw_deg": 150.0,
+            }
+        )
+        predictions["excluded_operator_label"] = -150.0
+
+        for calibrate in (calibrate_semiuhpe_sign, calibrate_whenet_sign):
+            sign, validation = calibrate(rows, predictions)
+            self.assertEqual(sign, 1)
+            self.assertEqual(validation["count"], 20)
+            self.assertEqual(validation["positive_count"], 10)
+            self.assertEqual(validation["negative_count"], 10)
+            self.assertEqual(
+                validation["label_sources"],
+                ["intent_s004", "intent_s005"],
+            )
 
 
 if __name__ == "__main__":

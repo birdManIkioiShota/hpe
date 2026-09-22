@@ -241,6 +241,8 @@ checkout:
 Both external teacher adapters write a prediction JSONL and a sidecar
 `.manifest.json` containing the fixed implementation revision, checkpoint SHA-256,
 preprocessing description, yaw adapter, and data-based yaw-sign calibration result.
+Sign calibration uses only the direction-QA synthetic sources `intent_s004` and
+`intent_s005` in the 120--165 degree rear band; noisy `intent_rear` labels are excluded.
 
 Precompute SixDRepNet360 predictions, the three-teacher reliability score, ranking, and
 all five nested subset manifests in one immutable experiment run:
