@@ -31,7 +31,7 @@ from training.prepare_data import ROOT, prepared_data_path
 
 SEMIUHPE_REVISION = "c8f67102bf5aba8869b3f23453ac67599f21aa1f"
 WHENET_REVISION = "a0d7bdfb5e2ac97ae6b0ae3eef79fdcf4075ab82"
-FIXTURE_YAWS = {0.0, 90.0, -90.0, 150.0, -150.0}
+MIN_CALIBRATION_SAMPLES = 20
 SOURCE_FILES = (
     "src/experiments/common/yawpose.py",
     "src/experiments/scripts/precompute_yawpose_reliability.py",
@@ -69,12 +69,15 @@ def _load_external_teacher(
     checkpoint_sha = str(manifest.get("checkpoint_sha256", ""))
     if len(checkpoint_sha) != 64 or any(ch not in "0123456789abcdef" for ch in checkpoint_sha.lower()):
         raise ValueError(f"invalid {teacher_id} checkpoint SHA-256")
-    fixture = manifest.get("fixture_validation")
-    if not isinstance(fixture, dict) or fixture.get("passed") is not True:
-        raise ValueError(f"{teacher_id} yaw adapter fixture validation did not pass")
-    observed = {float(value) for value in fixture.get("yaw_degrees", [])}
-    if not FIXTURE_YAWS.issubset(observed):
-        raise ValueError(f"{teacher_id} fixture validation is missing required yaw cases")
+    validation = manifest.get("yaw_convention_validation")
+    if not isinstance(validation, dict) or validation.get("passed") is not True:
+        raise ValueError(f"{teacher_id} yaw convention validation did not pass")
+    if int(validation.get("count", 0)) < MIN_CALIBRATION_SAMPLES:
+        raise ValueError(f"{teacher_id} yaw convention validation used too few samples")
+    if int(validation.get("positive_count", 0)) <= 0 or int(validation.get("negative_count", 0)) <= 0:
+        raise ValueError(f"{teacher_id} yaw convention validation must cover both yaw signs")
+    if int(validation.get("selected_sign", 0)) not in {-1, 1}:
+        raise ValueError(f"{teacher_id} yaw convention validation has an invalid sign")
 
     predictions: dict[str, float] = {}
     for line_number, row in enumerate(_read_jsonl(prediction_path), 1):
@@ -144,11 +147,6 @@ def _infer_sixd(
         "checkpoint_sha256": BASE_SHA256,
         "input_preprocess": "Resize256-CenterCrop224-ImageNet normalization",
         "yaw_adapter": "atan2(R[0,2],R[2,2]) -> degrees -> [-180,180)",
-        "fixture_validation": {
-            "passed": True,
-            "yaw_degrees": sorted(FIXTURE_YAWS),
-            "method": "analytic rotation-matrix convention covered by unit test",
-        },
         "prediction_sha256": sha256_file(output_path),
         "count": len(predictions),
     }
