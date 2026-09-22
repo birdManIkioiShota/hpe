@@ -1,0 +1,101 @@
+[
+  {
+    "condition_id": "rear_natural_flip_000",
+    "rear_fraction_level": "natural",
+    "flip_consistency_weight": 0.0,
+    "rear_mean_delta_vs_same_fraction_flip_zero": 0.0,
+    "front_mean_delta_vs_same_fraction_flip_zero": 0.0,
+    "side_mean_delta_vs_same_fraction_flip_zero": 0.0,
+    "rear_mean_delta_vs_natural_same_flip": 0.0,
+    "front_mean_delta_vs_natural_same_flip": 0.0,
+    "side_mean_delta_vs_natural_same_flip": 0.0
+  },
+  {
+    "condition_id": "rear_natural_flip_020",
+    "rear_fraction_level": "natural",
+    "flip_consistency_weight": 0.2,
+    "rear_mean_delta_vs_same_fraction_flip_zero": -5.90026323339325,
+    "front_mean_delta_vs_same_fraction_flip_zero": -0.8271823928216264,
+    "side_mean_delta_vs_same_fraction_flip_zero": -1.0153625480401907,
+    "rear_mean_delta_vs_natural_same_flip": 0.0,
+    "front_mean_delta_vs_natural_same_flip": 0.0,
+    "side_mean_delta_vs_natural_same_flip": 0.0
+  },
+  {
+    "condition_id": "rear_natural_flip_100",
+    "rear_fraction_level": "natural",
+    "flip_consistency_weight": 1.0,
+    "rear_mean_delta_vs_same_fraction_flip_zero": -6.576965355111113,
+    "front_mean_delta_vs_same_fraction_flip_zero": -3.7347661088607715,
+    "side_mean_delta_vs_same_fraction_flip_zero": -0.7613259824562988,
+    "rear_mean_delta_vs_natural_same_flip": 0.0,
+    "front_mean_delta_vs_natural_same_flip": 0.0,
+    "side_mean_delta_vs_natural_same_flip": 0.0
+  },
+  {
+    "condition_id": "rear_005_flip_000",
+    "rear_fraction_level": "0.05",
+    "flip_consistency_weight": 0.0,
+    "rear_mean_delta_vs_same_fraction_flip_zero": 0.0,
+    "front_mean_delta_vs_same_fraction_flip_zero": 0.0,
+    "side_mean_delta_vs_same_fraction_flip_zero": 0.0,
+    "rear_mean_delta_vs_natural_same_flip": -3.1755662736822643,
+    "front_mean_delta_vs_natural_same_flip": -0.012822175281222314,
+    "side_mean_delta_vs_natural_same_flip": -0.25993343732904606
+  },
+  {
+    "condition_id": "rear_005_flip_020",
+    "rear_fraction_level": "0.05",
+    "flip_consistency_weight": 0.2,
+    "rear_mean_delta_vs_same_fraction_flip_zero": -5.523522661300291,
+    "front_mean_delta_vs_same_fraction_flip_zero": -1.3346627355646312,
+    "side_mean_delta_vs_same_fraction_flip_zero": -1.0854732983892994,
+    "rear_mean_delta_vs_natural_same_flip": -2.7988257015893048,
+    "front_mean_delta_vs_natural_same_flip": -0.5203025180242271,
+    "side_mean_delta_vs_natural_same_flip": -0.3300441876781548
+  },
+  {
+    "condition_id": "rear_005_flip_100",
+    "rear_fraction_level": "0.05",
+    "flip_consistency_weight": 1.0,
+    "rear_mean_delta_vs_same_fraction_flip_zero": -2.820656290440951,
+    "front_mean_delta_vs_same_fraction_flip_zero": -5.182438153427814,
+    "side_mean_delta_vs_same_fraction_flip_zero": 0.91423689172656,
+    "rear_mean_delta_vs_natural_same_flip": 0.5807427909878982,
+    "front_mean_delta_vs_natural_same_flip": -1.4604942198482647,
+    "side_mean_delta_vs_natural_same_flip": 1.4156294368538127
+  },
+  {
+    "condition_id": "rear_025_flip_000",
+    "rear_fraction_level": "0.25",
+    "flip_consistency_weight": 0.0,
+    "rear_mean_delta_vs_same_fraction_flip_zero": 0.0,
+    "front_mean_delta_vs_same_fraction_flip_zero": 0.0,
+    "side_mean_delta_vs_same_fraction_flip_zero": 0.0,
+    "rear_mean_delta_vs_natural_same_flip": -10.171724398253073,
+    "front_mean_delta_vs_natural_same_flip": -0.08445118734478285,
+    "side_mean_delta_vs_natural_same_flip": -0.8224623739072641
+  },
+  {
+    "condition_id": "rear_025_flip_020",
+    "rear_fraction_level": "0.25",
+    "flip_consistency_weight": 0.2,
+    "rear_mean_delta_vs_same_fraction_flip_zero": -2.1933984242309705,
+    "front_mean_delta_vs_same_fraction_flip_zero": -0.4066865769607233,
+    "side_mean_delta_vs_same_fraction_flip_zero": -0.4083166339444766,
+    "rear_mean_delta_vs_natural_same_flip": -6.464859589090793,
+    "front_mean_delta_vs_natural_same_flip": 0.33604462851612027,
+    "side_mean_delta_vs_natural_same_flip": -0.21541645981155
+  },
+  {
+    "condition_id": "rear_025_flip_100",
+    "rear_fraction_level": "0.25",
+    "flip_consistency_weight": 1.0,
+    "rear_mean_delta_vs_same_fraction_flip_zero": -2.0520178366981376,
+    "front_mean_delta_vs_same_fraction_flip_zero": -1.5603617437893682,
+    "side_mean_delta_vs_same_fraction_flip_zero": 0.5233509419412883,
+    "rear_mean_delta_vs_natural_same_flip": -5.646776879840097,
+    "front_mean_delta_vs_natural_same_flip": 2.0899531777266205,
+    "side_mean_delta_vs_natural_same_flip": 0.462214550490323
+  }
+]

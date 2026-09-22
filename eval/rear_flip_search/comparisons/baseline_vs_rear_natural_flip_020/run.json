@@ -1,0 +1,16 @@
+{
+  "comparison_name": "baseline_vs_rear_natural_flip_020",
+  "baseline": "/home/hoge/learn/hpe/eval/baseline_fp32/evaluations/baseline",
+  "baseline_checkpoint_sha256": "3ee08f1e04b8d452a6c4a40926a6f38051894ae6d0aaa6d191fe6d8bc6e4f9c6",
+  "candidate": "/home/hoge/learn/hpe/eval/rear_flip_search/conditions/rear_natural_flip_020",
+  "candidate_checkpoint_sha256": "d55aa613311cef890a1664e768dd15ccec511a740220867c22a13c593b942ca8",
+  "datasets": [
+    "agora_hpe",
+    "aflw2000",
+    "300w_lp"
+  ],
+  "bootstrap_repetitions": 1000,
+  "bootstrap_sample_limit": 10000,
+  "seed": 0,
+  "delta_definition": "candidate minus baseline; negative is improvement"
+}

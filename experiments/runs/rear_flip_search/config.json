@@ -1,0 +1,84 @@
+{
+  "kind": "rear_sampling_flip_consistency_search",
+  "epochs": 10,
+  "sampling_policy": "proportional_to_source_rear_bucket_counts",
+  "natural_rear_fraction": 0.017426677603139065,
+  "conditions": [
+    {
+      "condition_id": "rear_natural_flip_000",
+      "rear_fraction_level": "natural",
+      "rear_fraction": 0.017426677603139065,
+      "flip_consistency_weight": 0.0
+    },
+    {
+      "condition_id": "rear_natural_flip_020",
+      "rear_fraction_level": "natural",
+      "rear_fraction": 0.017426677603139065,
+      "flip_consistency_weight": 0.2
+    },
+    {
+      "condition_id": "rear_natural_flip_100",
+      "rear_fraction_level": "natural",
+      "rear_fraction": 0.017426677603139065,
+      "flip_consistency_weight": 1.0
+    },
+    {
+      "condition_id": "rear_005_flip_000",
+      "rear_fraction_level": "0.05",
+      "rear_fraction": 0.05,
+      "flip_consistency_weight": 0.0
+    },
+    {
+      "condition_id": "rear_005_flip_020",
+      "rear_fraction_level": "0.05",
+      "rear_fraction": 0.05,
+      "flip_consistency_weight": 0.2
+    },
+    {
+      "condition_id": "rear_005_flip_100",
+      "rear_fraction_level": "0.05",
+      "rear_fraction": 0.05,
+      "flip_consistency_weight": 1.0
+    },
+    {
+      "condition_id": "rear_025_flip_000",
+      "rear_fraction_level": "0.25",
+      "rear_fraction": 0.25,
+      "flip_consistency_weight": 0.0
+    },
+    {
+      "condition_id": "rear_025_flip_020",
+      "rear_fraction_level": "0.25",
+      "rear_fraction": 0.25,
+      "flip_consistency_weight": 0.2
+    },
+    {
+      "condition_id": "rear_025_flip_100",
+      "rear_fraction_level": "0.25",
+      "rear_fraction": 0.25,
+      "flip_consistency_weight": 1.0
+    }
+  ],
+  "shared_training": {
+    "vgg_data_id": "vgg_data",
+    "dad_data_id": "dad3dheads_train",
+    "device": "cuda:0",
+    "precision": "bf16",
+    "update_scope": "layer4",
+    "epochs": 10,
+    "samples_per_epoch": null,
+    "batch_size": 64,
+    "accumulation": 2,
+    "workers": 8,
+    "backbone_lr": 1e-06,
+    "head_lr": 3e-05,
+    "weight_decay": 0.0001,
+    "warmup_updates": 100,
+    "clip_norm": 1.0,
+    "rear_supervised_weight": 1.0,
+    "replay_supervised_weight": 1.0,
+    "retain_distill_weight": 1.0,
+    "retention_tolerance_deg": 0.0,
+    "seed": 42
+  }
+}

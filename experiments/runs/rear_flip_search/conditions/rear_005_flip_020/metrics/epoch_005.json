@@ -1,0 +1,189 @@
+{
+  "epoch": 5,
+  "global_step": 17620,
+  "train": {
+    "samples": 451072,
+    "loss_rad": 0.45884632586029006,
+    "supervised_rad": 0.3700224420734418,
+    "distill_rad": 0.051190626806057314,
+    "distill_weighted_rad": 0.051190626806057314,
+    "flip_consistency_rad": 0.18816628300880317,
+    "flip_consistency_weighted_rad": 0.03763325660176066,
+    "rear_fraction_observed": 0.05000088677639047,
+    "sampling": {
+      "rear_fraction_requested": 0.05,
+      "rear_fraction_planned": 0.05000088677639047,
+      "rear_bucket_policy": "proportional",
+      "rear_bucket_draws": {
+        "negative:rear_120_to_lt150": 4571,
+        "negative:rear_150_to_180": 6031,
+        "positive:rear_120_to_lt150": 4335,
+        "positive:rear_150_to_180": 7617
+      },
+      "unique_samples": 436379,
+      "repeated_draws": 14693
+    }
+  },
+  "dev": {
+    "overall": {
+      "count": 55719,
+      "mean_deg": 20.522272953349557,
+      "median_deg": 7.514970039287133,
+      "p90_deg": 46.696218615987995,
+      "over90_percent": 7.1968269351567695
+    },
+    "front": {
+      "count": 51898,
+      "mean_deg": 20.39815505857512,
+      "median_deg": 7.376166042488546,
+      "p90_deg": 44.616121407304796,
+      "over90_percent": 7.2546148213804
+    },
+    "side": {
+      "count": 2787,
+      "mean_deg": 21.452219324340014,
+      "median_deg": 7.9957840169984085,
+      "p90_deg": 70.55935820653359,
+      "over90_percent": 7.140294223179046
+    },
+    "rear": {
+      "count": 1034,
+      "mean_deg": 24.245396712588704,
+      "median_deg": 15.009326714052392,
+      "p90_deg": 49.87106101276737,
+      "over90_percent": 4.448742746615087
+    },
+    "retention": {
+      "count": 54685,
+      "mean_deg": 20.451875038618763,
+      "median_deg": 7.412363311066788,
+      "p90_deg": 46.455692536462195,
+      "over90_percent": 7.248788516046448
+    },
+    "rear_negative": {
+      "count": 490,
+      "mean_deg": 21.768873921468654,
+      "median_deg": 15.402115845717137,
+      "p90_deg": 40.3895876076962,
+      "over90_percent": 2.857142857142857
+    },
+    "rear_positive": {
+      "count": 544,
+      "mean_deg": 26.47608819723727,
+      "median_deg": 14.682360114691456,
+      "p90_deg": 56.004759093867655,
+      "over90_percent": 5.88235294117647
+    },
+    "rear_120_to_lt150": {
+      "count": 389,
+      "mean_deg": 26.426075027147103,
+      "median_deg": 18.545664500704355,
+      "p90_deg": 51.1895859695903,
+      "over90_percent": 3.5989717223650386
+    },
+    "rear_150_to_180": {
+      "count": 645,
+      "mean_deg": 22.930227930630224,
+      "median_deg": 13.467958463336874,
+      "p90_deg": 44.84739318240781,
+      "over90_percent": 4.961240310077519
+    },
+    "rear_negative_120_to_lt150": {
+      "count": 200,
+      "mean_deg": 23.56600177965731,
+      "median_deg": 18.370927325530225,
+      "p90_deg": 41.903516048431676,
+      "over90_percent": 2.5
+    },
+    "rear_negative_150_to_180": {
+      "count": 290,
+      "mean_deg": 20.529475398579923,
+      "median_deg": 13.135929924034624,
+      "p90_deg": 36.22002936725156,
+      "over90_percent": 3.103448275862069
+    },
+    "rear_positive_120_to_lt150": {
+      "count": 189,
+      "mean_deg": 29.452607564173327,
+      "median_deg": 18.662256481460556,
+      "p90_deg": 57.275230223269,
+      "over90_percent": 4.761904761904762
+    },
+    "rear_positive_150_to_180": {
+      "count": 355,
+      "mean_deg": 24.891406055403714,
+      "median_deg": 13.691418681898133,
+      "p90_deg": 53.875953353617625,
+      "over90_percent": 6.478873239436619
+    },
+    "dataset:dad3dheads": {
+      "count": 3805,
+      "mean_deg": 35.45382906743472,
+      "median_deg": 17.526382720927657,
+      "p90_deg": 117.42254287262548,
+      "over90_percent": 12.614980289093298
+    },
+    "dataset:dad3dheads:front": {
+      "count": 3638,
+      "mean_deg": 35.4438248462001,
+      "median_deg": 17.52009046169413,
+      "p90_deg": 118.48860519720223,
+      "over90_percent": 12.616822429906541
+    },
+    "dataset:dad3dheads:side": {
+      "count": 156,
+      "mean_deg": 34.64621705862979,
+      "median_deg": 17.69467649811874,
+      "p90_deg": 95.43929012886383,
+      "over90_percent": 12.179487179487179
+    },
+    "dataset:dad3dheads:rear": {
+      "count": 11,
+      "mean_deg": 50.215904542444314,
+      "median_deg": 17.09129159322212,
+      "p90_deg": 178.61465986641943,
+      "over90_percent": 18.181818181818183
+    },
+    "dataset:vggheads": {
+      "count": 51914,
+      "mean_deg": 19.427875083524572,
+      "median_deg": 7.102854397631495,
+      "p90_deg": 40.564761325909856,
+      "over90_percent": 6.799707208074893
+    },
+    "dataset:vggheads:front": {
+      "count": 48260,
+      "mean_deg": 19.26396221383041,
+      "median_deg": 6.959194385784117,
+      "p90_deg": 37.945991587857584,
+      "over90_percent": 6.850393700787402
+    },
+    "dataset:vggheads:side": {
+      "count": 2631,
+      "mean_deg": 20.66990702994655,
+      "median_deg": 7.70396202769963,
+      "p90_deg": 67.10653376533577,
+      "over90_percent": 6.841505131128849
+    },
+    "dataset:vggheads:rear": {
+      "count": 1023,
+      "mean_deg": 23.966143940224665,
+      "median_deg": 14.9466098434948,
+      "p90_deg": 48.648251933525295,
+      "over90_percent": 4.301075268817205
+    }
+  },
+  "selection_score": [
+    0.0,
+    57.275230223269,
+    49.87106101276737,
+    6.478873239436619,
+    24.245396712588704,
+    -1.7485282915536509,
+    20.39815505857512,
+    21.452219324340014,
+    44.616121407304796,
+    70.55935820653359
+  ],
+  "improved": false
+}

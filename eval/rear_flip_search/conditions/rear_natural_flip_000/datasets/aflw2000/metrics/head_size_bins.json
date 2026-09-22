@@ -1,0 +1,38 @@
+[
+  {
+    "head_size_bin": "64_to_lt128",
+    "count": 4,
+    "pitch_error_deg_mean": 47.18889259177637,
+    "yaw_error_deg_mean": 8.397516097942457,
+    "roll_error_deg_mean": 43.162381528941495,
+    "mean_axis_error_deg_mean": 32.91626340622011,
+    "geodesic_error_deg_mean": 17.638530242134884,
+    "vec1_error_deg_mean": 14.04321600281466,
+    "vec2_error_deg_mean": 13.217903912769986,
+    "vec3_error_deg_mean": 13.940734553999526,
+    "vmae_deg_mean": 13.73395148986139,
+    "geodesic_error_deg_median": 17.5292535878915,
+    "geodesic_error_deg_p90": 23.38133414362115,
+    "geodesic_error_deg_p95": 23.833246495469872,
+    "geodesic_error_deg_gt90_count": 0,
+    "geodesic_error_deg_gt90_percent": 0.0
+  },
+  {
+    "head_size_bin": "ge128",
+    "count": 1984,
+    "pitch_error_deg_mean": 5.882552627892724,
+    "yaw_error_deg_mean": 3.477978715655234,
+    "roll_error_deg_mean": 3.978635031431691,
+    "mean_axis_error_deg_mean": 4.446388791659882,
+    "geodesic_error_deg_mean": 6.519742526038135,
+    "vec1_error_deg_mean": 4.868901107462419,
+    "vec2_error_deg_mean": 4.591266985546007,
+    "vec3_error_deg_mean": 5.701594347775181,
+    "vmae_deg_mean": 5.0539208135945355,
+    "geodesic_error_deg_median": 5.307209899747962,
+    "geodesic_error_deg_p90": 11.278674132978944,
+    "geodesic_error_deg_p95": 14.234300618398409,
+    "geodesic_error_deg_gt90_count": 3,
+    "geodesic_error_deg_gt90_percent": 0.15120967741935484
+  }
+]
