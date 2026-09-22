@@ -68,6 +68,10 @@ YawPoseの手動修正には次の補助ツールを使用します。
 | 用語 | 定義 |
 |---|---|
 | existing HPE data | VGGHeadsおよびDAD-3DHeads train由来の学習データです。完全な回転行列教師を使用します。 |
+| SO(3) | 3次元回転を表す回転群です。本実験のSO(3) geodesic loss / errorは、二つの3次元回転の間の角距離を表します。 |
+| base model | 学習開始時checkpointをロードしたSixDRepNet360です。retention distillationでは、このモデルを固定teacherとして使用します。 |
+| retention distillation | existing HPE dataの非後方サンプルについて、学習対象モデルの予測を固定base modelの予測へ近づけ、非後方性能の変化を抑える損失です。 |
+| flip-consistency | 元画像と水平反転画像から得た予測を同一座標系へ戻し、両者の整合性を要求する損失です。本実験ではexisting HPE dataの後方だけにSO(3)版を適用します。 |
 | YawPose rear candidate | YawPoseのうち、canonical yawが共通yaw規約で`|yaw| >= 120°`となるサンプルです。 |
 | teacher | YawPoseの学習には使用せず、YawPose canonical yawの信頼度導出にのみ使用する固定済みHPEモデルです。 |
 | canonical yaw | 学習時にYawPoseサンプルへ適用するyaw教師です。人手修正が存在する場合は修正値を使用し、それ以外はYawPoseの元yawを使用します。 |
@@ -177,7 +181,7 @@ teacherごとにyawの符号、範囲、Euler角の定義が異なる可能性�
 
 全YawPose rear candidateについて固定teacher ensembleによる推論を完了し、その結果からreliability scoreとreliability rankingを作成します。
 
-学習中にteacher推論を実行しません。studentの予測、学習loss、epoch、checkpointによって信頼度を更新することもありません。
+学習中にteacher推論を実行しません。学習対象モデルの予測、学習loss、epoch、checkpointによって信頼度を更新することもありません。
 
 すべてのYawPose学習条件は同一の事前計算成果物を参照します。
 
