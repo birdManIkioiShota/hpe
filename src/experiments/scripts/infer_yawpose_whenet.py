@@ -19,7 +19,9 @@ from tqdm import tqdm
 
 
 REQUIRED_REVISION = "a0d7bdfb5e2ac97ae6b0ae3eef79fdcf4075ab82"
-FIXTURE_YAWS = (0.0, 90.0, -90.0, 150.0, -150.0)
+CALIBRATION_LABEL_SOURCE = "intent_operator_promoted"
+MIN_CALIBRATION_SAMPLES = 20
+CALIBRATION_MAX_ABS_YAW = 165.0
 ROOT = Path(__file__).resolve().parents[3]
 
 
@@ -36,8 +38,59 @@ def _signed(value: float) -> float:
     return 0.0 if abs(result) < 1e-12 else result
 
 
+def _circular_error(prediction: np.ndarray, target: np.ndarray) -> np.ndarray:
+    return np.abs((prediction - target + 180.0) % 360.0 - 180.0)
+
+
+def _calibrate_sign(
+    rows: list[dict],
+    predictions: dict[str, float],
+) -> tuple[int, dict]:
+    calibration = [
+        row
+        for row in rows
+        if row.get("label_source") == CALIBRATION_LABEL_SOURCE
+        and 120.0 <= abs(float(row["canonical_yaw_deg"])) <= CALIBRATION_MAX_ABS_YAW
+    ]
+    if len(calibration) < MIN_CALIBRATION_SAMPLES:
+        raise ValueError(
+            f"WHENet yaw calibration requires at least {MIN_CALIBRATION_SAMPLES} "
+            f"operator-verified rear samples; found {len(calibration)}"
+        )
+    target = np.asarray(
+        [float(row["canonical_yaw_deg"]) for row in calibration],
+        dtype=np.float64,
+    )
+    if not np.any(target < 0.0) or not np.any(target > 0.0):
+        raise ValueError("WHENet yaw calibration requires both yaw signs")
+    raw = np.asarray(
+        [predictions[str(row["instance_id"])] for row in calibration],
+        dtype=np.float64,
+    )
+    plus_error = float(_circular_error(raw, target).mean())
+    minus_error = float(_circular_error(-raw, target).mean())
+    if plus_error == minus_error:
+        raise ValueError("WHENet yaw sign calibration is ambiguous")
+    sign = 1 if plus_error < minus_error else -1
+    return sign, {
+        "passed": True,
+        "method": "operator-verified YawPose rear samples",
+        "label_source": CALIBRATION_LABEL_SOURCE,
+        "count": len(calibration),
+        "positive_count": int(np.sum(target > 0.0)),
+        "negative_count": int(np.sum(target < 0.0)),
+        "max_abs_yaw_deg": CALIBRATION_MAX_ABS_YAW,
+        "mean_error_sign_plus_deg": plus_error,
+        "mean_error_sign_minus_deg": minus_error,
+        "selected_sign": sign,
+    }
+
+
 def _git_revision(repo: Path) -> str:
-    return subprocess.check_output(["git", "-C", str(repo), "rev-parse", "HEAD"], text=True).strip()
+    return subprocess.check_output(
+        ["git", "-C", str(repo), "rev-parse", "HEAD"],
+        text=True,
+    ).strip()
 
 
 def _read_jsonl(path: Path) -> list[dict]:
@@ -50,7 +103,9 @@ def _write_jsonl(path: Path, rows: list[dict]) -> None:
     temp = path.with_suffix(path.suffix + ".tmp")
     with temp.open("w", encoding="utf-8") as stream:
         for row in rows:
-            stream.write(json.dumps(row, ensure_ascii=False, separators=(",", ":")) + "\n")
+            stream.write(
+                json.dumps(row, ensure_ascii=False, separators=(",", ":")) + "\n"
+            )
     temp.replace(path)
 
 
@@ -67,8 +122,14 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", required=True)
     parser.add_argument("--checkpoint", required=True)
-    parser.add_argument("--manifest", default="datasets/prepared/yawpose_rear/rear_candidates.jsonl")
-    parser.add_argument("--output", default="datasets/prepared/yawpose_teachers/whenet.jsonl")
+    parser.add_argument(
+        "--manifest",
+        default="datasets/prepared/yawpose_rear/rear_candidates.jsonl",
+    )
+    parser.add_argument(
+        "--output",
+        default="datasets/prepared/yawpose_teachers/whenet.jsonl",
+    )
     parser.add_argument("--batch-size", type=int, default=64)
     args = parser.parse_args()
     if args.batch_size <= 0:
@@ -79,7 +140,11 @@ def main() -> None:
     checkpoint = Path(args.checkpoint).resolve()
     if not checkpoint.is_file():
         raise FileNotFoundError(checkpoint)
-    manifest = (ROOT / args.manifest).resolve() if not Path(args.manifest).is_absolute() else Path(args.manifest).resolve()
+    manifest = (
+        (ROOT / args.manifest).resolve()
+        if not Path(args.manifest).is_absolute()
+        else Path(args.manifest).resolve()
+    )
     if not manifest.is_file():
         raise FileNotFoundError(manifest)
 
@@ -88,31 +153,51 @@ def main() -> None:
 
     model = WHENet(str(checkpoint))
     source_rows = _read_jsonl(manifest)
-    rows: list[dict] = []
-    for start in tqdm(range(0, len(source_rows), args.batch_size), desc="WHENet teacher", unit="batch"):
-        batch_rows = source_rows[start:start + args.batch_size]
+    raw_predictions: dict[str, float] = {}
+    for start in tqdm(
+        range(0, len(source_rows), args.batch_size),
+        desc="WHENet teacher",
+        unit="batch",
+    ):
+        batch_rows = source_rows[start : start + args.batch_size]
         images = []
         for row in batch_rows:
             bgr = cv2.imread(str(ROOT / row["image_path"]), cv2.IMREAD_COLOR)
             if bgr is None:
                 raise FileNotFoundError(ROOT / row["image_path"])
             rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
-            images.append(cv2.resize(rgb, (224, 224), interpolation=cv2.INTER_LINEAR))
+            images.append(
+                cv2.resize(
+                    rgb,
+                    (224, 224),
+                    interpolation=cv2.INTER_LINEAR,
+                )
+            )
         yaw, _, _ = model.get_angle(np.asarray(images))
         for row, value in zip(batch_rows, yaw):
-            rows.append({"instance_id": str(row["instance_id"]), "yaw_deg": _signed(float(value)), "valid": True})
+            raw_predictions[str(row["instance_id"])] = float(value)
 
-    output = (ROOT / args.output).resolve() if not Path(args.output).is_absolute() else Path(args.output).resolve()
+    sign, calibration = _calibrate_sign(source_rows, raw_predictions)
+    rows = [
+        {
+            "instance_id": str(row["instance_id"]),
+            "yaw_deg": _signed(
+                sign * raw_predictions[str(row["instance_id"])]
+            ),
+            "valid": True,
+        }
+        for row in source_rows
+    ]
+
+    output = (
+        (ROOT / args.output).resolve()
+        if not Path(args.output).is_absolute()
+        else Path(args.output).resolve()
+    )
     sidecar_path = output.with_suffix(".manifest.json")
     if output.exists() or sidecar_path.exists():
         raise FileExistsError(f"teacher output already exists: {output}")
     _write_jsonl(output, rows)
-    fixture = []
-    for yaw in FIXTURE_YAWS:
-        restored = _signed(yaw)
-        if abs(_signed(restored - yaw)) > 1e-9:
-            raise ValueError(f"WHENet yaw adapter fixture failed at {yaw}")
-        fixture.append(yaw)
     sidecar = {
         "teacher_id": "whenet",
         "model": "WHENet wide-range yaw",
@@ -121,9 +206,13 @@ def main() -> None:
         "repository_path": str(repo),
         "checkpoint_path": str(checkpoint),
         "checkpoint_sha256": _sha256(checkpoint),
-        "input_preprocess": "upstream WHENet RGB 224x224 and ImageNet normalization",
-        "yaw_adapter": "upstream yaw output wrapped to [-180,180)",
-        "fixture_validation": {"passed": True, "yaw_degrees": fixture, "method": "published WHENet yaw output convention and periodic wrap"},
+        "input_preprocess": (
+            "upstream WHENet RGB 224x224 and ImageNet normalization"
+        ),
+        "yaw_adapter": (
+            "upstream yaw output; data-calibrated sign; wrap [-180,180)"
+        ),
+        "yaw_convention_validation": calibration,
         "candidate_manifest_sha256": _sha256(manifest),
         "prediction_sha256": _sha256(output),
         "count": len(rows),
