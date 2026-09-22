@@ -4,14 +4,13 @@ Run this file with the Python environment used by the fixed WHENet repository re
 It intentionally does not import the HPE package so TensorFlow/Keras dependencies stay
 outside the HPE uv environment.
 """
-from __future__ import annotations
-
 import argparse
 import hashlib
 import json
 from pathlib import Path
 import subprocess
 import sys
+from typing import Dict, List, Tuple
 
 import cv2
 import numpy as np
@@ -28,8 +27,10 @@ ROOT = Path(__file__).resolve().parents[3]
 def _sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as stream:
-        while chunk := stream.read(1024 * 1024):
+        chunk = stream.read(1024 * 1024)
+        while chunk:
             digest.update(chunk)
+            chunk = stream.read(1024 * 1024)
     return digest.hexdigest()
 
 
@@ -43,9 +44,9 @@ def _circular_error(prediction: np.ndarray, target: np.ndarray) -> np.ndarray:
 
 
 def _calibrate_sign(
-    rows: list[dict],
-    predictions: dict[str, float],
-) -> tuple[int, dict]:
+    rows: List[dict],
+    predictions: Dict[str, float],
+) -> Tuple[int, dict]:
     calibration = [
         row
         for row in rows
@@ -90,16 +91,16 @@ def _calibrate_sign(
 def _git_revision(repo: Path) -> str:
     return subprocess.check_output(
         ["git", "-C", str(repo), "rev-parse", "HEAD"],
-        text=True,
+        universal_newlines=True,
     ).strip()
 
 
-def _read_jsonl(path: Path) -> list[dict]:
+def _read_jsonl(path: Path) -> List[dict]:
     with path.open(encoding="utf-8") as stream:
         return [json.loads(line) for line in stream if line.strip()]
 
 
-def _write_jsonl(path: Path, rows: list[dict]) -> None:
+def _write_jsonl(path: Path, rows: List[dict]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temp = path.with_suffix(path.suffix + ".tmp")
     with temp.open("w", encoding="utf-8") as stream:
@@ -154,7 +155,7 @@ def main() -> None:
 
     model = WHENet(str(checkpoint))
     source_rows = _read_jsonl(manifest)
-    raw_predictions: dict[str, float] = {}
+    raw_predictions: Dict[str, float] = {}
     for start in tqdm(
         range(0, len(source_rows), args.batch_size),
         desc="WHENet teacher",
