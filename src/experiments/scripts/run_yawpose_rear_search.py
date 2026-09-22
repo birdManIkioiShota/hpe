@@ -21,7 +21,7 @@ from experiments.common.yawpose_search import (
 )
 from hpe.datasets.common import sha256_file
 from training.audit import BASE_CHECKPOINT, BASE_SHA256
-from training.prepare_data import ROOT
+from training.prepare_data import ROOT, prepared_data_path
 
 
 SOURCE_FILES = (
@@ -157,10 +157,46 @@ def main() -> None:
     checkpoint = ROOT / BASE_CHECKPOINT
     if sha256_file(checkpoint) != BASE_SHA256:
         raise ValueError("base checkpoint SHA-256 mismatch")
+    vgg_dir = prepared_data_path(ROOT, args.vgg_data_id)
+    dad_dir = prepared_data_path(ROOT, args.dad_data_id)
+    training_manifests = [
+        vgg_dir / "train.jsonl",
+        vgg_dir / "dev.jsonl",
+        dad_dir / "train.jsonl",
+        dad_dir / "dev.jsonl",
+    ]
+    for manifest in training_manifests:
+        if not manifest.is_file():
+            raise FileNotFoundError(manifest)
+    subset_paths = {
+        condition.subset: (
+            reliability_dir
+            / "predictions"
+            / "subsets"
+            / f"{condition.subset}.jsonl"
+        )
+        for condition in conditions
+        if condition.subset != "base"
+    }
+    for subset_path in subset_paths.values():
+        if not subset_path.is_file():
+            raise FileNotFoundError(subset_path)
+
     provenance = {
         "base_checkpoint": {
             "path": BASE_CHECKPOINT,
             "sha256": BASE_SHA256,
+        },
+        "training_manifests": {
+            str(manifest.relative_to(ROOT)): sha256_file(manifest)
+            for manifest in training_manifests
+        },
+        "reliability_subsets": {
+            name: {
+                "path": str(subset_path.relative_to(ROOT)),
+                "sha256": sha256_file(subset_path),
+            }
+            for name, subset_path in sorted(subset_paths.items())
         },
         "reliability_run": {
             "run_id": args.reliability_run,
