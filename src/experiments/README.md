@@ -240,7 +240,7 @@ checkout:
 
 Both external teacher adapters write a prediction JSONL and a sidecar
 `.manifest.json` containing the fixed implementation revision, checkpoint SHA-256,
-preprocessing description, yaw adapter, and adapter-fixture result.
+preprocessing description, yaw adapter, and data-based yaw-sign calibration result.
 
 Precompute SixDRepNet360 predictions, the three-teacher reliability score, ranking, and
 all five nested subset manifests in one immutable experiment run:
