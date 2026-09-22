@@ -67,6 +67,9 @@ YawPoseの手動修正には次の補助ツールを使用します。
 
 | 用語 | 定義 |
 |---|---|
+| HPE | Head Pose Estimationの略称です。画像から頭部姿勢を推定するタスクを指します。 |
+| yaw | 本実験では頭部のhead-forward方向の水平方位角を指します。具体的な座標規約は第5.1節で定義します。 |
+| pitch / roll | 頭部姿勢を構成するyaw以外の回転成分です。existing HPE dataでは学習対象ですが、YawPose由来データでは教師信号として使用しません。 |
 | existing HPE data | VGGHeadsおよびDAD-3DHeads train由来の学習データです。完全な回転行列教師を使用します。 |
 | SO(3) | 3次元回転を表す回転群です。本実験のSO(3) geodesic loss / errorは、二つの3次元回転の間の角距離を表します。 |
 | base model | 学習開始時checkpointをロードしたSixDRepNet360です。retention distillationでは、このモデルを固定teacherとして使用します。 |
