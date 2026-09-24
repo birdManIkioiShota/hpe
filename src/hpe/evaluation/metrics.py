@@ -55,6 +55,7 @@ def yaw_bin_table(
     frame: pd.DataFrame,
     *,
     bin_size_deg: int = 30,
+    include_empty: bool = False,
 ) -> pd.DataFrame:
     if bin_size_deg <= 0 or 360 % bin_size_deg:
         raise ValueError("yaw bin size must be a positive divisor of 360")
@@ -80,9 +81,12 @@ def yaw_bin_table(
         right=False,
         include_lowest=True,
     ).astype("string")
-    return pd.DataFrame(
-        _group_rows(data, "yaw_bin", labels, "yaw_bin")
-    )
+    rows: list[dict[str, Any]] = []
+    for label in labels:
+        subset = data[data["yaw_bin"] == label]
+        if include_empty or len(subset):
+            rows.append(metric_row(subset, yaw_bin=label))
+    return pd.DataFrame(rows)
 
 
 def metric_tables(frame: pd.DataFrame) -> dict[str, pd.DataFrame]:
