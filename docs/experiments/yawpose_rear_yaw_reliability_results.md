@@ -300,7 +300,7 @@ YawPoseを使用する全条件では、subset sizeにかかわらず1 epochあ�
 
 `Y_base`比では`Y_top20`のrear yaw meanが+0.401°、`Y_top40`が+0.203°、`Y_top60`が-0.017°、`Y_top80`が-0.326°です。
 
-`Y_top100`の`experiments/runs/yawpose_rear_search/conditions/Y_top100/metrics/epoch_010.json`はリポジトリ上で0 byteのため、固定epoch 10の内部development値を保存成果物から検証できません。外部評価では修復された`Y_top100`のepoch 10 checkpointが評価され、checkpoint SHA-256も記録されています。
+`Y_top100`の`experiments/runs/yawpose_rear_search/conditions/Y_top100/metrics/epoch_010.json`はリポジトリ上で0 byteのため、固定epoch 10の内部development値を保存成果物から検証できません。一方、外部評価成果物には`Y_top100`のepoch 10 checkpointを用いた評価結果とcheckpoint SHA-256が保存されています。
 
 ### front / side保持
 
