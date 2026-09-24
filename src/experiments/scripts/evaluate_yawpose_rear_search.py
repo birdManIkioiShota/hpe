@@ -19,7 +19,7 @@ from training.prepare_data import ROOT
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--run-id", default="yawpose_rear_search")
+    parser.add_argument("--run-id", default="yawpose_rear_stratified_search")
     parser.add_argument("--baseline-run", required=True)
     parser.add_argument(
         "--checkpoint-choice",
@@ -87,6 +87,17 @@ def _masks(yaw: np.ndarray) -> dict[str, np.ndarray]:
         ),
         "rear_positive_150_to_180": yaw >= 150.0,
     }
+
+
+def _yaw15_masks(yaw: np.ndarray) -> dict[str, np.ndarray]:
+    signed = (np.asarray(yaw, dtype=np.float64) + 180.0) % 360.0 - 180.0
+    result: dict[str, np.ndarray] = {}
+    for left in range(-180, 180, 15):
+        right = left + 15
+        result[f"yaw_{left}_to_lt{right}"] = (
+            (signed >= left) & (signed < right)
+        )
+    return result
 
 
 def _bootstrap_ci(
@@ -179,7 +190,10 @@ def _yaw_comparison(
         baseline_error = _circular_error(baseline_yaw, gt)
         candidate_error = _circular_error(candidate_yaw, gt)
 
-        for group, mask in _masks(gt).items():
+        masks = _masks(gt)
+        if dataset == "agora_hpe":
+            masks.update(_yaw15_masks(gt))
+        for group, mask in masks.items():
             if not mask.any():
                 continue
             base_metric = _metric(baseline_error[mask])
