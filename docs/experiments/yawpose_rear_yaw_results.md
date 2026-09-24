@@ -101,6 +101,8 @@ SemiUHPEとWHENetのyaw符号は、方向QAを通過したYawPose後方サンプ
 
 `Y_top20`では1画像が平均約160.5回/epoch、10 epochでは単純平均で約1,605回drawされる計算になります。`Y_top100`では約32.1回/epochであり、1画像当たりの平均曝露回数には約5倍の差があります。
 
+`Y_top100`のrepeat ratioは、epoch 10 metricsが空ファイルであるためepoch 9の保存値を使用しています。選択画像数14,049件とtotal draws 451,072件は条件設定上固定されており、epoch 9では14,049件すべてが少なくとも1回drawされています。
+
 このため、採用率比較ではreliability rankingの範囲と角度分布に加えて、1サンプル当たりの累積YawPose loss寄与も同時に変化しています。
 
 ## 内部development split
