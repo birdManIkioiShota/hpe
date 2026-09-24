@@ -167,7 +167,6 @@ def main() -> None:
         vgg_dir / "train.jsonl",
         vgg_dir / "dev.jsonl",
         dad_dir / "train.jsonl",
-        dad_dir / "dev.jsonl",
     ]
     for manifest in training_manifests:
         if not manifest.is_file():
