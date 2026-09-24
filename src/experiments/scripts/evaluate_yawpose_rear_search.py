@@ -98,7 +98,7 @@ def _bootstrap_ci(
     if not len(difference):
         return float("nan"), float("nan")
     rng = np.random.default_rng(0)
-    values = difference
+    values = np.asarray(difference, dtype=np.float64)
     if len(values) > sample_limit:
         values = rng.choice(
             values,
