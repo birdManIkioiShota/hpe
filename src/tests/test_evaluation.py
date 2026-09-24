@@ -9,7 +9,7 @@ import pandas as pd
 import torch
 
 from hpe.data import ManifestDataset
-from hpe.evaluation.metrics import ERROR_COLUMNS, metric_tables
+from hpe.evaluation.metrics import ERROR_COLUMNS, metric_tables, yaw_bin_table
 from hpe.geometry import (
     circular_error_degrees,
     euler_degrees_to_matrix,
@@ -85,6 +85,40 @@ class MetricsTests(unittest.TestCase):
         self.assertEqual(int(bands.loc["front_lt60", "count"]), 1)
         self.assertEqual(int(bands.loc["side_60_to_lt120", "count"]), 2)
         self.assertEqual(int(bands.loc["rear_ge120", "count"]), 1)
+
+
+    def test_fifteen_degree_yaw_bins_cover_full_range(self):
+        yaw = [
+            -180.0,
+            -165.0,
+            -150.0,
+            -135.0,
+            -120.0,
+            -15.0,
+            0.0,
+            15.0,
+            120.0,
+            135.0,
+            150.0,
+            165.0,
+            179.9,
+        ]
+        frame = pd.DataFrame(
+            {
+                "gt_source_yaw_deg": yaw,
+                "bbox_width": [100.0] * len(yaw),
+                "bbox_height": [100.0] * len(yaw),
+                "occlusion_percent": [np.nan] * len(yaw),
+                **{
+                    column: [1.0] * len(yaw)
+                    for column in ERROR_COLUMNS
+                },
+            }
+        )
+        table = yaw_bin_table(frame, bin_size_deg=15)
+        self.assertEqual(int(table["count"].sum()), len(yaw))
+        self.assertIn("-180_to_-165", set(table["yaw_bin"]))
+        self.assertIn("165_to_180", set(table["yaw_bin"]))
 
 
 if __name__ == "__main__":
