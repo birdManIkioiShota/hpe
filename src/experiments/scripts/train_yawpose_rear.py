@@ -606,10 +606,10 @@ def main() -> None:
             )
             yaw_plan = None
             yaw_loader = None
+            yaw_batch_positions: tuple[int, ...] = ()
             if yawpose_data is not None:
                 yaw_plan = build_yawpose_epoch_plan(
                     subset_rows,
-                    num_samples=samples_per_epoch,
                     seed=args.seed,
                     epoch=epoch,
                 )
@@ -621,11 +621,14 @@ def main() -> None:
                     pin_memory=True,
                     drop_last=False,
                 )
-                if len(yaw_loader) != len(hpe_loader):
-                    raise ValueError(
-                        "YawPose and HPE streams must have equal micro-batch counts"
-                    )
-            yaw_iterator = iter(yaw_loader) if yaw_loader is not None else None
+                yaw_batch_positions = _spread_batch_positions(
+                    len(hpe_loader),
+                    len(yaw_loader),
+                )
+            yaw_iterator = (
+                iter(yaw_loader) if yaw_loader is not None else None
+            )
+            yaw_position_set = set(yaw_batch_positions)
 
             optimizer.zero_grad(set_to_none=True)
             totals = {
@@ -635,6 +638,8 @@ def main() -> None:
                 "distill": 0.0,
                 "flip": 0.0,
                 "yawpose": 0.0,
+                "yawpose_samples": 0,
+                "yawpose_batches": 0,
                 "rear_samples": 0,
             }
             bar = tqdm(
@@ -663,14 +668,21 @@ def main() -> None:
                         teacher_prediction = teacher(images[retention_mask])
 
                 yaw_images = yaw_target = None
-                if yaw_iterator is not None:
+                if (
+                    yaw_iterator is not None
+                    and batch_index in yaw_position_set
+                ):
                     yaw_images, yaw_target, _ = next(yaw_iterator)
                     yaw_images = yaw_images.to(device, non_blocking=True)
                     yaw_target = yaw_target.to(device, non_blocking=True)
 
+                yaw_errors = None
                 with autocast_context(device, args.precision):
                     prediction = student(images)
-                    supervised = rotation_loss_rad(prediction, target).mean()
+                    supervised = rotation_loss_rad(
+                        prediction,
+                        target,
+                    ).mean()
                     if teacher_prediction is not None:
                         distill = rotation_loss_rad(
                             prediction[retention_mask],
@@ -678,7 +690,10 @@ def main() -> None:
                         ).mean()
                     else:
                         distill = prediction.sum() * 0.0
-                    if rear_mask.any() and args.rear_flip_consistency_weight:
+                    if (
+                        rear_mask.any()
+                        and args.rear_flip_consistency_weight
+                    ):
                         flipped_prediction = student(
                             torch.flip(images[rear_mask], dims=[3])
                         )
@@ -690,10 +705,17 @@ def main() -> None:
                         flip_loss = prediction.sum() * 0.0
                     if yaw_images is not None:
                         yaw_prediction = student(yaw_images)
-                        yawpose_loss = yaw_loss_rad(
+                        yaw_errors = yaw_loss_rad(
                             yaw_prediction,
                             yaw_target,
-                        ).mean()
+                        )
+                        # Full YawPose batches retain the previous mean-loss
+                        # scale. A final partial batch is scaled by its actual
+                        # sample count so every selected sample contributes
+                        # exactly one equal draw per epoch.
+                        yawpose_loss = (
+                            yaw_errors.sum() / args.batch_size
+                        )
                     else:
                         yawpose_loss = prediction.sum() * 0.0
                     loss = (
@@ -701,8 +723,11 @@ def main() -> None:
                         + args.retain_distill_weight * distill
                         + args.rear_flip_consistency_weight * flip_loss
                         + (
-                            args.yawpose_weight if yawpose_enabled else 0.0
-                        ) * yawpose_loss
+                            args.yawpose_weight
+                            if yawpose_enabled
+                            else 0.0
+                        )
+                        * yawpose_loss
                     )
                     scaled_loss = loss / args.accumulation
 
@@ -714,10 +739,15 @@ def main() -> None:
                 totals["samples"] += count
                 totals["rear_samples"] += int(rear_mask.sum())
                 totals["loss"] += float(loss.detach()) * count
-                totals["supervised"] += float(supervised.detach()) * count
+                totals["supervised"] += (
+                    float(supervised.detach()) * count
+                )
                 totals["distill"] += float(distill.detach()) * count
                 totals["flip"] += float(flip_loss.detach()) * count
-                totals["yawpose"] += float(yawpose_loss.detach()) * count
+                if yaw_errors is not None:
+                    totals["yawpose"] += float(yaw_errors.detach().sum())
+                    totals["yawpose_samples"] += len(yaw_errors)
+                    totals["yawpose_batches"] += 1
 
                 if (batch_index + 1) % args.accumulation == 0:
                     norm = torch.nn.utils.clip_grad_norm_(
@@ -730,26 +760,40 @@ def main() -> None:
                     optimizer.zero_grad(set_to_none=True)
                     global_step += 1
                     if global_step % 100 == 0:
+                        yaw_mean = (
+                            totals["yawpose"]
+                            / totals["yawpose_samples"]
+                            if totals["yawpose_samples"]
+                            else 0.0
+                        )
                         _append_jsonl(
                             run.path / "metrics" / "train.jsonl",
                             {
-                                "time": datetime.now(timezone.utc).isoformat(),
+                                "time": datetime.now(
+                                    timezone.utc
+                                ).isoformat(),
                                 "epoch": epoch + 1,
                                 "step": global_step,
                                 "samples": totals["samples"],
-                                "loss_rad": totals["loss"] / totals["samples"],
+                                "yawpose_samples": totals[
+                                    "yawpose_samples"
+                                ],
+                                "loss_rad": (
+                                    totals["loss"] / totals["samples"]
+                                ),
                                 "supervised_rad": (
-                                    totals["supervised"] / totals["samples"]
+                                    totals["supervised"]
+                                    / totals["samples"]
                                 ),
                                 "distill_rad": (
-                                    totals["distill"] / totals["samples"]
+                                    totals["distill"]
+                                    / totals["samples"]
                                 ),
                                 "flip_consistency_rad": (
-                                    totals["flip"] / totals["samples"]
+                                    totals["flip"]
+                                    / totals["samples"]
                                 ),
-                                "yawpose_rad": (
-                                    totals["yawpose"] / totals["samples"]
-                                ),
+                                "yawpose_rad": yaw_mean,
                                 "gradient_norm": float(norm),
                                 "lr": [
                                     group["lr"]
@@ -760,6 +804,16 @@ def main() -> None:
                 bar.set_postfix(
                     loss=f"{totals['loss'] / totals['samples']:.4f}"
                 )
+
+            if yaw_plan is not None:
+                if totals["yawpose_samples"] != yaw_plan.total_draws:
+                    raise ValueError(
+                        "not all selected YawPose samples were drawn"
+                    )
+                if totals["yawpose_batches"] != len(yaw_batch_positions):
+                    raise ValueError(
+                        "YawPose batch schedule was not fully consumed"
+                    )
 
             dev = evaluate_pose_model(
                 student,
