@@ -1,0 +1,46 @@
+{
+  "base_checkpoint": {
+    "path": "checkpoints/6DRepNet360_Full-Rotation_300W_LP+Panoptic.pth",
+    "sha256": "3ee08f1e04b8d452a6c4a40926a6f38051894ae6d0aaa6d191fe6d8bc6e4f9c6"
+  },
+  "training_manifests": {
+    "datasets/prepared/vgg_data/train.jsonl": "087e644fa095374c730b0d10e38af8e8371556ffbb9c2d617aa1f5d3a644b394",
+    "datasets/prepared/vgg_data/dev.jsonl": "ba83be1e197275697e8919959519e4a5da314d460a34d5457ac9788f1a18d13b",
+    "datasets/prepared/dad3dheads_train/train.jsonl": "52be88952ab12c96bfa34ee8eab352ced96ba2e4d5863e712db7efed0c4e4bb8",
+    "datasets/prepared/dad3dheads_train/dev.jsonl": "7fc2d709d300014470fd274e70e9d016b7be3232b5bd297550afef547254c018"
+  },
+  "reliability_subsets": {
+    "top020": {
+      "path": "experiments/runs/yawpose_reliability/predictions/subsets/top020.jsonl",
+      "sha256": "02816201103585c063b5c89150e2b73dd7fa7d2ac9a42f57ee792b5d30ffdb33"
+    },
+    "top040": {
+      "path": "experiments/runs/yawpose_reliability/predictions/subsets/top040.jsonl",
+      "sha256": "147d59538fbba882d5033488f6801af8d8f3c702dcab4a02f95609a98f95a1f4"
+    },
+    "top060": {
+      "path": "experiments/runs/yawpose_reliability/predictions/subsets/top060.jsonl",
+      "sha256": "1690dc7ee138ae7eb117148b650a56b26c8a496b613903bcde0b9b6bcf3691c7"
+    },
+    "top080": {
+      "path": "experiments/runs/yawpose_reliability/predictions/subsets/top080.jsonl",
+      "sha256": "e01ebe7c6f37f46f587af0583ff573624bcf861a65786a353f447ad470a4599d"
+    },
+    "top100": {
+      "path": "experiments/runs/yawpose_reliability/predictions/subsets/top100.jsonl",
+      "sha256": "415e83b0afb185d01c85cd6deaf5eb7b48246f7e2b8a044d6e12e95bde908209"
+    }
+  },
+  "reliability_run": {
+    "run_id": "yawpose_reliability",
+    "config_sha256": "1889a84b3ce8539498641651b6f5fd93f5aab87926b0afef7e49c22959d5aa2c",
+    "provenance_sha256": "19143ed4aad855d72a984ac560d3c6573e38053449fc5fc453ac081c47870ce0",
+    "summary_sha256": "1bb78d0635440c3481feb802082636f5542a8d05e3629052d77c04d44ceccd48"
+  },
+  "source_sha256": {
+    "src/experiments/common/yawpose.py": "3d79fb7c3f03185188f062c7acd2ba1e732f0b95da46accab90b61b6e5c35bc5",
+    "src/experiments/common/yawpose_search.py": "b10de20fdbd86aae371ecfc137842e343bb0f3bcddaa55a15baee34820b8b2ba",
+    "src/experiments/scripts/run_yawpose_rear_search.py": "3e526b9e6fe37d746d95800dd77f1fd2dc5b5209f4a2544c810a835ae389ea10",
+    "src/experiments/scripts/train_yawpose_rear.py": "4fd937a4fbbaa16e9063778e55c1c8f2e0689060c06e426f4d38a6c03cf657e0"
+  }
+}

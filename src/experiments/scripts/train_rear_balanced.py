@@ -233,6 +233,7 @@ def main() -> None:
     parser.add_argument("--rear-flip-consistency-weight", type=float, required=True)
     parser.add_argument("--retention-tolerance-deg", type=float, default=0.0)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--progress-position", type=int, default=0)
     args = parser.parse_args()
 
     if (
@@ -250,6 +251,7 @@ def main() -> None:
         or args.retain_distill_weight < 0
         or args.rear_flip_consistency_weight < 0
         or args.retention_tolerance_deg < 0
+        or args.progress_position < 0
     ):
         raise ValueError("Invalid training hyperparameter")
     if not 0.0 < args.rear_fraction < 1.0:
@@ -370,6 +372,7 @@ def main() -> None:
         pin_memory=True,
     )
 
+    epoch_progress = None
     try:
         random.seed(args.seed)
         np.random.seed(args.seed)
@@ -407,7 +410,14 @@ def main() -> None:
         if resuming:
             baseline = json.loads(baseline_path.read_text())
         else:
-            baseline = evaluate_pose_model(student, dev_loader, device)
+            baseline = evaluate_pose_model(
+                student,
+                dev_loader,
+                device,
+                progress_position=args.progress_position + 1,
+                progress_leave=False,
+                progress_desc="Baseline dev",
+            )
             run.event(
                 "dev_baseline",
                 rear=baseline.get("rear"),
@@ -503,7 +513,17 @@ def main() -> None:
                 },
             )
 
+        epoch_progress = tqdm(
+            total=args.epochs,
+            initial=start_epoch,
+            desc="Epoch",
+            unit="epoch",
+            position=args.progress_position,
+            leave=True,
+            dynamic_ncols=True,
+        )
         for epoch in range(start_epoch, args.epochs):
+            epoch_progress.set_postfix(epoch=f"{epoch + 1}/{args.epochs}")
             training_mode(student, args.update_scope)
             sample_plan = build_epoch_plan(
                 buckets,
@@ -532,7 +552,14 @@ def main() -> None:
                 "flip_consistency_weighted": 0.0,
                 "rear_samples": 0,
             }
-            bar = tqdm(loader, desc=f"Train {epoch + 1}/{args.epochs}", unit="batch")
+            bar = tqdm(
+                loader,
+                desc="Train",
+                unit="batch",
+                position=args.progress_position + 1,
+                leave=False,
+                dynamic_ncols=True,
+            )
             for batch_index, (images, target, metadata) in enumerate(bar):
                 images = images.to(device, non_blocking=True)
                 target = target.to(device, non_blocking=True)
@@ -640,7 +667,14 @@ def main() -> None:
                     rear=f"{totals['rear_samples'] / totals['samples']:.3f}",
                 )
 
-            dev = evaluate_pose_model(student, dev_loader, device)
+            dev = evaluate_pose_model(
+                student,
+                dev_loader,
+                device,
+                progress_position=args.progress_position + 1,
+                progress_leave=False,
+                progress_desc="Internal dev",
+            )
             score = selection_score(
                 dev,
                 baseline,
@@ -724,6 +758,11 @@ def main() -> None:
                         "selection": config["selection"],
                     },
                 )
+            epoch_progress.update(1)
+            epoch_progress.set_postfix(
+                epoch=f"{epoch + 1}/{args.epochs}",
+                best=best_epoch,
+            )
 
         final_metrics = json.loads(
             (run.path / "metrics" / f"epoch_{args.epochs:03d}.json").read_text()
@@ -759,6 +798,8 @@ def main() -> None:
         run.fail(error)
         raise
     finally:
+        if epoch_progress is not None:
+            epoch_progress.close()
         train_data.close()
         dev_data.close()
 

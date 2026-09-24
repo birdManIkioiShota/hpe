@@ -120,6 +120,8 @@ def _condition_command(
         repr(args.retention_tolerance_deg),
         "--seed",
         str(args.seed),
+        "--progress-position",
+        "1",
     ]
     if args.samples_per_epoch is not None:
         command.extend(("--samples-per-epoch", str(args.samples_per_epoch)))
@@ -237,6 +239,9 @@ def main() -> None:
         conditions,
         desc="YawPose rear search",
         unit="condition",
+        position=0,
+        leave=True,
+        dynamic_ncols=True,
     )
     try:
         for condition in progress:
@@ -287,6 +292,8 @@ def main() -> None:
     except BaseException as error:
         run.fail(error)
         raise
+    finally:
+        progress.close()
 
 
 if __name__ == "__main__":

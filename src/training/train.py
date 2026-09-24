@@ -113,10 +113,25 @@ def optimizer_update(model, optimizer, scheduler, scaler, clip_norm):
 
 
 @torch.inference_mode()
-def evaluate_dev(model, loader, device):
+def evaluate_dev(
+    model,
+    loader,
+    device,
+    *,
+    progress_position=0,
+    progress_leave=True,
+    progress_desc="VGG dev (FP32)",
+):
     model.eval()
     errors = []
-    bar = tqdm(loader, desc="VGG dev (FP32)", unit="batch")
+    bar = tqdm(
+        loader,
+        desc=progress_desc,
+        unit="batch",
+        position=progress_position,
+        leave=progress_leave,
+        dynamic_ncols=True,
+    )
     running_sum, count = 0., 0
     for images, target in bar:
         prediction = model(images.to(device, non_blocking=True))
@@ -238,6 +253,7 @@ def run(root: Path, run_dir: Path, config: dict, *, resume: bool):
                       preflight_unique_images=verified_images)
         write_json_atomic(run_dir / "config.json", config)
     write_json_atomic(run_dir / "status.json", {"status": "running"})
+    epoch_progress = None
     with (run_dir / "events.jsonl").open("a") as log:
         try:
             os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
@@ -290,7 +306,14 @@ def run(root: Path, run_dir: Path, config: dict, *, resume: bool):
                 event(log, "resume", next_epoch=start_epoch, next_batch=start_batch, step=step)
             else:
                 # This is VGG dev, never one of the protected benchmarks.
-                baseline = evaluate_dev(model, dev_loader, device)
+                baseline = evaluate_dev(
+                    model,
+                    dev_loader,
+                    device,
+                    progress_position=1,
+                    progress_leave=False,
+                    progress_desc="Baseline dev",
+                )
                 best = baseline["geodesic_mean_deg"]
                 write_json_atomic(run_dir / "dev_baseline.json", baseline)
                 atomic_save(run_dir / "best.pth", {"state_dict": model.state_dict(), "epoch": 0,
@@ -298,7 +321,17 @@ def run(root: Path, run_dir: Path, config: dict, *, resume: bool):
                 save_last(0)
                 event(log, "dev_baseline", **baseline)
             dtype = torch.bfloat16 if config["precision"] == "bf16" else torch.float32
+            epoch_progress = tqdm(
+                total=config["epochs"],
+                initial=start_epoch,
+                desc="Epoch",
+                unit="epoch",
+                position=0,
+                leave=True,
+                dynamic_ncols=True,
+            )
             for epoch in range(start_epoch, config["epochs"]):
+                epoch_progress.set_postfix(epoch=f"{epoch + 1}/{config['epochs']}")
                 training_mode(model, head_only=epoch < config["head_warmup_epochs"])
                 epoch_start_batch = start_batch if epoch == start_epoch else 0
                 loader = make_loader(train, config, epoch=epoch, start_batch=epoch_start_batch)
@@ -311,7 +344,16 @@ def run(root: Path, run_dir: Path, config: dict, *, resume: bool):
                 full_batches = math.ceil(len(train) / config["batch_size"])
                 optimizer.zero_grad(set_to_none=True)
                 start = time.monotonic()
-                bar = tqdm(loader, desc=f"Train epoch {epoch + 1}/{config['epochs']}", unit="batch")
+                bar = tqdm(
+                    loader,
+                    total=full_batches,
+                    initial=epoch_start_batch,
+                    desc="Train",
+                    unit="batch",
+                    position=1,
+                    leave=False,
+                    dynamic_ncols=True,
+                )
                 for local_batch, (images, target) in enumerate(bar):
                     batch_index = epoch_start_batch + local_batch
                     images, target = images.to(device, non_blocking=True), target.to(device, non_blocking=True)
@@ -342,7 +384,13 @@ def run(root: Path, run_dir: Path, config: dict, *, resume: bool):
                                   next_batch=batch_index + 1, step=step)
                     bar.set_postfix(loss=f"{total_loss / seen:.4f}", lr=f"{optimizer.param_groups[1]['lr']:.2e}",
                                     heads_s=f"{(seen - seen_at_start) / max(time.monotonic() - start, .001):.1f}")
-                metrics = evaluate_dev(model, dev_loader, device)
+                metrics = evaluate_dev(
+                    model,
+                    dev_loader,
+                    device,
+                    progress_position=1,
+                    progress_leave=False,
+                )
                 improved = metrics["geodesic_mean_deg"] < best
                 if improved:
                     best = metrics["geodesic_mean_deg"]
@@ -356,6 +404,11 @@ def run(root: Path, run_dir: Path, config: dict, *, resume: bool):
                 tqdm.write(f"epoch {epoch + 1}: dev {metrics['geodesic_mean_deg']:.3f}°, best {best:.3f}°")
                 start_batch = 0
                 resume_accumulator = {"total_loss": 0.0, "seen": 0}
+                epoch_progress.update(1)
+                epoch_progress.set_postfix(
+                    epoch=f"{epoch + 1}/{config['epochs']}",
+                    best=f"{best:.3f}°",
+                )
             write_json_atomic(run_dir / "status.json", {"status": "completed", "epochs": config["epochs"],
                                                        "step": step, "best_dev_deg": best})
             event(log, "completed", best_dev_deg=best, step=step)
@@ -365,6 +418,9 @@ def run(root: Path, run_dir: Path, config: dict, *, resume: bool):
                 "resume": "last.pt restarts at the latest completed optimizer update"})
             event(log, status, error=str(error))
             raise
+        finally:
+            if epoch_progress is not None:
+                epoch_progress.close()
 
 
 def main():

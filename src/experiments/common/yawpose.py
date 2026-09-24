@@ -9,6 +9,7 @@ from typing import Any, Iterable
 import numpy as np
 import torch
 from torch.utils.data import Dataset
+from tqdm import tqdm
 from torchvision.transforms import functional as TF
 
 from hpe.data.dataset import evaluation_transform, read_rgb_image
@@ -299,18 +300,40 @@ def grouped_forward_yaw_metrics(
 
 
 @torch.inference_mode()
-def evaluate_forward_yaw_model(model, loader, device: torch.device) -> dict[str, dict[str, float]]:
+def evaluate_forward_yaw_model(
+    model,
+    loader,
+    device: torch.device,
+    *,
+    progress_position: int = 0,
+    progress_leave: bool = True,
+    progress_desc: str = "Yaw dev",
+) -> dict[str, dict[str, float]]:
     """Evaluate full-range head-forward azimuth on internal rotation-matrix dev data."""
     model.eval()
     errors: list[torch.Tensor] = []
     metadata_rows: dict[str, list[Any]] = {"azimuth_deg": [], "pose_band": []}
-    for images, target, metadata in loader:
+    bar = tqdm(
+        loader,
+        desc=progress_desc,
+        unit="batch",
+        position=progress_position,
+        leave=progress_leave,
+        dynamic_ncols=True,
+    )
+    running_sum = 0.0
+    count = 0
+    for images, target, metadata in bar:
         prediction = model(images.to(device, non_blocking=True)).float()
         target = target.to(device, non_blocking=True).float()
         pred_yaw = yaw_from_rotation_matrix_rad(prediction)
         target_yaw = yaw_from_rotation_matrix_rad(target)
         delta = torch.atan2(torch.sin(pred_yaw - target_yaw), torch.cos(pred_yaw - target_yaw))
-        errors.append(torch.rad2deg(delta.abs()).cpu())
+        batch_errors = torch.rad2deg(delta.abs())
+        errors.append(batch_errors.cpu())
+        running_sum += float(batch_errors.sum())
+        count += len(batch_errors)
+        bar.set_postfix(yaw_deg=f"{running_sum / count:.3f}")
         metadata_rows["azimuth_deg"].extend(
             metadata["azimuth_deg"].cpu().tolist()
             if torch.is_tensor(metadata["azimuth_deg"])

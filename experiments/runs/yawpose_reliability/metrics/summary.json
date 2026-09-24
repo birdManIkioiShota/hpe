@@ -1,0 +1,166 @@
+{
+  "count": 14049,
+  "score": {
+    "min": 0.043944570994684885,
+    "median": 0.5115318906605922,
+    "max": 0.9895121488230828
+  },
+  "subsets": {
+    "top020": {
+      "count": 2810,
+      "by_source": {
+        "synthetic_001": 865,
+        "synthetic_004": 869,
+        "synthetic_005": 1076
+      },
+      "by_rear_bucket": {
+        "negative:rear_120_to_lt150": 1562,
+        "negative:rear_150_to_180": 38,
+        "positive:rear_120_to_lt150": 1180,
+        "positive:rear_150_to_180": 30
+      },
+      "human_corrected": 0,
+      "score_max": 0.2955106302201974
+    },
+    "top040": {
+      "count": 5620,
+      "by_source": {
+        "synthetic_001": 1547,
+        "synthetic_004": 2149,
+        "synthetic_005": 1924
+      },
+      "by_rear_bucket": {
+        "negative:rear_120_to_lt150": 2596,
+        "negative:rear_150_to_180": 395,
+        "positive:rear_120_to_lt150": 2180,
+        "positive:rear_150_to_180": 449
+      },
+      "human_corrected": 0,
+      "score_max": 0.4332289293849658
+    },
+    "top060": {
+      "count": 8430,
+      "by_source": {
+        "synthetic_001": 1785,
+        "synthetic_004": 4044,
+        "synthetic_005": 2601
+      },
+      "by_rear_bucket": {
+        "negative:rear_120_to_lt150": 3259,
+        "negative:rear_150_to_180": 1398,
+        "positive:rear_120_to_lt150": 2567,
+        "positive:rear_150_to_180": 1206
+      },
+      "human_corrected": 0,
+      "score_max": 0.5909500759301443
+    },
+    "top080": {
+      "count": 11240,
+      "by_source": {
+        "synthetic_001": 1843,
+        "synthetic_004": 6019,
+        "synthetic_005": 3378
+      },
+      "by_rear_bucket": {
+        "negative:rear_120_to_lt150": 3680,
+        "negative:rear_150_to_180": 2295,
+        "positive:rear_120_to_lt150": 3088,
+        "positive:rear_150_to_180": 2177
+      },
+      "human_corrected": 0,
+      "score_max": 0.7062927107061503
+    },
+    "top100": {
+      "count": 14049,
+      "by_source": {
+        "synthetic_001": 1909,
+        "synthetic_004": 7934,
+        "synthetic_005": 4206
+      },
+      "by_rear_bucket": {
+        "negative:rear_120_to_lt150": 3946,
+        "negative:rear_150_to_180": 2791,
+        "positive:rear_120_to_lt150": 3630,
+        "positive:rear_150_to_180": 3682
+      },
+      "human_corrected": 0,
+      "score_max": 0.9895121488230828
+    }
+  },
+  "teachers": {
+    "sixdrepnet360_base": {
+      "teacher_id": "sixdrepnet360_base",
+      "implementation": "birdManIkioiShota/hpe",
+      "implementation_revision": "recorded-by-source-sha256",
+      "checkpoint_path": "checkpoints/6DRepNet360_Full-Rotation_300W_LP+Panoptic.pth",
+      "checkpoint_sha256": "3ee08f1e04b8d452a6c4a40926a6f38051894ae6d0aaa6d191fe6d8bc6e4f9c6",
+      "input_preprocess": "Resize256-CenterCrop224-ImageNet normalization",
+      "yaw_adapter": "atan2(R[0,2],R[2,2]) -> degrees -> [-180,180)",
+      "prediction_sha256": "77b81dde4824ecb7150e3fa7896d397f1c81f248c038684f32d36370f69c2cca",
+      "count": 14049
+    },
+    "semiuhpe_effnetv2s": {
+      "teacher_id": "semiuhpe_effnetv2s",
+      "model": "SemiUHPE EfficientNetV2-S full-range",
+      "implementation": "hnuzhy/SemiUHPE",
+      "implementation_revision": "c8f67102bf5aba8869b3f23453ac67599f21aa1f",
+      "repository_path": "/home/hoge/learn/hpe_external/SemiUHPE",
+      "checkpoint_path": "/home/hoge/learn/hpe_external/SemiUHPE/weights/DAD-WildHead-EffNetV2-S-best.pth",
+      "checkpoint_sha256": "5f31ce5aa0d5e9da2a5dc66b96d248d4dd05d8d52053d8293f4fdf3445b60739",
+      "input_preprocess": "RGB PIL BICUBIC resize 224x224, ImageNet normalization",
+      "yaw_adapter": "matrix-Fisher SVD projection; transpose; scipy xyz Euler yaw; data-calibrated sign; wrap [-180,180)",
+      "yaw_convention_validation": {
+        "passed": true,
+        "method": "direction-verified synthetic YawPose rear samples",
+        "label_sources": [
+          "intent_s004",
+          "intent_s005"
+        ],
+        "count": 9138,
+        "positive_count": 4579,
+        "negative_count": 4559,
+        "max_abs_yaw_deg": 165.0,
+        "mean_error_sign_plus_deg": 122.13410050374092,
+        "mean_error_sign_minus_deg": 152.5514305732003,
+        "selected_sign": 1
+      },
+      "candidate_manifest_sha256": "2f5c2d6e9749971d4c794ff75c0a7c1fcc7cb49fb0a899a14fffd8be7b360ef8",
+      "prediction_sha256": "fee635b8510c7fad242b18a61e57a010de5a97e81878243271af277b24333b8b",
+      "count": 14049,
+      "prediction_path": "/home/hoge/learn/hpe/datasets/prepared/yawpose_teachers/semiuhpe_effnetv2s.jsonl",
+      "manifest_sha256": "442264f40b0bbd12545b9e449960f0ea284a167663a2b7fe910108309f4c8749"
+    },
+    "whenet": {
+      "teacher_id": "whenet",
+      "model": "WHENet wide-range yaw",
+      "implementation": "Ascend-Research/HeadPoseEstimation-WHENet",
+      "implementation_revision": "a0d7bdfb5e2ac97ae6b0ae3eef79fdcf4075ab82",
+      "repository_path": "/home/hoge/learn/hpe_external/HeadPoseEstimation-WHENet",
+      "checkpoint_path": "/home/hoge/learn/hpe_external/HeadPoseEstimation-WHENet/WHENet.h5",
+      "checkpoint_sha256": "8f8bcf924447f7126666cf2c725a633ec2b9ae06afa4699064d3242a02401f59",
+      "input_preprocess": "upstream WHENet RGB 224x224 and ImageNet normalization",
+      "yaw_adapter": "upstream yaw output; data-calibrated sign; wrap [-180,180)",
+      "yaw_convention_validation": {
+        "passed": true,
+        "method": "direction-verified synthetic YawPose rear samples",
+        "label_sources": [
+          "intent_s004",
+          "intent_s005"
+        ],
+        "count": 9138,
+        "positive_count": 4579,
+        "negative_count": 4559,
+        "max_abs_yaw_deg": 165.0,
+        "mean_error_sign_plus_deg": 29.6766206453707,
+        "mean_error_sign_minus_deg": 65.46487042365906,
+        "selected_sign": 1
+      },
+      "candidate_manifest_sha256": "2f5c2d6e9749971d4c794ff75c0a7c1fcc7cb49fb0a899a14fffd8be7b360ef8",
+      "prediction_sha256": "3aa5351dbd14a60f7c6daa86f7f578ffa3944857ce2bbfd0d71b92fd1284db53",
+      "count": 14049,
+      "prediction_path": "/home/hoge/learn/hpe/datasets/prepared/yawpose_teachers/whenet.jsonl",
+      "manifest_sha256": "f38c13ddc29638db72280c72f8b392ea7a4eb9116c93aa8e97a30977cbb77a8b"
+    }
+  },
+  "reliability_sha256": "415e83b0afb185d01c85cd6deaf5eb7b48246f7e2b8a044d6e12e95bde908209"
+}

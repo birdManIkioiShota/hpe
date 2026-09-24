@@ -221,6 +221,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--yawpose-weight", type=float, default=0.2)
     parser.add_argument("--retention-tolerance-deg", type=float, default=0.0)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--progress-position", type=int, default=0)
     return parser
 
 
@@ -240,6 +241,7 @@ def main() -> None:
         or args.rear_flip_consistency_weight < 0
         or args.yawpose_weight < 0
         or args.retention_tolerance_deg < 0
+        or args.progress_position < 0
     ):
         raise ValueError("invalid training hyperparameter")
     device = torch.device(args.device)
@@ -401,6 +403,7 @@ def main() -> None:
         if len(yawpose_data) != len(subset_rows):
             raise ValueError("YawPose subset count changed")
 
+    epoch_progress = None
     try:
         random.seed(args.seed)
         np.random.seed(args.seed)
@@ -440,8 +443,22 @@ def main() -> None:
             baseline = json.loads(baseline_path.read_text())
             baseline_yaw = json.loads(baseline_yaw_path.read_text())
         else:
-            baseline = evaluate_pose_model(student, dev_loader, device)
-            baseline_yaw = evaluate_forward_yaw_model(student, dev_loader, device)
+            baseline = evaluate_pose_model(
+                student,
+                dev_loader,
+                device,
+                progress_position=args.progress_position + 1,
+                progress_leave=False,
+                progress_desc="Baseline pose dev",
+            )
+            baseline_yaw = evaluate_forward_yaw_model(
+                student,
+                dev_loader,
+                device,
+                progress_position=args.progress_position + 1,
+                progress_leave=False,
+                progress_desc="Baseline yaw dev",
+            )
             write_json_atomic(baseline_path, baseline)
             write_json_atomic(baseline_yaw_path, baseline_yaw)
 
@@ -518,7 +535,17 @@ def main() -> None:
                 },
             )
 
+        epoch_progress = tqdm(
+            total=args.epochs,
+            initial=start_epoch,
+            desc="Epoch",
+            unit="epoch",
+            position=args.progress_position,
+            leave=True,
+            dynamic_ncols=True,
+        )
         for epoch in range(start_epoch, args.epochs):
+            epoch_progress.set_postfix(epoch=f"{epoch + 1}/{args.epochs}")
             training_mode(student, args.update_scope)
             hpe_plan = build_epoch_plan(
                 buckets,
@@ -571,8 +598,11 @@ def main() -> None:
             }
             bar = tqdm(
                 hpe_loader,
-                desc=f"Train {epoch + 1}/{args.epochs}",
+                desc="Train",
                 unit="batch",
+                position=args.progress_position + 1,
+                leave=False,
+                dynamic_ncols=True,
             )
             for batch_index, (images, target, metadata) in enumerate(bar):
                 images = images.to(device, non_blocking=True)
@@ -690,8 +720,22 @@ def main() -> None:
                     loss=f"{totals['loss'] / totals['samples']:.4f}"
                 )
 
-            dev = evaluate_pose_model(student, dev_loader, device)
-            dev_yaw = evaluate_forward_yaw_model(student, dev_loader, device)
+            dev = evaluate_pose_model(
+                student,
+                dev_loader,
+                device,
+                progress_position=args.progress_position + 1,
+                progress_leave=False,
+                progress_desc="Pose dev",
+            )
+            dev_yaw = evaluate_forward_yaw_model(
+                student,
+                dev_loader,
+                device,
+                progress_position=args.progress_position + 1,
+                progress_leave=False,
+                progress_desc="Yaw dev",
+            )
             score = selection_score(
                 dev,
                 baseline,
@@ -811,6 +855,11 @@ def main() -> None:
                         "selection": config["selection"],
                     },
                 )
+            epoch_progress.update(1)
+            epoch_progress.set_postfix(
+                epoch=f"{epoch + 1}/{args.epochs}",
+                best=best_epoch,
+            )
 
         final = json.loads(
             (
@@ -846,6 +895,8 @@ def main() -> None:
         run.fail(error)
         raise
     finally:
+        if epoch_progress is not None:
+            epoch_progress.close()
         train_data.close()
         dev_data.close()
 

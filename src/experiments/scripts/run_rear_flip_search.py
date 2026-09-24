@@ -133,6 +133,8 @@ def _condition_command(args: argparse.Namespace, condition, *, resume: bool) -> 
         repr(args.retention_tolerance_deg),
         "--seed",
         str(args.seed),
+        "--progress-position",
+        "1",
     ]
     if args.samples_per_epoch is not None:
         command.extend(("--samples-per-epoch", str(args.samples_per_epoch)))
@@ -201,7 +203,14 @@ def main() -> None:
         )
 
     completed = 0
-    progress = tqdm(conditions, desc="Rear/flip search", unit="condition")
+    progress = tqdm(
+        conditions,
+        desc="Rear/flip search",
+        unit="condition",
+        position=0,
+        leave=True,
+        dynamic_ncols=True,
+    )
     try:
         for condition in progress:
             progress.set_postfix(condition=condition.condition_id, completed=completed)
@@ -243,6 +252,8 @@ def main() -> None:
     except BaseException as error:
         run.fail(error)
         raise
+    finally:
+        progress.close()
 
 
 if __name__ == "__main__":

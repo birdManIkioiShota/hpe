@@ -1,0 +1,60 @@
+{
+  "kind": "yawpose_rear_adoption_search",
+  "epochs": 10,
+  "conditions": [
+    {
+      "condition_id": "Y_base",
+      "subset": "base",
+      "adoption_ratio": 0.0
+    },
+    {
+      "condition_id": "Y_top20",
+      "subset": "top020",
+      "adoption_ratio": 0.2
+    },
+    {
+      "condition_id": "Y_top40",
+      "subset": "top040",
+      "adoption_ratio": 0.4
+    },
+    {
+      "condition_id": "Y_top60",
+      "subset": "top060",
+      "adoption_ratio": 0.6
+    },
+    {
+      "condition_id": "Y_top80",
+      "subset": "top080",
+      "adoption_ratio": 0.8
+    },
+    {
+      "condition_id": "Y_top100",
+      "subset": "top100",
+      "adoption_ratio": 1.0
+    }
+  ],
+  "reliability_run": "yawpose_reliability",
+  "shared_training": {
+    "reliability_run": "yawpose_reliability",
+    "vgg_data_id": "vgg_data",
+    "dad_data_id": "dad3dheads_train",
+    "device": "cuda:0",
+    "precision": "bf16",
+    "update_scope": "layer4",
+    "epochs": 10,
+    "samples_per_epoch": null,
+    "batch_size": 64,
+    "accumulation": 2,
+    "workers": 8,
+    "backbone_lr": 1e-06,
+    "head_lr": 3e-05,
+    "weight_decay": 0.0001,
+    "warmup_updates": 100,
+    "clip_norm": 1.0,
+    "retain_distill_weight": 1.0,
+    "rear_flip_consistency_weight": 0.2,
+    "yawpose_weight": 0.2,
+    "retention_tolerance_deg": 0.0,
+    "seed": 42
+  }
+}

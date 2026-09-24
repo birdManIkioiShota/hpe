@@ -1,0 +1,21 @@
+{
+  "kind": "yawpose_reliability_precompute",
+  "data_id": "yawpose_rear",
+  "teacher_ids": [
+    "sixdrepnet360_base",
+    "semiuhpe_effnetv2s",
+    "whenet"
+  ],
+  "adoption_ratios": [
+    0.2,
+    0.4,
+    0.6,
+    0.8,
+    1.0
+  ],
+  "device": "cuda:0",
+  "batch_size": 256,
+  "workers": 8,
+  "seed": 42,
+  "score": "mean(percentile(gt_median_error), percentile(teacher_dispersion), percentile(gt_max_error))"
+}

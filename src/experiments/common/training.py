@@ -136,7 +136,15 @@ def grouped_metrics(errors: torch.Tensor, metadata: dict[str, Any]) -> dict[str,
 
 
 @torch.inference_mode()
-def evaluate_pose_model(model: nn.Module, loader, device: torch.device) -> dict[str, dict[str, float]]:
+def evaluate_pose_model(
+    model: nn.Module,
+    loader,
+    device: torch.device,
+    *,
+    progress_position: int = 0,
+    progress_leave: bool = True,
+    progress_desc: str = "Internal dev",
+) -> dict[str, dict[str, float]]:
     model.eval()
     errors: list[torch.Tensor] = []
     metadata_rows: dict[str, list[Any]] = {
@@ -144,7 +152,14 @@ def evaluate_pose_model(model: nn.Module, loader, device: torch.device) -> dict[
     }
     running_sum = 0.0
     count = 0
-    bar = tqdm(loader, desc="Internal dev", unit="batch")
+    bar = tqdm(
+        loader,
+        desc=progress_desc,
+        unit="batch",
+        position=progress_position,
+        leave=progress_leave,
+        dynamic_ncols=True,
+    )
     for images, target, metadata in bar:
         prediction = model(images.to(device, non_blocking=True))
         values = geodesic_error_degrees(

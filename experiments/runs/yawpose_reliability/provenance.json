@@ -1,0 +1,79 @@
+{
+  "candidate_manifest": {
+    "path": "datasets/prepared/yawpose_rear/rear_candidates.jsonl",
+    "sha256": "2f5c2d6e9749971d4c794ff75c0a7c1fcc7cb49fb0a899a14fffd8be7b360ef8"
+  },
+  "prepared_metadata": {
+    "path": "datasets/prepared/yawpose_rear/metadata.json",
+    "sha256": "bf27a354e6b2b660816d907b21d5cab4e75d2cc550f1012bf947e8a6e55b5e70"
+  },
+  "external_teachers": {
+    "semiuhpe_effnetv2s": {
+      "teacher_id": "semiuhpe_effnetv2s",
+      "model": "SemiUHPE EfficientNetV2-S full-range",
+      "implementation": "hnuzhy/SemiUHPE",
+      "implementation_revision": "c8f67102bf5aba8869b3f23453ac67599f21aa1f",
+      "repository_path": "/home/hoge/learn/hpe_external/SemiUHPE",
+      "checkpoint_path": "/home/hoge/learn/hpe_external/SemiUHPE/weights/DAD-WildHead-EffNetV2-S-best.pth",
+      "checkpoint_sha256": "5f31ce5aa0d5e9da2a5dc66b96d248d4dd05d8d52053d8293f4fdf3445b60739",
+      "input_preprocess": "RGB PIL BICUBIC resize 224x224, ImageNet normalization",
+      "yaw_adapter": "matrix-Fisher SVD projection; transpose; scipy xyz Euler yaw; data-calibrated sign; wrap [-180,180)",
+      "yaw_convention_validation": {
+        "passed": true,
+        "method": "direction-verified synthetic YawPose rear samples",
+        "label_sources": [
+          "intent_s004",
+          "intent_s005"
+        ],
+        "count": 9138,
+        "positive_count": 4579,
+        "negative_count": 4559,
+        "max_abs_yaw_deg": 165.0,
+        "mean_error_sign_plus_deg": 122.13410050374092,
+        "mean_error_sign_minus_deg": 152.5514305732003,
+        "selected_sign": 1
+      },
+      "candidate_manifest_sha256": "2f5c2d6e9749971d4c794ff75c0a7c1fcc7cb49fb0a899a14fffd8be7b360ef8",
+      "prediction_sha256": "fee635b8510c7fad242b18a61e57a010de5a97e81878243271af277b24333b8b",
+      "count": 14049,
+      "prediction_path": "/home/hoge/learn/hpe/datasets/prepared/yawpose_teachers/semiuhpe_effnetv2s.jsonl",
+      "manifest_sha256": "442264f40b0bbd12545b9e449960f0ea284a167663a2b7fe910108309f4c8749"
+    },
+    "whenet": {
+      "teacher_id": "whenet",
+      "model": "WHENet wide-range yaw",
+      "implementation": "Ascend-Research/HeadPoseEstimation-WHENet",
+      "implementation_revision": "a0d7bdfb5e2ac97ae6b0ae3eef79fdcf4075ab82",
+      "repository_path": "/home/hoge/learn/hpe_external/HeadPoseEstimation-WHENet",
+      "checkpoint_path": "/home/hoge/learn/hpe_external/HeadPoseEstimation-WHENet/WHENet.h5",
+      "checkpoint_sha256": "8f8bcf924447f7126666cf2c725a633ec2b9ae06afa4699064d3242a02401f59",
+      "input_preprocess": "upstream WHENet RGB 224x224 and ImageNet normalization",
+      "yaw_adapter": "upstream yaw output; data-calibrated sign; wrap [-180,180)",
+      "yaw_convention_validation": {
+        "passed": true,
+        "method": "direction-verified synthetic YawPose rear samples",
+        "label_sources": [
+          "intent_s004",
+          "intent_s005"
+        ],
+        "count": 9138,
+        "positive_count": 4579,
+        "negative_count": 4559,
+        "max_abs_yaw_deg": 165.0,
+        "mean_error_sign_plus_deg": 29.6766206453707,
+        "mean_error_sign_minus_deg": 65.46487042365906,
+        "selected_sign": 1
+      },
+      "candidate_manifest_sha256": "2f5c2d6e9749971d4c794ff75c0a7c1fcc7cb49fb0a899a14fffd8be7b360ef8",
+      "prediction_sha256": "3aa5351dbd14a60f7c6daa86f7f578ffa3944857ce2bbfd0d71b92fd1284db53",
+      "count": 14049,
+      "prediction_path": "/home/hoge/learn/hpe/datasets/prepared/yawpose_teachers/whenet.jsonl",
+      "manifest_sha256": "f38c13ddc29638db72280c72f8b392ea7a4eb9116c93aa8e97a30977cbb77a8b"
+    }
+  },
+  "source_sha256": {
+    "src/experiments/common/yawpose.py": "d20a99d87a57c0c537b152736dab9473f6430232be87e9663e7179d03fc6908b",
+    "src/experiments/scripts/precompute_yawpose_reliability.py": "b4080b5a4dc420d050875195837d5f8d283011feb965fb399c399f1b1d47429c",
+    "src/hpe/models/sixdrepnet360.py": "9e4ff8d9f4be26fd2aed4a7387bf128c4f242c8a9e9f4f4c513f0d01e90089a0"
+  }
+}
