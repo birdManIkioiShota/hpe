@@ -61,6 +61,16 @@ def _circular_error(a: np.ndarray, b: np.ndarray) -> np.ndarray:
 
 
 def _metric(error: np.ndarray) -> dict:
+    if not len(error):
+        return {
+            "count": 0,
+            "mean_deg": None,
+            "median_deg": None,
+            "p90_deg": None,
+            "over30_percent": None,
+            "over60_percent": None,
+            "over90_percent": None,
+        }
     return {
         "count": int(len(error)),
         "mean_deg": float(np.mean(error)),
@@ -106,9 +116,9 @@ def _bootstrap_ci(
     *,
     repetitions: int,
     sample_limit: int,
-) -> tuple[float, float]:
+) -> tuple[float | None, float | None]:
     if not len(difference):
-        return float("nan"), float("nan")
+        return None, None
     rng = np.random.default_rng(0)
     values = np.asarray(difference, dtype=np.float64)
     if len(values) > sample_limit:
@@ -195,7 +205,11 @@ def _yaw_comparison(
         if dataset == "agora_hpe":
             masks.update(_yaw15_masks(gt))
         for group, mask in masks.items():
-            if not mask.any():
+            is_agora_yaw15 = (
+                dataset == "agora_hpe"
+                and group.startswith("yaw_")
+            )
+            if not mask.any() and not is_agora_yaw15:
                 continue
             base_metric = _metric(baseline_error[mask])
             candidate_metric = _metric(candidate_error[mask])
@@ -213,8 +227,10 @@ def _yaw_comparison(
                     "group": group,
                     "baseline": base_metric,
                     "candidate": candidate_metric,
-                    "mean_delta_candidate_minus_baseline_deg": float(
-                        np.mean(difference)
+                    "mean_delta_candidate_minus_baseline_deg": (
+                        float(np.mean(difference))
+                        if len(difference)
+                        else None
                     ),
                     "mean_delta_ci95_low": ci_low,
                     "mean_delta_ci95_high": ci_high,
@@ -248,8 +264,16 @@ def _write_agora_yaw15_comparison_plot(
         label = row["group"][len("yaw_"):]
         left, right = label.split("_to_lt")
         centers.append((float(left) + float(right)) / 2.0)
-        baseline_values.append(float(row["baseline"]["mean_deg"]))
-        candidate_values.append(float(row["candidate"]["mean_deg"]))
+        baseline_values.append(
+            float(row["baseline"]["mean_deg"])
+            if row["baseline"]["mean_deg"] is not None
+            else float("nan")
+        )
+        candidate_values.append(
+            float(row["candidate"]["mean_deg"])
+            if row["candidate"]["mean_deg"] is not None
+            else float("nan")
+        )
 
     write_yaw_comparison_radar(
         output_path,
