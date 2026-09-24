@@ -187,7 +187,7 @@ def _summary(rows: list[dict], subsets: dict[str, list[dict]]) -> dict:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--run-id", default="yawpose_reliability")
+    parser.add_argument("--run-id", default="yawpose_reliability_stratified15")
     parser.add_argument("--data-id", default="yawpose_rear")
     parser.add_argument("--semiuhpe-predictions", required=True)
     parser.add_argument("--whenet-predictions", required=True)
