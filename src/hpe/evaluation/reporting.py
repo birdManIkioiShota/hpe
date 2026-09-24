@@ -110,3 +110,54 @@ def write_yaw_radar_plot(
         bbox_inches="tight",
     )
     plt.close(figure)
+
+
+def write_yaw_comparison_radar(
+    output_path: Path,
+    *,
+    yaw_centers_deg: list[float],
+    baseline_mean_deg: list[float],
+    candidate_mean_deg: list[float],
+    baseline_label: str,
+    candidate_label: str,
+    title: str,
+) -> None:
+    if not yaw_centers_deg:
+        return
+    if not (
+        len(yaw_centers_deg)
+        == len(baseline_mean_deg)
+        == len(candidate_mean_deg)
+    ):
+        raise ValueError("yaw comparison radar lengths differ")
+
+    theta = np.deg2rad(np.asarray(yaw_centers_deg, dtype=np.float64))
+    figure, axis = plt.subplots(
+        figsize=(8, 8),
+        subplot_kw={"projection": "polar"},
+    )
+    for values, label in (
+        (baseline_mean_deg, baseline_label),
+        (candidate_mean_deg, candidate_label),
+    ):
+        array = np.asarray(values, dtype=np.float64)
+        axis.plot(
+            np.append(theta, theta[0]),
+            np.append(array, array[0]),
+            marker="o",
+            label=label,
+        )
+
+    axis.set_theta_zero_location("N")
+    axis.set_theta_direction(-1)
+    signed_ticks = np.arange(-180, 180, 30)
+    axis.set_thetagrids(
+        np.mod(signed_ticks, 360),
+        labels=[f"{degree}°" for degree in signed_ticks],
+    )
+    axis.set_title(title)
+    axis.legend(loc="upper right", bbox_to_anchor=(1.28, 1.12))
+    figure.tight_layout()
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    figure.savefig(output_path, dpi=160, bbox_inches="tight")
+    plt.close(figure)
