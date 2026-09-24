@@ -227,7 +227,7 @@ def build_parser() -> argparse.ArgumentParser:
         choices=("base", "top020", "top040", "top060", "top080", "top100"),
         required=True,
     )
-    parser.add_argument("--reliability-run", default="yawpose_reliability")
+    parser.add_argument("--reliability-run", default="yawpose_reliability_stratified15")
     parser.add_argument("--vgg-data-id", default="vgg_data")
     parser.add_argument("--dad-data-id", default="dad3dheads_train")
     parser.add_argument("--use-dad", action="store_true")
