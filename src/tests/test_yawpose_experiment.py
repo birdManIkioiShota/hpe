@@ -59,19 +59,19 @@ class YawPoseExperimentTests(unittest.TestCase):
 
     def test_rear_yaw_bins_cover_signed_rear_range(self):
         cases = {
-            -180.0: "negative:rear_165_to_180",
-            -165.0: "negative:rear_165_to_180",
-            -164.9: "negative:rear_150_to_lt165",
-            -150.0: "negative:rear_150_to_lt165",
-            -149.9: "negative:rear_135_to_lt150",
-            -135.0: "negative:rear_135_to_lt150",
-            -134.9: "negative:rear_120_to_lt135",
-            -120.0: "negative:rear_120_to_lt135",
-            120.0: "positive:rear_120_to_lt135",
-            135.0: "positive:rear_135_to_lt150",
-            150.0: "positive:rear_150_to_lt165",
-            165.0: "positive:rear_165_to_180",
-            179.9: "positive:rear_165_to_180",
+            -180.0: "negative:yaw_-180_to_lt-165",
+            -165.0: "negative:yaw_-165_to_lt-150",
+            -164.9: "negative:yaw_-165_to_lt-150",
+            -150.0: "negative:yaw_-150_to_lt-135",
+            -149.9: "negative:yaw_-150_to_lt-135",
+            -135.0: "negative:yaw_-135_to_-120",
+            -134.9: "negative:yaw_-135_to_-120",
+            -120.0: "negative:yaw_-135_to_-120",
+            120.0: "positive:yaw_120_to_lt135",
+            135.0: "positive:yaw_135_to_lt150",
+            150.0: "positive:yaw_150_to_lt165",
+            165.0: "positive:yaw_165_to_lt180",
+            179.9: "positive:yaw_165_to_lt180",
         }
         for yaw, expected in cases.items():
             with self.subTest(yaw=yaw):
@@ -80,14 +80,14 @@ class YawPoseExperimentTests(unittest.TestCase):
 
     def test_reliability_ranking_is_stratified_and_nested(self):
         yaw_by_bin = {
-            "negative:rear_165_to_180": -172.0,
-            "negative:rear_150_to_lt165": -157.0,
-            "negative:rear_135_to_lt150": -142.0,
-            "negative:rear_120_to_lt135": -127.0,
-            "positive:rear_120_to_lt135": 127.0,
-            "positive:rear_135_to_lt150": 142.0,
-            "positive:rear_150_to_lt165": 157.0,
-            "positive:rear_165_to_180": 172.0,
+            "negative:yaw_-180_to_lt-165": -172.0,
+            "negative:yaw_-165_to_lt-150": -157.0,
+            "negative:yaw_-150_to_lt-135": -142.0,
+            "negative:yaw_-135_to_-120": -127.0,
+            "positive:yaw_120_to_lt135": 127.0,
+            "positive:yaw_135_to_lt150": 142.0,
+            "positive:yaw_150_to_lt165": 157.0,
+            "positive:yaw_165_to_lt180": 172.0,
         }
         candidates = []
         predictions = {
