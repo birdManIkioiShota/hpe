@@ -1,0 +1,16 @@
+{
+  "comparison_name": "baseline_vs_Y_top20",
+  "baseline": "/home/hoge/learn/hpe/eval/baseline_fp32/evaluations/baseline",
+  "baseline_checkpoint_sha256": "3ee08f1e04b8d452a6c4a40926a6f38051894ae6d0aaa6d191fe6d8bc6e4f9c6",
+  "candidate": "/home/hoge/learn/hpe/eval/yawpose_rear_search/conditions/Y_top20",
+  "candidate_checkpoint_sha256": "8df7331515fe99eba2eda0dc5b4452031f1ace3a9dd372730d1f40a692440d44",
+  "datasets": [
+    "agora_hpe",
+    "aflw2000",
+    "300w_lp"
+  ],
+  "bootstrap_repetitions": 1000,
+  "bootstrap_sample_limit": 10000,
+  "seed": 0,
+  "delta_definition": "candidate minus baseline; negative is improvement"
+}

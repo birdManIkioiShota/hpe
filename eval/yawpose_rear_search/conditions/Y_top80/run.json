@@ -1,0 +1,146 @@
+{
+  "run_name": "Y_top80",
+  "checkpoint": {
+    "path": "/home/hoge/learn/hpe/experiments/runs/yawpose_rear_search/conditions/Y_top80/checkpoints/epoch_010.pth",
+    "sha256": "85cd78c6d967bd4a9e95e2e49790599d49fba14c32fbd82c7345e064ff39f98e",
+    "parameter_tensors": 320
+  },
+  "datasets": [
+    {
+      "dataset": "agora_hpe",
+      "count": 7505,
+      "elapsed_seconds": 23.522391820000053,
+      "samples_per_second": 319.05769011205865,
+      "manifest": "/home/hoge/learn/hpe/datasets/prepared/agora_hpe/manifest.jsonl",
+      "manifest_sha256": "c4b70189a17ea4ad7d79112f66c2562672395c8dd969e85b1bd0804357c6abf2",
+      "overall": {
+        "count": 7505.0,
+        "pitch_error_deg_mean": 42.96630831749968,
+        "yaw_error_deg_mean": 25.879375559704766,
+        "roll_error_deg_mean": 41.50425260364372,
+        "mean_axis_error_deg_mean": 36.783312160282726,
+        "geodesic_error_deg_mean": 44.1590570114247,
+        "vec1_error_deg_mean": 40.49871533609256,
+        "vec2_error_deg_mean": 16.035468733633955,
+        "vec3_error_deg_mean": 41.19169642482815,
+        "vmae_deg_mean": 32.57529349818489,
+        "geodesic_error_deg_median": 28.92712778239232,
+        "geodesic_error_deg_p90": 108.06231061794044,
+        "geodesic_error_deg_p95": 140.5264905735458,
+        "geodesic_error_deg_gt90_count": 1029.0,
+        "geodesic_error_deg_gt90_percent": 13.710859427048636
+      },
+      "rotation_checks": {
+        "max_orthogonality_error": 4.2594773708160005e-07,
+        "max_determinant_error": 4.086074553155683e-07
+      },
+      "image_lock_sha256": "d5fecd3e045d5b93ad3a7941b239ae2f4a05d36c3bfeee5be4bea67c0eacc5af"
+    },
+    {
+      "dataset": "aflw2000",
+      "count": 1988,
+      "elapsed_seconds": 1.812670623000031,
+      "samples_per_second": 1096.7243440563918,
+      "manifest": "/home/hoge/learn/hpe/datasets/prepared/aflw2000/manifest.jsonl",
+      "manifest_sha256": "218f3dc212ccfe7b6f88475649febd0124a81670de462ad9caab5e9040e98470",
+      "overall": {
+        "count": 1988.0,
+        "pitch_error_deg_mean": 7.358195343158681,
+        "yaw_error_deg_mean": 3.683572326830268,
+        "roll_error_deg_mean": 5.527284627628693,
+        "mean_axis_error_deg_mean": 5.523017432539213,
+        "geodesic_error_deg_mean": 6.822913886226298,
+        "vec1_error_deg_mean": 5.155095019905753,
+        "vec2_error_deg_mean": 4.683306235369609,
+        "vec3_error_deg_mean": 6.034301208035927,
+        "vmae_deg_mean": 5.2909008211037625,
+        "geodesic_error_deg_median": 5.619777351225644,
+        "geodesic_error_deg_p90": 11.957345045465692,
+        "geodesic_error_deg_p95": 15.049109429142403,
+        "geodesic_error_deg_gt90_count": 3.0,
+        "geodesic_error_deg_gt90_percent": 0.15090543259557343
+      },
+      "rotation_checks": {
+        "max_orthogonality_error": 3.8121830492343634e-07,
+        "max_determinant_error": 3.3143772260046944e-07
+      },
+      "image_lock_sha256": "d2f1fa927f0e0cf4708875de618af24c2af3bda608306f5a2ed0c693732631f9"
+    },
+    {
+      "dataset": "300w_lp",
+      "count": 122217,
+      "elapsed_seconds": 70.3368687730001,
+      "samples_per_second": 1737.5951209092618,
+      "manifest": "/home/hoge/learn/hpe/datasets/prepared/300w_lp/manifest.jsonl",
+      "manifest_sha256": "9e425513d30747d1fc1c9d5e6fab93ced9c6d900ac0cc457d0d4d94c57cf1619",
+      "overall": {
+        "count": 122217.0,
+        "pitch_error_deg_mean": 6.832928240590897,
+        "yaw_error_deg_mean": 3.884227728823372,
+        "roll_error_deg_mean": 6.070201783324518,
+        "mean_axis_error_deg_mean": 5.5957859175795965,
+        "geodesic_error_deg_mean": 5.637227085156699,
+        "vec1_error_deg_mean": 4.719689357430084,
+        "vec2_error_deg_mean": 3.359922950081791,
+        "vec3_error_deg_mean": 5.038926814255749,
+        "vmae_deg_mean": 4.372846373922543,
+        "geodesic_error_deg_median": 4.914318828812378,
+        "geodesic_error_deg_p90": 9.627537477037793,
+        "geodesic_error_deg_p95": 11.789856235297478,
+        "geodesic_error_deg_gt90_count": 29.0,
+        "geodesic_error_deg_gt90_percent": 0.02372828657224445
+      },
+      "rotation_checks": {
+        "max_orthogonality_error": 4.74302032760221e-07,
+        "max_determinant_error": 4.4688869627051986e-07
+      },
+      "image_lock_sha256": "d9c71e941d6394dd19340f5b1549d17cd75eb272be25130837f2b32826c63ab2"
+    }
+  ],
+  "settings": {
+    "model": "SixDRepNet360-ResNet50",
+    "crop_source": "ground_truth_manifest",
+    "resize": 256,
+    "center_crop": 224,
+    "normalization_mean": [
+      0.485,
+      0.456,
+      0.406
+    ],
+    "normalization_std": [
+      0.229,
+      0.224,
+      0.225
+    ],
+    "device": "cuda:0",
+    "batch_size": 256,
+    "workers": 8,
+    "amp": false,
+    "max_samples": null,
+    "axis_error_representation": "canonical RzRyRx Euler for both target and prediction",
+    "yaw_group_source": "manifest source yaw",
+    "head_size_measure": "sqrt(bbox_width*bbox_height)",
+    "rotation_normalization": "fp32",
+    "metric_dtype": "float64",
+    "geodesic_formula": "atan2",
+    "vector_definition": "rows",
+    "deterministic": true,
+    "cudnn_benchmark": false,
+    "cuda_matmul_fp32_precision": "ieee",
+    "cudnn_conv_fp32_precision": "ieee"
+  },
+  "environment": {
+    "python": "3.11.13",
+    "platform": "Linux-7.0.0-31-generic-x86_64-with-glibc2.39",
+    "torch": "2.9.0+cu128",
+    "torchvision": "0.24.0+cu128",
+    "cuda_runtime": "12.8",
+    "cudnn": 91002,
+    "device": "cuda:0",
+    "gpu_name": "NVIDIA GeForce RTX 4090",
+    "gpu_capability": [
+      8,
+      9
+    ]
+  }
+}

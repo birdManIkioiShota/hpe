@@ -1,0 +1,202 @@
+[
+  {
+    "dataset": "dad3dheads",
+    "group": "overall",
+    "baseline": {
+      "count": 4312,
+      "mean_deg": 26.661721968190566,
+      "median_deg": 11.472814638146701,
+      "p90_deg": 81.54362826393147,
+      "over30_percent": 21.219851576994433,
+      "over60_percent": 12.708719851576994,
+      "over90_percent": 9.39239332096475
+    },
+    "candidate": {
+      "count": 4312,
+      "mean_deg": 24.659272002557568,
+      "median_deg": 10.60225200874649,
+      "p90_deg": 71.99325519444965,
+      "over30_percent": 19.457328385899814,
+      "over60_percent": 11.456400742115028,
+      "over90_percent": 8.000927643784788
+    },
+    "mean_delta_candidate_minus_baseline_deg": -2.002449965633002,
+    "mean_delta_ci95_low": -2.26523859542855,
+    "mean_delta_ci95_high": -1.771610015909568
+  },
+  {
+    "dataset": "dad3dheads",
+    "group": "front_lt60",
+    "baseline": {
+      "count": 3840,
+      "mean_deg": 26.535047103274227,
+      "median_deg": 11.365255448347725,
+      "p90_deg": 81.0782775974238,
+      "over30_percent": 20.651041666666668,
+      "over60_percent": 12.421875,
+      "over90_percent": 9.427083333333334
+    },
+    "candidate": {
+      "count": 3840,
+      "mean_deg": 24.533315216860032,
+      "median_deg": 10.55737512857155,
+      "p90_deg": 70.93756602562999,
+      "over30_percent": 18.984375,
+      "over60_percent": 11.145833333333334,
+      "over90_percent": 8.125
+    },
+    "mean_delta_candidate_minus_baseline_deg": -2.0017318864141935,
+    "mean_delta_ci95_low": -2.259427485740151,
+    "mean_delta_ci95_high": -1.7519513780119071
+  },
+  {
+    "dataset": "dad3dheads",
+    "group": "side_60_to_lt120",
+    "baseline": {
+      "count": 425,
+      "mean_deg": 24.605851307154687,
+      "median_deg": 9.958054132896791,
+      "p90_deg": 77.51701249035378,
+      "over30_percent": 21.88235294117647,
+      "over60_percent": 13.176470588235295,
+      "over90_percent": 8.0
+    },
+    "candidate": {
+      "count": 425,
+      "mean_deg": 23.057051605446105,
+      "median_deg": 10.27885284150915,
+      "p90_deg": 68.93323215257874,
+      "over30_percent": 20.0,
+      "over60_percent": 12.705882352941176,
+      "over90_percent": 6.11764705882353
+    },
+    "mean_delta_candidate_minus_baseline_deg": -1.548799701708587,
+    "mean_delta_ci95_low": -2.4271048892770324,
+    "mean_delta_ci95_high": -0.7099725791804399
+  },
+  {
+    "dataset": "dad3dheads",
+    "group": "rear_ge120",
+    "baseline": {
+      "count": 47,
+      "mean_deg": 55.60164776008426,
+      "median_deg": 42.47620397341541,
+      "p90_deg": 141.09418235273102,
+      "over30_percent": 61.702127659574465,
+      "over60_percent": 31.914893617021278,
+      "over90_percent": 19.148936170212767
+    },
+    "candidate": {
+      "count": 47,
+      "mean_deg": 49.43837255257679,
+      "median_deg": 32.45092716769173,
+      "p90_deg": 133.6696221016856,
+      "over30_percent": 53.191489361702125,
+      "over60_percent": 25.53191489361702,
+      "over90_percent": 14.893617021276595
+    },
+    "mean_delta_candidate_minus_baseline_deg": -6.163275207507455,
+    "mean_delta_ci95_low": -11.364101403760408,
+    "mean_delta_ci95_high": -1.9457165973903137
+  },
+  {
+    "dataset": "dad3dheads",
+    "group": "rear_negative_120_to_lt150",
+    "baseline": {
+      "count": 20,
+      "mean_deg": 43.589736144573564,
+      "median_deg": 33.168430120123475,
+      "p90_deg": 88.64830757712664,
+      "over30_percent": 55.00000000000001,
+      "over60_percent": 20.0,
+      "over90_percent": 10.0
+    },
+    "candidate": {
+      "count": 20,
+      "mean_deg": 42.203387664008304,
+      "median_deg": 27.405555802348715,
+      "p90_deg": 89.76696907797191,
+      "over30_percent": 45.0,
+      "over60_percent": 20.0,
+      "over90_percent": 10.0
+    },
+    "mean_delta_candidate_minus_baseline_deg": -1.3863484805652633,
+    "mean_delta_ci95_low": -4.595831832570999,
+    "mean_delta_ci95_high": 1.847835727056207
+  },
+  {
+    "dataset": "dad3dheads",
+    "group": "rear_negative_150_to_180",
+    "baseline": {
+      "count": 1,
+      "mean_deg": 74.06107920976456,
+      "median_deg": 74.06107920976456,
+      "p90_deg": 74.06107920976456,
+      "over30_percent": 100.0,
+      "over60_percent": 100.0,
+      "over90_percent": 0.0
+    },
+    "candidate": {
+      "count": 1,
+      "mean_deg": 69.06096116605315,
+      "median_deg": 69.06096116605315,
+      "p90_deg": 69.06096116605315,
+      "over30_percent": 100.0,
+      "over60_percent": 100.0,
+      "over90_percent": 0.0
+    },
+    "mean_delta_candidate_minus_baseline_deg": -5.00011804371141,
+    "mean_delta_ci95_low": -5.00011804371141,
+    "mean_delta_ci95_high": -5.00011804371141
+  },
+  {
+    "dataset": "dad3dheads",
+    "group": "rear_positive_120_to_lt150",
+    "baseline": {
+      "count": 19,
+      "mean_deg": 44.39422530345205,
+      "median_deg": 31.868145110288367,
+      "p90_deg": 89.77149275576264,
+      "over30_percent": 52.63157894736842,
+      "over60_percent": 21.052631578947366,
+      "over90_percent": 10.526315789473683
+    },
+    "candidate": {
+      "count": 19,
+      "mean_deg": 41.181309394409816,
+      "median_deg": 26.476364425043812,
+      "p90_deg": 83.06662605892427,
+      "over30_percent": 47.368421052631575,
+      "over60_percent": 15.789473684210526,
+      "over90_percent": 10.526315789473683
+    },
+    "mean_delta_candidate_minus_baseline_deg": -3.212915909042227,
+    "mean_delta_ci95_low": -5.771385513214666,
+    "mean_delta_ci95_high": -0.3189834458422541
+  },
+  {
+    "dataset": "dad3dheads",
+    "group": "rear_positive_150_to_180",
+    "baseline": {
+      "count": 7,
+      "mean_deg": 117.70448026530502,
+      "median_deg": 139.44154030336813,
+      "p90_deg": 145.2022057284364,
+      "over30_percent": 100.0,
+      "over60_percent": 85.71428571428571,
+      "over90_percent": 71.42857142857143
+    },
+    "candidate": {
+      "count": 7,
+      "mean_deg": 89.71855957587195,
+      "median_deg": 89.37463283614005,
+      "p90_deg": 147.9366691099256,
+      "over30_percent": 85.71428571428571,
+      "over60_percent": 57.14285714285714,
+      "over90_percent": 42.857142857142854
+    },
+    "mean_delta_candidate_minus_baseline_deg": -27.985920689433065,
+    "mean_delta_ci95_low": -52.64076371118917,
+    "mean_delta_ci95_high": -5.85812192813105
+  }
+]
