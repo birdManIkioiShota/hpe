@@ -326,6 +326,8 @@ def main() -> None:
                     "condition_id": condition_id,
                     "evaluation_name": evaluation_name,
                     "adoption_ratio": condition["adoption_ratio"],
+                    "hpe_regime": condition["hpe_regime"],
+                    "use_dad": condition["use_dad"],
                     **row,
                 }
             )
