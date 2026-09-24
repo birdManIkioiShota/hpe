@@ -864,11 +864,23 @@ def main() -> None:
                         * totals["flip"]
                         / totals["samples"]
                     ),
-                    "yawpose_rad": totals["yawpose"] / totals["samples"],
+                    "yawpose_samples": totals["yawpose_samples"],
+                    "yawpose_batches": totals["yawpose_batches"],
+                    "yawpose_rad": (
+                        totals["yawpose"] / totals["yawpose_samples"]
+                        if totals["yawpose_samples"]
+                        else 0.0
+                    ),
                     "yawpose_weighted_rad": (
-                        (args.yawpose_weight if yawpose_enabled else 0.0)
+                        (
+                            args.yawpose_weight
+                            if yawpose_enabled
+                            else 0.0
+                        )
                         * totals["yawpose"]
-                        / totals["samples"]
+                        / totals["yawpose_samples"]
+                        if totals["yawpose_samples"]
+                        else 0.0
                     ),
                     "rear_fraction_observed": (
                         totals["rear_samples"] / totals["samples"]
@@ -897,7 +909,12 @@ def main() -> None:
                                 yaw_plan.repeated_draws / yaw_plan.total_draws
                             ),
                             "source_draws": yaw_plan.source_draws,
-                            "rear_bucket_draws": yaw_plan.rear_bucket_draws,
+                            "rear_yaw_bin_draws": (
+                                yaw_plan.rear_yaw_bin_draws
+                            ),
+                            "batch_positions": list(
+                                yaw_batch_positions
+                            ),
                         }
                     ),
                 },
