@@ -21,6 +21,7 @@ from experiments.common.yawpose_search import yawpose_conditions
 from experiments.scripts.infer_yawpose_semiuhpe import (
     _calibrate_sign as calibrate_semiuhpe_sign,
 )
+from experiments.scripts.train_yawpose_rear import _spread_batch_positions
 
 with mock.patch.dict(sys.modules, {"cv2": mock.MagicMock()}):
     from experiments.scripts.infer_yawpose_whenet import (
@@ -171,6 +172,15 @@ class YawPoseExperimentTests(unittest.TestCase):
             list(range(len(records))),
         )
         self.assertNotEqual(first.order, second.order)
+
+    def test_yawpose_batches_are_spread_without_duplicates(self):
+        positions = _spread_batch_positions(100, 7)
+        self.assertEqual(len(positions), 7)
+        self.assertEqual(len(set(positions)), 7)
+        self.assertEqual(positions[0], 0)
+        self.assertTrue(all(0 <= value < 100 for value in positions))
+        with self.assertRaises(ValueError):
+            _spread_batch_positions(4, 5)
 
     def test_fixed_search_matrix(self):
         conditions = yawpose_conditions()
