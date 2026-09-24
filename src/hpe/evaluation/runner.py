@@ -244,6 +244,7 @@ def _evaluate_dataset(
         tables["yaw_bins_15"] = yaw_bin_table(
             predictions,
             bin_size_deg=15,
+            include_empty=True,
         )
     dataset_metrics = output_dir / "datasets" / dataset_name
     write_metric_tables(dataset_metrics, tables)
