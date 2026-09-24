@@ -106,7 +106,7 @@ class YawPoseExperimentTests(unittest.TestCase):
                         "source": "synthetic_005",
                         "rear_bucket": (
                             "negative:rear_150_to_180"
-                            if yaw < -150
+                            if yaw <= -150
                             else "negative:rear_120_to_lt150"
                             if yaw < 0
                             else "positive:rear_150_to_180"
