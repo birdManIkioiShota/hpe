@@ -41,6 +41,46 @@ def _project_path(value: str) -> Path:
     return path if path.is_absolute() else ROOT / path
 
 
+def _resolve_final_checkpoint(run_dir: Path, config: dict) -> Path:
+    epoch = int(config["epochs"])
+    final_checkpoint = run_dir / "checkpoints" / f"epoch_{epoch:03d}.pth"
+    final_error: Exception | None = None
+    if final_checkpoint.is_file():
+        try:
+            torch.load(final_checkpoint, map_location="cpu", weights_only=True)
+        except Exception as error:
+            final_error = error
+        else:
+            return final_checkpoint
+    else:
+        final_error = FileNotFoundError(
+            f"Experiment checkpoint not found: {final_checkpoint}"
+        )
+
+    fallback = run_dir / "checkpoints" / "last.pt"
+    if not fallback.is_file():
+        raise RuntimeError(
+            f"Final checkpoint is unavailable and no last.pt fallback exists: {final_checkpoint}"
+        ) from final_error
+    try:
+        payload = torch.load(fallback, map_location="cpu", weights_only=True)
+    except Exception as error:
+        raise RuntimeError(
+            f"Final checkpoint is unreadable and last.pt fallback also cannot be loaded: {fallback}"
+        ) from error
+    if (
+        not isinstance(payload, dict)
+        or payload.get("schema") != 1
+        or int(payload.get("epoch", -1)) != epoch
+        or payload.get("config") != config
+        or not isinstance(payload.get("state_dict"), dict)
+    ):
+        raise RuntimeError(
+            f"last.pt does not represent the completed final epoch: {fallback}"
+        ) from final_error
+    return fallback
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run-id", required=True)
@@ -73,15 +113,11 @@ def main() -> None:
         raise ValueError("Experiment run must be completed before final evaluation")
     if args.checkpoint_choice == "best":
         checkpoint = run_dir / "checkpoints" / "best.pth"
+        if not checkpoint.is_file():
+            raise FileNotFoundError(f"Experiment checkpoint not found: {checkpoint}")
     else:
         condition_config = json.loads((run_dir / "config.json").read_text())
-        checkpoint = (
-            run_dir
-            / "checkpoints"
-            / f"epoch_{int(condition_config['epochs']):03d}.pth"
-        )
-    if not checkpoint.is_file():
-        raise FileNotFoundError(f"Experiment checkpoint not found: {checkpoint}")
+        checkpoint = _resolve_final_checkpoint(run_dir, condition_config)
 
     reference_name = _safe_name(args.baseline_run, "baseline-run")
     default_name = args.condition_id or args.run_id
