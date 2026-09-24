@@ -34,8 +34,8 @@ SOURCE_FILES = (
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--run-id", default="yawpose_rear_search")
-    parser.add_argument("--reliability-run", default="yawpose_reliability")
+    parser.add_argument("--run-id", default="yawpose_rear_stratified_search")
+    parser.add_argument("--reliability-run", default="yawpose_reliability_stratified15")
     parser.add_argument("--vgg-data-id", default="vgg_data")
     parser.add_argument("--dad-data-id", default="dad3dheads_train")
     parser.add_argument("--device", default="cuda:0")
@@ -125,6 +125,8 @@ def _condition_command(
     ]
     if args.samples_per_epoch is not None:
         command.extend(("--samples-per-epoch", str(args.samples_per_epoch)))
+    if condition.use_dad:
+        command.append("--use-dad")
     if resume:
         command.append("--resume")
     return command
