@@ -113,15 +113,46 @@ def _line_count(path: Path) -> int:
         return sum(1 for _ in stream)
 
 
-def _manifest_set(vgg_data_id: str, dad_data_id: str) -> tuple[list[Path], list[Path]]:
+def _manifest_set(
+    vgg_data_id: str,
+    dad_data_id: str,
+    *,
+    use_dad: bool,
+) -> tuple[list[Path], list[Path], Path]:
     vgg = prepared_data_path(ROOT, vgg_data_id)
-    dad = prepared_data_path(ROOT, dad_data_id)
-    train = [vgg / "train.jsonl", dad / "train.jsonl"]
-    dev = [vgg / "dev.jsonl", dad / "dev.jsonl"]
-    for path in train + dev:
-        if not path.is_file():
-            raise FileNotFoundError(path)
-    return train, dev
+    vgg_train = vgg / "train.jsonl"
+    train = [vgg_train]
+    if use_dad:
+        dad = prepared_data_path(ROOT, dad_data_id)
+        train.append(dad / "train.jsonl")
+    # Checkpoint selection always uses the same VGGHeads dev split so that
+    # enabling DAD changes training data, not the internal comparison set.
+    dev = [vgg / "dev.jsonl"]
+    for manifest in train + dev:
+        if not manifest.is_file():
+            raise FileNotFoundError(manifest)
+    return train, dev, vgg_train
+
+
+def _spread_batch_positions(
+    total_batches: int,
+    selected_batches: int,
+) -> tuple[int, ...]:
+    if selected_batches < 0 or total_batches <= 0:
+        raise ValueError("invalid batch schedule size")
+    if selected_batches == 0:
+        return ()
+    if selected_batches > total_batches:
+        raise ValueError(
+            "YawPose has more batches than the existing-HPE epoch"
+        )
+    positions = tuple(
+        index * total_batches // selected_batches
+        for index in range(selected_batches)
+    )
+    if len(set(positions)) != selected_batches:
+        raise ValueError("YawPose batch schedule contains duplicate positions")
+    return positions
 
 
 def _make_pose_dataset(
@@ -199,6 +230,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--reliability-run", default="yawpose_reliability")
     parser.add_argument("--vgg-data-id", default="vgg_data")
     parser.add_argument("--dad-data-id", default="dad3dheads_train")
+    parser.add_argument("--use-dad", action="store_true")
     parser.add_argument("--device", default="cuda:0")
     parser.add_argument("--precision", choices=("bf16", "fp32"), default="bf16")
     parser.add_argument(
@@ -253,16 +285,22 @@ def main() -> None:
     checkpoint = ROOT / BASE_CHECKPOINT
     if sha256_file(checkpoint) != BASE_SHA256:
         raise ValueError("base checkpoint SHA-256 mismatch")
-    train_manifests, dev_manifests = _manifest_set(
+    train_manifests, dev_manifests, vgg_train_manifest = _manifest_set(
         args.vgg_data_id,
         args.dad_data_id,
+        use_dad=args.use_dad,
     )
-    partition_summary = verify_manifest_partitions(train_manifests, dev_manifests)
+    partition_summary = verify_manifest_partitions(
+        train_manifests,
+        dev_manifests,
+    )
     buckets = scan_pose_buckets(train_manifests)
     rear_fraction = buckets.natural_rear_fraction
-    raw_samples = sum(_line_count(path) for path in train_manifests)
+    # Keep the existing-HPE training budget fixed to the VGGHeads-only
+    # train count so that DAD inclusion changes the pool, not update count.
+    vgg_raw_samples = _line_count(vgg_train_manifest)
     effective_batch = args.batch_size * args.accumulation
-    requested_samples = args.samples_per_epoch or raw_samples
+    requested_samples = args.samples_per_epoch or vgg_raw_samples
     samples_per_epoch = requested_samples // effective_batch * effective_batch
     if samples_per_epoch < effective_batch:
         raise ValueError("samples-per-epoch is smaller than one effective batch")
@@ -275,7 +313,9 @@ def main() -> None:
         "subset": args.subset,
         "reliability_run": args.reliability_run,
         "vgg_data_id": args.vgg_data_id,
-        "dad_data_id": args.dad_data_id,
+        "dad_data_id": args.dad_data_id if args.use_dad else None,
+        "use_dad": args.use_dad,
+        "hpe_regime": "vgg_plus_dad" if args.use_dad else "vgg_only",
         "device": args.device,
         "precision": args.precision,
         "update_scope": args.update_scope,
@@ -313,6 +353,7 @@ def main() -> None:
             str(path.relative_to(ROOT)): sha256_file(path)
             for path in dev_manifests
         },
+        "checkpoint_selection_dataset": "vggheads_dev",
         "partition_summary": partition_summary,
         "training_bucket_counts": {
             "retention": len(buckets.retention),
