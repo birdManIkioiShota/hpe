@@ -261,7 +261,7 @@ AFLW2000では`Y_base`の6.534°に対してYawPose条件が6.754–7.030°で�
 
 ## 結論
 
-今回のreliability scoreは、teacherとcanonical yawの一致度だけでなく、teacherが推定しやすい120–150°の後方画像を上位へ集める性質を示しました。top20では97.6%が120–150°であり、この角度分布に対応してAGORA-HPEの120–150°は改善する一方、150–180°は`Y_base`より悪化しました。
+今回のreliability scoreは、teacherとcanonical yawの一致度だけでなく、teacherとcanonical yawが一致しやすい120–150°の後方画像を上位へ集める性質を示しました。top20では97.6%が120–150°であり、この角度分布に対応してAGORA-HPEの120–150°は改善する一方、150–180°は`Y_base`より悪化しました。
 
 また、YawPose streamの総draw数を全条件で固定したため、top20の少数画像は1 epochあたり平均160.5回再利用されました。top20のYawPose training lossが低い一方で内部rear yawが`Y_base`より悪化し、外部評価でも浅い後方角の改善とdeep-rearの悪化が同時に現れていることは、少数かつ浅い角度の画像へ教師信号が集中したという学習条件と整合します。
 
