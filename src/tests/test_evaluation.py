@@ -115,7 +115,12 @@ class MetricsTests(unittest.TestCase):
                 },
             }
         )
-        table = yaw_bin_table(frame, bin_size_deg=15)
+        table = yaw_bin_table(
+            frame,
+            bin_size_deg=15,
+            include_empty=True,
+        )
+        self.assertEqual(len(table), 24)
         self.assertEqual(int(table["count"].sum()), len(yaw))
         self.assertIn("-180_to_-165", set(table["yaw_bin"]))
         self.assertIn("165_to_180", set(table["yaw_bin"]))
