@@ -253,7 +253,7 @@ class YawPoseSamplePlan:
     repeated_draws: int
     total_draws: int
     source_draws: dict[str, int]
-    rear_bucket_draws: dict[str, int]
+    rear_yaw_bin_draws: dict[str, int]
 
 
 def build_yawpose_epoch_plan(
@@ -283,7 +283,7 @@ def build_yawpose_epoch_plan(
         repeated_draws=0,
         total_draws=len(indices),
         source_draws=source_draws,
-        rear_bucket_draws=bucket_draws,
+        rear_yaw_bin_draws=bucket_draws,
     )
 
 
