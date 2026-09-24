@@ -16,6 +16,7 @@ from tqdm import tqdm
 from experiments.common.run_directory import ExperimentRun, experiment_run_path
 from experiments.common.yawpose import (
     ADOPTION_RATIOS,
+    REAR_YAW_BINS,
     TEACHER_IDS,
     YawPoseDataset,
     reliability_records,
@@ -169,8 +170,16 @@ def _summary(rows: list[dict], subsets: dict[str, list[dict]]) -> dict:
         result["subsets"][name] = {
             "count": len(subset),
             "by_source": dict(sorted(Counter(str(row["source"]) for row in subset).items())),
-            "by_rear_bucket": dict(sorted(Counter(str(row["rear_bucket"]) for row in subset).items())),
-            "human_corrected": sum(bool(row.get("human_corrected")) for row in subset),
+            "by_rear_bucket": dict(
+                sorted(Counter(str(row["rear_bucket"]) for row in subset).items())
+            ),
+            "by_rear_yaw_bin": {
+                name: sum(str(row["rear_yaw_bin"]) == name for row in subset)
+                for name in REAR_YAW_BINS
+            },
+            "human_corrected": sum(
+                bool(row.get("human_corrected")) for row in subset
+            ),
             "score_max": max(row["reliability_score"] for row in subset),
         }
     return result
@@ -241,7 +250,11 @@ def main() -> None:
         "batch_size": args.batch_size,
         "workers": args.workers,
         "seed": args.seed,
-        "score": "mean(percentile(gt_median_error), percentile(teacher_dispersion), percentile(gt_max_error))",
+        "score": (
+            "mean(percentile(gt_median_error), percentile(teacher_dispersion), "
+            "percentile(gt_max_error)) within signed 15-degree rear-yaw strata"
+        ),
+        "reliability_strata": list(REAR_YAW_BINS),
     }
     provenance = {
         "candidate_manifest": {
