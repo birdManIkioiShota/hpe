@@ -18,14 +18,14 @@ from hpe.data.dataset import evaluation_transform, read_rgb_image
 TEACHER_IDS = ("sixdrepnet360_base", "semiuhpe_effnetv2s", "whenet")
 ADOPTION_RATIOS = (0.2, 0.4, 0.6, 0.8, 1.0)
 REAR_YAW_BINS = (
-    "negative:rear_165_to_180",
-    "negative:rear_150_to_lt165",
-    "negative:rear_135_to_lt150",
-    "negative:rear_120_to_lt135",
-    "positive:rear_120_to_lt135",
-    "positive:rear_135_to_lt150",
-    "positive:rear_150_to_lt165",
-    "positive:rear_165_to_180",
+    "negative:yaw_-180_to_lt-165",
+    "negative:yaw_-165_to_lt-150",
+    "negative:yaw_-150_to_lt-135",
+    "negative:yaw_-135_to_-120",
+    "positive:yaw_120_to_lt135",
+    "positive:yaw_135_to_lt150",
+    "positive:yaw_150_to_lt165",
+    "positive:yaw_165_to_lt180",
 )
 
 
@@ -57,19 +57,23 @@ def rear_bucket(yaw_deg: float) -> str:
 def rear_yaw_bin(yaw_deg: float) -> str:
     """Return the fixed signed 15-degree rear-yaw stratum."""
     yaw = signed_yaw_degrees(yaw_deg)
-    absolute = abs(yaw)
-    if absolute < 120.0:
-        raise ValueError("rear yaw bin requires |yaw| >= 120 degrees")
-    side = "negative" if yaw < 0.0 else "positive"
-    if absolute < 135.0:
-        band = "120_to_lt135"
-    elif absolute < 150.0:
-        band = "135_to_lt150"
-    elif absolute < 165.0:
-        band = "150_to_lt165"
-    else:
-        band = "165_to_180"
-    return f"{side}:rear_{band}"
+    if -180.0 <= yaw < -165.0:
+        return "negative:yaw_-180_to_lt-165"
+    if -165.0 <= yaw < -150.0:
+        return "negative:yaw_-165_to_lt-150"
+    if -150.0 <= yaw < -135.0:
+        return "negative:yaw_-150_to_lt-135"
+    if -135.0 <= yaw <= -120.0:
+        return "negative:yaw_-135_to_-120"
+    if 120.0 <= yaw < 135.0:
+        return "positive:yaw_120_to_lt135"
+    if 135.0 <= yaw < 150.0:
+        return "positive:yaw_135_to_lt150"
+    if 150.0 <= yaw < 165.0:
+        return "positive:yaw_150_to_lt165"
+    if 165.0 <= yaw < 180.0:
+        return "positive:yaw_165_to_lt180"
+    raise ValueError("rear yaw bin requires |yaw| >= 120 degrees")
 
 
 def yaw_from_rotation_matrix_rad(rotation: torch.Tensor) -> torch.Tensor:
