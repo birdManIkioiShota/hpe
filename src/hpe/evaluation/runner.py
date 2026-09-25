@@ -17,8 +17,13 @@ from tqdm import tqdm
 
 from hpe.data import ManifestDataset
 from hpe.datasets.common import sha256_file
-from hpe.evaluation.metrics import metric_tables
-from hpe.evaluation.reporting import write_json, write_metric_tables, write_yaw_plot
+from hpe.evaluation.metrics import metric_tables, yaw_bin_table
+from hpe.evaluation.reporting import (
+    write_json,
+    write_metric_tables,
+    write_yaw_plot,
+    write_yaw_radar_plot,
+)
 from hpe.geometry import (
     circular_error_degrees,
     euler_degrees_to_matrix,
@@ -235,9 +240,21 @@ def _evaluate_dataset(
         float_format="%.8f",
     )
     tables = metric_tables(predictions)
+    if dataset_name == "agora_hpe":
+        tables["yaw_bins_15"] = yaw_bin_table(
+            predictions,
+            bin_size_deg=15,
+            include_empty=True,
+        )
     dataset_metrics = output_dir / "datasets" / dataset_name
     write_metric_tables(dataset_metrics, tables)
     write_yaw_plot(dataset_metrics, tables["yaw_bins"], dataset_name)
+    if dataset_name == "agora_hpe":
+        write_yaw_radar_plot(
+            dataset_metrics,
+            tables["yaw_bins_15"],
+            dataset_name,
+        )
     result = {
         "dataset": dataset_name,
         "count": len(predictions),

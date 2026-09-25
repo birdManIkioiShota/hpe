@@ -244,66 +244,75 @@ preprocessing description, yaw adapter, and data-based yaw-sign calibration resu
 Sign calibration uses only the direction-QA synthetic sources `intent_s004` and
 `intent_s005` in the 120--165 degree rear band; noisy `intent_rear` labels are excluded.
 
-Precompute SixDRepNet360 predictions, the three-teacher reliability score, ranking, and
-all five nested subset manifests in one immutable experiment run:
+Precompute SixDRepNet360 predictions and the three-teacher reliability score in
+signed 15-degree rear-yaw strata. Percentile ranks and adoption thresholds are computed
+independently inside each of the eight strata from -180 to -120 degrees and 120 to
+180 degrees:
 
 ```bash
 uv run python -m experiments.scripts.precompute_yawpose_reliability \
-  --run-id yawpose_reliability \
+  --run-id yawpose_reliability_stratified15 \
   --data-id yawpose_rear \
   --semiuhpe-predictions datasets/prepared/yawpose_teachers/semiuhpe_effnetv2s.jsonl \
   --whenet-predictions datasets/prepared/yawpose_teachers/whenet.jsonl
 ```
 
-The resulting sample-level ranking and `top020`, `top040`, `top060`, `top080`,
-and `top100` manifests are stored under
-`experiments/runs/yawpose_reliability/predictions/`. Teacher models are not loaded
-during subsequent training.
+The resulting `top020`, `top040`, `top060`, `top080`, and `top100`
+manifests remain nested within every yaw stratum. Their union is stored under
+`experiments/runs/yawpose_reliability_stratified15/predictions/`. Teacher models
+are not loaded during subsequent training.
 
-Inspect the fixed six-condition search matrix without starting training:
+Inspect the twelve-condition matrix without starting training:
 
 ```bash
 uv run python -m experiments.scripts.run_yawpose_rear_search \
-  --run-id yawpose_rear_search \
-  --reliability-run yawpose_reliability \
+  --run-id yawpose_rear_stratified_search \
+  --reliability-run yawpose_reliability_stratified15 \
   --dry-run
 ```
 
-Run the baseline plus five adoption-ratio conditions:
+The matrix crosses six YawPose conditions, including the no-YawPose control, with two
+existing-HPE regimes: VGGHeads only and VGGHeads plus DAD-3DHeads train. VGGHeads is
+present in every condition. Checkpoint selection uses the same VGGHeads dev split in
+both regimes so enabling DAD changes the training pool rather than the internal
+selection dataset.
+
+Run the complete matrix:
 
 ```bash
 uv run python -m experiments.scripts.run_yawpose_rear_search \
-  --run-id yawpose_rear_search \
-  --reliability-run yawpose_reliability
+  --run-id yawpose_rear_stratified_search \
+  --reliability-run yawpose_reliability_stratified15
 ```
 
-The condition runs are stored below
-`experiments/runs/yawpose_rear_search/conditions/`. The existing VGGHeads and
-DAD-3DHeads stream keeps natural rear sampling, base-model non-rear distillation, and
-SO(3) rear flip consistency. YawPose uses a separate same-sized stream with yaw-only
-circular loss and no horizontal flip.
+The existing-HPE training budget is fixed to the VGGHeads train count rounded down to
+an effective batch boundary. Each selected YawPose sample is shuffled and drawn exactly
+once per epoch. YawPose batches are spread deterministically across the existing-HPE
+epoch, and the final partial YawPose batch is scaled by its actual sample count.
 
-After all six conditions complete, evaluate the fixed final checkpoint against the
+After all twelve conditions complete, evaluate the fixed final checkpoint against the
 existing protected baselines:
 
 ```bash
 uv run python -m experiments.scripts.evaluate_yawpose_rear_search \
-  --run-id yawpose_rear_search \
+  --run-id yawpose_rear_stratified_search \
   --baseline-run baseline_fp32
 
 uv run python -m experiments.scripts.evaluate_yawpose_rear_search \
-  --run-id yawpose_rear_search \
+  --run-id yawpose_rear_stratified_search \
   --baseline-run baseline_dad_fp32 \
   --name-suffix _dad
 ```
 
-Normal SO(3) evaluation continues to use `evaluate_candidate`. The YawPose evaluation
-wrapper additionally computes full-range yaw error from the saved prediction rotation
-matrices and writes paired yaw summaries under `eval/yawpose_rear_search/`.
+Normal SO(3) evaluation continues to use `evaluate_candidate`. AGORA-HPE additionally
+writes full-range 15-degree yaw-bin metrics and a polar error plot. The YawPose
+evaluation wrapper also records paired baseline/candidate yaw comparisons for those
+15-degree AGORA-HPE bins. Other external datasets retain the existing coarser
+diagnostics.
 
-
-The YawPose-specific unit checks are intentionally limited to yaw periodicity/loss,
-reliability ranking with nested subsets, and the fixed six-condition matrix:
+The YawPose-specific unit checks cover yaw periodicity/loss, signed 15-degree rear-yaw
+strata, stratum-local nested reliability subsets, single-draw epoch sampling, and the
+twelve-condition search matrix:
 
 ```bash
 uv run python -m unittest discover -s src/tests -p test_yawpose_experiment.py -v

@@ -17,6 +17,16 @@ from hpe.data.dataset import evaluation_transform, read_rgb_image
 
 TEACHER_IDS = ("sixdrepnet360_base", "semiuhpe_effnetv2s", "whenet")
 ADOPTION_RATIOS = (0.2, 0.4, 0.6, 0.8, 1.0)
+REAR_YAW_BINS = (
+    "negative:yaw_-180_to_lt-165",
+    "negative:yaw_-165_to_lt-150",
+    "negative:yaw_-150_to_lt-135",
+    "negative:yaw_-135_to_-120",
+    "positive:yaw_120_to_lt135",
+    "positive:yaw_135_to_lt150",
+    "positive:yaw_150_to_lt165",
+    "positive:yaw_165_to_lt180",
+)
 
 
 def signed_yaw_degrees(value: float) -> float:
@@ -42,6 +52,28 @@ def rear_bucket(yaw_deg: float) -> str:
     side = "negative" if yaw < 0.0 else "positive"
     band = "120_to_lt150" if absolute < 150.0 else "150_to_180"
     return f"{side}:rear_{band}"
+
+
+def rear_yaw_bin(yaw_deg: float) -> str:
+    """Return the fixed signed 15-degree rear-yaw stratum."""
+    yaw = signed_yaw_degrees(yaw_deg)
+    if -180.0 <= yaw < -165.0:
+        return "negative:yaw_-180_to_lt-165"
+    if -165.0 <= yaw < -150.0:
+        return "negative:yaw_-165_to_lt-150"
+    if -150.0 <= yaw < -135.0:
+        return "negative:yaw_-150_to_lt-135"
+    if -135.0 <= yaw <= -120.0:
+        return "negative:yaw_-135_to_-120"
+    if 120.0 <= yaw < 135.0:
+        return "positive:yaw_120_to_lt135"
+    if 135.0 <= yaw < 150.0:
+        return "positive:yaw_135_to_lt150"
+    if 150.0 <= yaw < 165.0:
+        return "positive:yaw_150_to_lt165"
+    if 165.0 <= yaw < 180.0:
+        return "positive:yaw_165_to_lt180"
+    raise ValueError("rear yaw bin requires |yaw| >= 120 degrees")
 
 
 def yaw_from_rotation_matrix_rad(rotation: torch.Tensor) -> torch.Tensor:
@@ -82,11 +114,21 @@ def _average_percentile_ranks(values: Iterable[float]) -> list[float]:
     return (ranks / (len(array) - 1)).tolist()
 
 
+def _reliability_sort_key(row: dict[str, Any]) -> tuple[Any, ...]:
+    return (
+        row["reliability_score"],
+        row["gt_median_error_deg"],
+        row["teacher_dispersion_deg"],
+        row["gt_max_error_deg"],
+        str(row["instance_id"]),
+    )
+
+
 def reliability_records(
     candidates: list[dict[str, Any]],
     predictions: dict[str, dict[str, float]],
 ) -> list[dict[str, Any]]:
-    """Compute fixed three-teacher reliability metrics and ranking."""
+    """Compute fixed three-teacher reliability metrics within 15-degree yaw strata."""
     if set(predictions) != set(TEACHER_IDS):
         raise ValueError(f"teacher IDs must be exactly {TEACHER_IDS}")
     if not candidates:
@@ -106,14 +148,23 @@ def reliability_records(
             if not math.isfinite(value):
                 raise ValueError(f"non-finite {teacher_id} yaw for {instance_id}")
             teacher_yaws[teacher_id] = signed_yaw_degrees(value)
-        gt_errors = [circular_distance_degrees(value, yaw) for value in teacher_yaws.values()]
+        gt_errors = [
+            circular_distance_degrees(value, yaw)
+            for value in teacher_yaws.values()
+        ]
         pairwise = []
         teacher_values = list(teacher_yaws.values())
         for left in range(len(teacher_values)):
             for right in range(left + 1, len(teacher_values)):
-                pairwise.append(circular_distance_degrees(teacher_values[left], teacher_values[right]))
+                pairwise.append(
+                    circular_distance_degrees(
+                        teacher_values[left],
+                        teacher_values[right],
+                    )
+                )
         row = {
             **candidate,
+            "rear_yaw_bin": rear_yaw_bin(yaw),
             "teacher_yaw_deg": teacher_yaws,
             "teacher_gt_error_deg": {
                 teacher_id: circular_distance_degrees(value, yaw)
@@ -128,38 +179,75 @@ def reliability_records(
         }
         rows.append(row)
 
-    r_median = _average_percentile_ranks(row["gt_median_error_deg"] for row in rows)
-    r_dispersion = _average_percentile_ranks(row["teacher_dispersion_deg"] for row in rows)
-    r_max = _average_percentile_ranks(row["gt_max_error_deg"] for row in rows)
-    for row, median_rank, dispersion_rank, max_rank in zip(
-        rows, r_median, r_dispersion, r_max
-    ):
-        row["r_median"] = median_rank
-        row["r_dispersion"] = dispersion_rank
-        row["r_max"] = max_rank
-        row["reliability_score"] = (median_rank + dispersion_rank + max_rank) / 3.0
-
-    rows.sort(
-        key=lambda row: (
-            row["reliability_score"],
-            row["gt_median_error_deg"],
-            row["teacher_dispersion_deg"],
-            row["gt_max_error_deg"],
-            str(row["instance_id"]),
+    grouped: dict[str, list[dict[str, Any]]] = {
+        name: [] for name in REAR_YAW_BINS
+    }
+    for row in rows:
+        grouped[str(row["rear_yaw_bin"])].append(row)
+    empty = [name for name, values in grouped.items() if not values]
+    if empty:
+        raise ValueError(
+            "YawPose rear candidates are missing 15-degree strata: "
+            + ", ".join(empty)
         )
-    )
-    denominator = max(1, len(rows) - 1)
-    for index, row in enumerate(rows):
-        row["reliability_rank"] = index + 1
-        row["reliability_percentile"] = index / denominator
-    return rows
+
+    ranked: list[dict[str, Any]] = []
+    for bin_name in REAR_YAW_BINS:
+        values = grouped[bin_name]
+        r_median = _average_percentile_ranks(
+            row["gt_median_error_deg"] for row in values
+        )
+        r_dispersion = _average_percentile_ranks(
+            row["teacher_dispersion_deg"] for row in values
+        )
+        r_max = _average_percentile_ranks(
+            row["gt_max_error_deg"] for row in values
+        )
+        for row, median_rank, dispersion_rank, max_rank in zip(
+            values, r_median, r_dispersion, r_max
+        ):
+            row["r_median"] = median_rank
+            row["r_dispersion"] = dispersion_rank
+            row["r_max"] = max_rank
+            row["reliability_score"] = (
+                median_rank + dispersion_rank + max_rank
+            ) / 3.0
+
+        values.sort(key=_reliability_sort_key)
+        denominator = max(1, len(values) - 1)
+        for index, row in enumerate(values):
+            row["reliability_rank"] = index + 1
+            row["reliability_percentile"] = index / denominator
+            row["reliability_stratum_count"] = len(values)
+        ranked.extend(values)
+    return ranked
 
 
 def subset_records(rows: list[dict[str, Any]], ratio: float) -> list[dict[str, Any]]:
+    """Select the requested top ratio independently inside every rear-yaw stratum."""
     if ratio not in ADOPTION_RATIOS:
         raise ValueError(f"unsupported adoption ratio: {ratio}")
-    count = len(rows) if ratio == 1.0 else max(1, math.ceil(len(rows) * ratio))
-    return rows[:count]
+    grouped: dict[str, list[dict[str, Any]]] = {
+        name: [] for name in REAR_YAW_BINS
+    }
+    for row in rows:
+        try:
+            grouped[str(row["rear_yaw_bin"])].append(row)
+        except KeyError as exc:
+            raise ValueError("reliability row is missing rear_yaw_bin") from exc
+
+    selected: list[dict[str, Any]] = []
+    for bin_name in REAR_YAW_BINS:
+        values = sorted(grouped[bin_name], key=_reliability_sort_key)
+        if not values:
+            raise ValueError(f"empty YawPose reliability stratum: {bin_name}")
+        count = (
+            len(values)
+            if ratio == 1.0
+            else max(1, math.ceil(len(values) * ratio))
+        )
+        selected.extend(values[:count])
+    return selected
 
 
 @dataclass(frozen=True)
@@ -169,41 +257,37 @@ class YawPoseSamplePlan:
     repeated_draws: int
     total_draws: int
     source_draws: dict[str, int]
-    rear_bucket_draws: dict[str, int]
+    rear_yaw_bin_draws: dict[str, int]
 
 
 def build_yawpose_epoch_plan(
     records: list[dict[str, Any]],
     *,
-    num_samples: int,
     seed: int,
     epoch: int,
 ) -> YawPoseSamplePlan:
-    if not records or num_samples <= 0:
-        raise ValueError("YawPose sampling requires records and positive num_samples")
-    generator = torch.Generator().manual_seed(seed + epoch * 1_000_003 + 97_531)
-    source = torch.arange(len(records), dtype=torch.int64)
-    indices: list[int] = []
-    while len(indices) < num_samples:
-        indices.extend(source[torch.randperm(len(source), generator=generator)].tolist())
-    indices = indices[:num_samples]
-    permutation = torch.randperm(len(indices), generator=generator).tolist()
-    indices = [indices[index] for index in permutation]
+    """Draw every selected YawPose sample exactly once per epoch."""
+    if not records:
+        raise ValueError("YawPose sampling requires records")
+    generator = torch.Generator().manual_seed(
+        seed + epoch * 1_000_003 + 97_531
+    )
+    indices = torch.randperm(len(records), generator=generator).tolist()
     source_draws: dict[str, int] = {}
     bucket_draws: dict[str, int] = {}
     for index in indices:
         record = records[index]
         source_name = str(record.get("source", "unknown"))
         source_draws[source_name] = source_draws.get(source_name, 0) + 1
-        bucket = str(record["rear_bucket"])
+        bucket = str(record["rear_yaw_bin"])
         bucket_draws[bucket] = bucket_draws.get(bucket, 0) + 1
     return YawPoseSamplePlan(
         order=[(index, epoch) for index in indices],
-        unique_samples=len(set(indices)),
-        repeated_draws=len(indices) - len(set(indices)),
+        unique_samples=len(indices),
+        repeated_draws=0,
         total_draws=len(indices),
         source_draws=source_draws,
-        rear_bucket_draws=bucket_draws,
+        rear_yaw_bin_draws=bucket_draws,
     )
 
 

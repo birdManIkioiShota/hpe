@@ -14,12 +14,13 @@ from tqdm import tqdm
 from experiments.common.run_directory import experiment_run_path
 from hpe.datasets.common import write_json_atomic
 from hpe.evaluation import compare_runs
+from hpe.evaluation.reporting import write_yaw_comparison_radar
 from training.prepare_data import ROOT
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--run-id", default="yawpose_rear_search")
+    parser.add_argument("--run-id", default="yawpose_rear_stratified_search")
     parser.add_argument("--baseline-run", required=True)
     parser.add_argument(
         "--checkpoint-choice",
@@ -60,6 +61,16 @@ def _circular_error(a: np.ndarray, b: np.ndarray) -> np.ndarray:
 
 
 def _metric(error: np.ndarray) -> dict:
+    if not len(error):
+        return {
+            "count": 0,
+            "mean_deg": None,
+            "median_deg": None,
+            "p90_deg": None,
+            "over30_percent": None,
+            "over60_percent": None,
+            "over90_percent": None,
+        }
     return {
         "count": int(len(error)),
         "mean_deg": float(np.mean(error)),
@@ -89,14 +100,25 @@ def _masks(yaw: np.ndarray) -> dict[str, np.ndarray]:
     }
 
 
+def _yaw15_masks(yaw: np.ndarray) -> dict[str, np.ndarray]:
+    signed = (np.asarray(yaw, dtype=np.float64) + 180.0) % 360.0 - 180.0
+    result: dict[str, np.ndarray] = {}
+    for left in range(-180, 180, 15):
+        right = left + 15
+        result[f"yaw_{left}_to_lt{right}"] = (
+            (signed >= left) & (signed < right)
+        )
+    return result
+
+
 def _bootstrap_ci(
     difference: np.ndarray,
     *,
     repetitions: int,
     sample_limit: int,
-) -> tuple[float, float]:
+) -> tuple[float | None, float | None]:
     if not len(difference):
-        return float("nan"), float("nan")
+        return None, None
     rng = np.random.default_rng(0)
     values = np.asarray(difference, dtype=np.float64)
     if len(values) > sample_limit:
@@ -179,8 +201,15 @@ def _yaw_comparison(
         baseline_error = _circular_error(baseline_yaw, gt)
         candidate_error = _circular_error(candidate_yaw, gt)
 
-        for group, mask in _masks(gt).items():
-            if not mask.any():
+        masks = _masks(gt)
+        if dataset == "agora_hpe":
+            masks.update(_yaw15_masks(gt))
+        for group, mask in masks.items():
+            is_agora_yaw15 = (
+                dataset == "agora_hpe"
+                and group.startswith("yaw_")
+            )
+            if not mask.any() and not is_agora_yaw15:
                 continue
             base_metric = _metric(baseline_error[mask])
             candidate_metric = _metric(candidate_error[mask])
@@ -198,14 +227,63 @@ def _yaw_comparison(
                     "group": group,
                     "baseline": base_metric,
                     "candidate": candidate_metric,
-                    "mean_delta_candidate_minus_baseline_deg": float(
-                        np.mean(difference)
+                    "mean_delta_candidate_minus_baseline_deg": (
+                        float(np.mean(difference))
+                        if len(difference)
+                        else None
                     ),
                     "mean_delta_ci95_low": ci_low,
                     "mean_delta_ci95_high": ci_high,
                 }
             )
     return rows
+
+
+def _write_agora_yaw15_comparison_plot(
+    rows: list[dict],
+    *,
+    output_path: Path,
+    baseline_label: str,
+    candidate_label: str,
+) -> None:
+    selected = [
+        row
+        for row in rows
+        if row["dataset"] == "agora_hpe"
+        and row["group"].startswith("yaw_")
+    ]
+    if not selected:
+        return
+    if len(selected) != 24:
+        raise ValueError("AGORA yaw comparison must contain 24 bins")
+
+    centers = []
+    baseline_values = []
+    candidate_values = []
+    for row in selected:
+        label = row["group"][len("yaw_"):]
+        left, right = label.split("_to_lt")
+        centers.append((float(left) + float(right)) / 2.0)
+        baseline_values.append(
+            float(row["baseline"]["mean_deg"])
+            if row["baseline"]["mean_deg"] is not None
+            else float("nan")
+        )
+        candidate_values.append(
+            float(row["candidate"]["mean_deg"])
+            if row["candidate"]["mean_deg"] is not None
+            else float("nan")
+        )
+
+    write_yaw_comparison_radar(
+        output_path,
+        yaw_centers_deg=centers,
+        baseline_mean_deg=baseline_values,
+        candidate_mean_deg=candidate_values,
+        baseline_label=baseline_label,
+        candidate_label=candidate_label,
+        title="AGORA-HPE: head-forward yaw error by 15-degree bin",
+    )
 
 
 def main() -> None:
@@ -306,12 +384,24 @@ def main() -> None:
         )
         yaw_path = yaw_root / f"{evaluation_name}.json"
         write_json_atomic(yaw_path, yaw_rows)
+        _write_agora_yaw15_comparison_plot(
+            yaw_rows,
+            output_path=(
+                yaw_root
+                / "plots"
+                / f"{evaluation_name}_agora_yaw15.png"
+            ),
+            baseline_label=baseline_metadata["run_name"],
+            candidate_label=evaluation_name,
+        )
         for row in yaw_rows:
             summary.append(
                 {
                     "condition_id": condition_id,
                     "evaluation_name": evaluation_name,
                     "adoption_ratio": condition["adoption_ratio"],
+                    "hpe_regime": condition["hpe_regime"],
+                    "use_dad": condition["use_dad"],
                     **row,
                 }
             )

@@ -51,6 +51,44 @@ def _group_rows(
     return rows
 
 
+def yaw_bin_table(
+    frame: pd.DataFrame,
+    *,
+    bin_size_deg: int = 30,
+    include_empty: bool = False,
+) -> pd.DataFrame:
+    if bin_size_deg <= 0 or 360 % bin_size_deg:
+        raise ValueError("yaw bin size must be a positive divisor of 360")
+    edges = np.arange(
+        -180,
+        180 + bin_size_deg,
+        bin_size_deg,
+        dtype=float,
+    )
+    labels = [
+        f"{int(left)}_to_{int(right)}"
+        for left, right in zip(edges[:-1], edges[1:])
+    ]
+    data = frame.copy()
+    clipped_yaw = data["gt_source_yaw_deg"].clip(
+        -180.0,
+        np.nextafter(180.0, -np.inf),
+    )
+    data["yaw_bin"] = pd.cut(
+        clipped_yaw,
+        bins=edges,
+        labels=labels,
+        right=False,
+        include_lowest=True,
+    ).astype("string")
+    rows: list[dict[str, Any]] = []
+    for label in labels:
+        subset = data[data["yaw_bin"] == label]
+        if include_empty or len(subset):
+            rows.append(metric_row(subset, yaw_bin=label))
+    return pd.DataFrame(rows)
+
+
 def metric_tables(frame: pd.DataFrame) -> dict[str, pd.DataFrame]:
     data = frame.copy()
     absolute_yaw = data["gt_source_yaw_deg"].abs()
@@ -59,17 +97,6 @@ def metric_tables(frame: pd.DataFrame) -> dict[str, pd.DataFrame]:
         bins=[-np.inf, 60.0, 120.0, np.inf],
         labels=["front_lt60", "side_60_to_lt120", "rear_ge120"],
         right=False,
-    ).astype("string")
-
-    yaw_edges = np.arange(-180, 181, 30, dtype=float)
-    yaw_labels = [f"{int(left)}_to_{int(right)}" for left, right in zip(yaw_edges[:-1], yaw_edges[1:])]
-    clipped_yaw = data["gt_source_yaw_deg"].clip(-180.0, 179.999999)
-    data["yaw_bin"] = pd.cut(
-        clipped_yaw,
-        bins=yaw_edges,
-        labels=yaw_labels,
-        right=False,
-        include_lowest=True,
     ).astype("string")
 
     head_scale = np.sqrt(data["bbox_width"] * data["bbox_height"])
@@ -98,7 +125,7 @@ def metric_tables(frame: pd.DataFrame) -> dict[str, pd.DataFrame]:
                 "yaw_band",
             )
         ),
-        "yaw_bins": pd.DataFrame(_group_rows(data, "yaw_bin", yaw_labels, "yaw_bin")),
+        "yaw_bins": yaw_bin_table(data, bin_size_deg=30),
         "head_size_bins": pd.DataFrame(
             _group_rows(
                 data,
