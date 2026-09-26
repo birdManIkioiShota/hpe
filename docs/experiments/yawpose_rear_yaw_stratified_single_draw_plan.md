@@ -119,6 +119,8 @@ DAD-3DHeads devはcheckpoint selectionに使用しません。
 
 生成されるcondition IDにはexisting-HPE regimeを含めます。
 
+実行時の最大同時条件数は `--parallel-conditions` で指定します。標準値は1です。並列実行時は親プロセスが各条件をepoch行とbatch行の2行で表示し、batch行はepochの開始時にリセットします。`--workers` は1条件あたりのDataLoader worker数として扱います。
+
 ## 外部評価
 
 既存のSO(3)評価、front / side / rear評価、120–150° / 150–180°の後方診断は維持します。

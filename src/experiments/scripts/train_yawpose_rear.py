@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import random
 import shutil
+import time
 
 _CUBLAS_WORKSPACE_CONFIGS = {":4096:8", ":16:8"}
 if "CUBLAS_WORKSPACE_CONFIG" not in os.environ:
@@ -68,6 +69,18 @@ SOURCE_FILES = (
     "src/hpe/models/checkpoint.py",
     "src/hpe/models/sixdrepnet360.py",
 )
+
+PROGRESS_PREFIX = "HPE_PROGRESS "
+
+
+def _emit_progress(enabled: bool, event: str, **values) -> None:
+    if not enabled:
+        return
+    payload = {"event": event, **values}
+    print(
+        PROGRESS_PREFIX + json.dumps(payload, allow_nan=False),
+        flush=True,
+    )
 
 
 def _append_jsonl(path: Path, value: dict) -> None:
@@ -254,6 +267,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--retention-tolerance-deg", type=float, default=0.0)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--progress-position", type=int, default=0)
+    parser.add_argument(
+        "--progress-events",
+        action="store_true",
+        help=argparse.SUPPRESS,
+    )
     return parser
 
 
@@ -484,6 +502,11 @@ def main() -> None:
             baseline = json.loads(baseline_path.read_text())
             baseline_yaw = json.loads(baseline_yaw_path.read_text())
         else:
+            _emit_progress(
+                args.progress_events,
+                "phase",
+                phase="baseline pose dev",
+            )
             baseline = evaluate_pose_model(
                 student,
                 dev_loader,
@@ -491,6 +514,11 @@ def main() -> None:
                 progress_position=args.progress_position + 1,
                 progress_leave=False,
                 progress_desc="Baseline pose dev",
+            )
+            _emit_progress(
+                args.progress_events,
+                "phase",
+                phase="baseline yaw dev",
             )
             baseline_yaw = evaluate_forward_yaw_model(
                 student,
@@ -576,6 +604,13 @@ def main() -> None:
                 },
             )
 
+        _emit_progress(
+            args.progress_events,
+            "training_started",
+            start_epoch=start_epoch,
+            epochs=args.epochs,
+            batches_per_epoch=samples_per_epoch // args.batch_size,
+        )
         epoch_progress = tqdm(
             total=args.epochs,
             initial=start_epoch,
@@ -584,9 +619,16 @@ def main() -> None:
             position=args.progress_position,
             leave=True,
             dynamic_ncols=True,
+            disable=args.progress_events,
         )
         for epoch in range(start_epoch, args.epochs):
             epoch_progress.set_postfix(epoch=f"{epoch + 1}/{args.epochs}")
+            _emit_progress(
+                args.progress_events,
+                "epoch_started",
+                epoch=epoch + 1,
+                epochs=args.epochs,
+            )
             training_mode(student, args.update_scope)
             hpe_plan = build_epoch_plan(
                 buckets,
@@ -649,7 +691,9 @@ def main() -> None:
                 position=args.progress_position + 1,
                 leave=False,
                 dynamic_ncols=True,
+                disable=args.progress_events,
             )
+            last_progress_emit = 0.0
             for batch_index, (images, target, metadata) in enumerate(bar):
                 images = images.to(device, non_blocking=True)
                 target = target.to(device, non_blocking=True)
@@ -804,6 +848,24 @@ def main() -> None:
                 bar.set_postfix(
                     loss=f"{totals['loss'] / totals['samples']:.4f}"
                 )
+                now = time.monotonic()
+                if (
+                    args.progress_events
+                    and (
+                        batch_index + 1 == len(hpe_loader)
+                        or now - last_progress_emit >= 0.25
+                    )
+                ):
+                    _emit_progress(
+                        True,
+                        "batch_progress",
+                        epoch=epoch + 1,
+                        epochs=args.epochs,
+                        batch=batch_index + 1,
+                        batches=len(hpe_loader),
+                        loss=totals["loss"] / totals["samples"],
+                    )
+                    last_progress_emit = now
 
             if yaw_plan is not None:
                 if totals["yawpose_samples"] != yaw_plan.total_draws:
@@ -815,6 +877,11 @@ def main() -> None:
                         "YawPose batch schedule was not fully consumed"
                     )
 
+            _emit_progress(
+                args.progress_events,
+                "phase",
+                phase=f"epoch {epoch + 1}/{args.epochs} pose dev",
+            )
             dev = evaluate_pose_model(
                 student,
                 dev_loader,
@@ -822,6 +889,11 @@ def main() -> None:
                 progress_position=args.progress_position + 1,
                 progress_leave=False,
                 progress_desc="Pose dev",
+            )
+            _emit_progress(
+                args.progress_events,
+                "phase",
+                phase=f"epoch {epoch + 1}/{args.epochs} yaw dev",
             )
             dev_yaw = evaluate_forward_yaw_model(
                 student,
@@ -972,6 +1044,14 @@ def main() -> None:
                 epoch=f"{epoch + 1}/{args.epochs}",
                 best=best_epoch,
             )
+            _emit_progress(
+                args.progress_events,
+                "epoch_completed",
+                epoch=epoch + 1,
+                epochs=args.epochs,
+                best_epoch=best_epoch,
+                loss=totals["loss"] / totals["samples"],
+            )
 
         final = json.loads(
             (
@@ -1003,7 +1083,19 @@ def main() -> None:
             final_rear=final["dev"]["rear"],
             final_rear_yaw=final["dev_yaw"]["rear"],
         )
+        _emit_progress(
+            args.progress_events,
+            "training_completed",
+            epochs=args.epochs,
+            best_epoch=best_epoch,
+        )
     except BaseException as error:
+        _emit_progress(
+            args.progress_events,
+            "training_failed",
+            error_type=type(error).__name__,
+            message=str(error),
+        )
         run.fail(error)
         raise
     finally:

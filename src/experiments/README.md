@@ -282,13 +282,19 @@ Run the complete matrix:
 ```bash
 uv run python -m experiments.scripts.run_yawpose_rear_search \
   --run-id yawpose_rear_stratified_search \
-  --reliability-run yawpose_reliability_stratified15
+  --reliability-run yawpose_reliability_stratified15 \
+  --parallel-conditions 3 \
+  --workers 4
 ```
 
 The existing-HPE training budget is fixed to the VGGHeads train count rounded down to
 an effective batch boundary. Each selected YawPose sample is shuffled and drawn exactly
 once per epoch. YawPose batches are spread deterministically across the existing-HPE
 epoch, and the final partial YawPose batch is scaled by its actual sample count.
+`--parallel-conditions` controls the maximum number of condition processes running at
+once and defaults to one. The parent process renders an epoch line and a batch line
+for every condition; the batch line resets at the start of each epoch. `--workers`
+remains the number of DataLoader workers used by each condition.
 
 After all twelve conditions complete, evaluate the fixed final checkpoint against the
 existing protected baselines:

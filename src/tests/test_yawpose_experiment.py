@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import io
 import math
 import sys
 import unittest
@@ -18,6 +19,14 @@ from experiments.common.yawpose import (
     yaw_loss_rad,
 )
 from experiments.common.yawpose_search import yawpose_conditions
+from experiments.scripts.run_yawpose_rear_search import (
+    PROGRESS_PREFIX,
+    ProcessTask,
+    SearchProgress,
+    _condition_command,
+    build_parser as build_search_parser,
+    run_process_pool,
+)
 from experiments.scripts.infer_yawpose_semiuhpe import (
     _calibrate_sign as calibrate_semiuhpe_sign,
 )
@@ -204,6 +213,96 @@ class YawPoseExperimentTests(unittest.TestCase):
                 [item.adoption_ratio for item in subset],
                 [0.0, 0.2, 0.4, 0.6, 0.8, 1.0],
             )
+
+    def test_parallel_search_argument_and_condition_progress(self):
+        args = build_search_parser().parse_args(
+            ["--parallel-conditions", "3", "--dry-run"]
+        )
+        self.assertEqual(args.parallel_conditions, 3)
+        command = _condition_command(
+            args,
+            yawpose_conditions()[0],
+            resume=False,
+        )
+        self.assertIn("--progress-events", command)
+
+        output = io.StringIO()
+        display = SearchProgress(
+            ["condition_a"],
+            10,
+            interactive=True,
+            output=output,
+        )
+        try:
+            display.handle_event(
+                "condition_a",
+                {
+                    "event": "training_started",
+                    "start_epoch": 0,
+                    "batches_per_epoch": 100,
+                },
+            )
+            display.handle_event(
+                "condition_a",
+                {
+                    "event": "epoch_started",
+                    "epoch": 3,
+                },
+            )
+            display.handle_event(
+                "condition_a",
+                {
+                    "event": "batch_progress",
+                    "epoch": 3,
+                    "batch": 50,
+                    "batches": 100,
+                    "loss": 0.25,
+                },
+            )
+            self.assertEqual(display.epoch_bars["condition_a"].n, 2)
+            self.assertEqual(display.batch_bars["condition_a"].n, 50)
+            self.assertEqual(display.batch_bars["condition_a"].total, 100)
+        finally:
+            display.close()
+
+    def test_condition_process_pool_respects_parallel_limit(self):
+        condition_ids = [f"condition_{index}" for index in range(4)]
+        script = (
+            "import json,time;"
+            f"prefix={PROGRESS_PREFIX!r};"
+            "print(prefix+json.dumps({'event':'training_started',"
+            "'start_epoch':0}),flush=True);"
+            "time.sleep(0.05);"
+            "print(prefix+json.dumps({'event':'epoch_completed',"
+            "'epoch':1,'best_epoch':1}),flush=True)"
+        )
+        tasks = [
+            ProcessTask(
+                condition_id=condition_id,
+                command=[sys.executable, "-c", script],
+                resume=False,
+            )
+            for condition_id in condition_ids
+        ]
+        output = io.StringIO()
+        display = SearchProgress(
+            condition_ids,
+            1,
+            interactive=False,
+            output=output,
+        )
+        try:
+            result = run_process_pool(
+                tasks,
+                parallel_conditions=2,
+                display=display,
+            )
+        finally:
+            display.close()
+        self.assertEqual(result.max_active, 2)
+        self.assertEqual(set(result.completed), set(condition_ids))
+        for condition_id in condition_ids:
+            self.assertIn(f"[{condition_id}] completed", output.getvalue())
 
     def test_teacher_sign_calibration_uses_direction_verified_sources(self):
         rows = []

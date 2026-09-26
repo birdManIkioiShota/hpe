@@ -1,0 +1,45 @@
+{
+  "base_checkpoint": {
+    "path": "checkpoints/6DRepNet360_Full-Rotation_300W_LP+Panoptic.pth",
+    "sha256": "3ee08f1e04b8d452a6c4a40926a6f38051894ae6d0aaa6d191fe6d8bc6e4f9c6"
+  },
+  "training_manifests": {
+    "datasets/prepared/vgg_data/train.jsonl": "087e644fa095374c730b0d10e38af8e8371556ffbb9c2d617aa1f5d3a644b394",
+    "datasets/prepared/vgg_data/dev.jsonl": "ba83be1e197275697e8919959519e4a5da314d460a34d5457ac9788f1a18d13b",
+    "datasets/prepared/dad3dheads_train/train.jsonl": "52be88952ab12c96bfa34ee8eab352ced96ba2e4d5863e712db7efed0c4e4bb8"
+  },
+  "reliability_subsets": {
+    "top020": {
+      "path": "experiments/runs/yawpose_reliability_stratified15/predictions/subsets/top020.jsonl",
+      "sha256": "d42e3b4d92d9a31a212053a3908655ae24695842f3d5bde65bb59a871f79da79"
+    },
+    "top040": {
+      "path": "experiments/runs/yawpose_reliability_stratified15/predictions/subsets/top040.jsonl",
+      "sha256": "33f5160ae16b53fd40cab3845f2639578d6cf3e4ccbf3c0a53c7fb9e2b6212b0"
+    },
+    "top060": {
+      "path": "experiments/runs/yawpose_reliability_stratified15/predictions/subsets/top060.jsonl",
+      "sha256": "09da8f26931c73af3dd0e49606242b00c6664c2cf35d4925c7f4bf46d46194b4"
+    },
+    "top080": {
+      "path": "experiments/runs/yawpose_reliability_stratified15/predictions/subsets/top080.jsonl",
+      "sha256": "7c0e3a7c7794018b29d706868d365d08b2e81fbe5d8ff8e7fddaf2fc7727fb38"
+    },
+    "top100": {
+      "path": "experiments/runs/yawpose_reliability_stratified15/predictions/subsets/top100.jsonl",
+      "sha256": "06ea2e354da0470faa6abcf03865a7927b27af5961a39c5df1e369e3316a8716"
+    }
+  },
+  "reliability_run": {
+    "run_id": "yawpose_reliability_stratified15",
+    "config_sha256": "77535fde1533a3120dbabaccd8c237419f1ef6bef9ba7e7d1e40d015578fdb53",
+    "provenance_sha256": "61912160cde977cd18824279d6fd407a85236216a5ea142e66f1675d66698cbb",
+    "summary_sha256": "aa4a6099e5a63d1952c540e3e9e6697d518ae2df4ccea4497d00a676a8da8eb8"
+  },
+  "source_sha256": {
+    "src/experiments/common/yawpose.py": "41df088be84d985e27b83c9a5481abc8f0b0c8bb245bb01ccd65f4999b2fa3ae",
+    "src/experiments/common/yawpose_search.py": "a932f69e7fd3b878980699017ad1c99dcc88e7f97f3afbe987373f96591b3915",
+    "src/experiments/scripts/run_yawpose_rear_search.py": "87b529c33353d75b2f0ff3f122da199af6de6d130af465cb4dea2fe8ecfd1645",
+    "src/experiments/scripts/train_yawpose_rear.py": "591361375715111785dddca73c8003eeca9a6bf136a772be81da05acbd06ce9d"
+  }
+}

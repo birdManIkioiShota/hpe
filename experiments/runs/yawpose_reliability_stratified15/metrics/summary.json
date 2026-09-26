@@ -1,0 +1,216 @@
+{
+  "count": 14049,
+  "score": {
+    "min": 0.03217411876035013,
+    "median": 0.5013347570742125,
+    "max": 0.9809574657412351
+  },
+  "subsets": {
+    "top020": {
+      "count": 2812,
+      "by_source": {
+        "synthetic_001": 845,
+        "synthetic_004": 1232,
+        "synthetic_005": 735
+      },
+      "by_rear_bucket": {
+        "negative:rear_120_to_lt150": 819,
+        "negative:rear_150_to_180": 529,
+        "positive:rear_120_to_lt150": 727,
+        "positive:rear_150_to_180": 737
+      },
+      "by_rear_yaw_bin": {
+        "negative:yaw_-180_to_lt-165": 282,
+        "negative:yaw_-165_to_lt-150": 243,
+        "negative:yaw_-150_to_lt-135": 383,
+        "negative:yaw_-135_to_-120": 440,
+        "positive:yaw_120_to_lt135": 386,
+        "positive:yaw_135_to_lt150": 341,
+        "positive:yaw_150_to_lt165": 375,
+        "positive:yaw_165_to_lt180": 362
+      },
+      "human_corrected": 0,
+      "score_max": 0.3546250295718003
+    },
+    "top040": {
+      "count": 5623,
+      "by_source": {
+        "synthetic_001": 1482,
+        "synthetic_004": 2592,
+        "synthetic_005": 1549
+      },
+      "by_rear_bucket": {
+        "negative:rear_120_to_lt150": 1577,
+        "negative:rear_150_to_180": 1119,
+        "positive:rear_120_to_lt150": 1453,
+        "positive:rear_150_to_180": 1474
+      },
+      "by_rear_yaw_bin": {
+        "negative:yaw_-180_to_lt-165": 564,
+        "negative:yaw_-165_to_lt-150": 486,
+        "negative:yaw_-150_to_lt-135": 766,
+        "negative:yaw_-135_to_-120": 880,
+        "positive:yaw_120_to_lt135": 772,
+        "positive:yaw_135_to_lt150": 681,
+        "positive:yaw_150_to_lt165": 750,
+        "positive:yaw_165_to_lt180": 724
+      },
+      "human_corrected": 0,
+      "score_max": 0.48976203652462647
+    },
+    "top060": {
+      "count": 8433,
+      "by_source": {
+        "synthetic_001": 1699,
+        "synthetic_004": 4286,
+        "synthetic_005": 2448
+      },
+      "by_rear_bucket": {
+        "negative:rear_120_to_lt150": 2369,
+        "negative:rear_150_to_180": 1675,
+        "positive:rear_120_to_lt150": 2179,
+        "positive:rear_150_to_180": 2210
+      },
+      "by_rear_yaw_bin": {
+        "negative:yaw_-180_to_lt-165": 846,
+        "negative:yaw_-165_to_lt-150": 729,
+        "negative:yaw_-150_to_lt-135": 1149,
+        "negative:yaw_-135_to_-120": 1320,
+        "positive:yaw_120_to_lt135": 1158,
+        "positive:yaw_135_to_lt150": 1021,
+        "positive:yaw_150_to_lt165": 1125,
+        "positive:yaw_165_to_lt180": 1085
+      },
+      "human_corrected": 0,
+      "score_max": 0.6215686274509804
+    },
+    "top080": {
+      "count": 11244,
+      "by_source": {
+        "synthetic_001": 1846,
+        "synthetic_004": 6110,
+        "synthetic_005": 3288
+      },
+      "by_rear_bucket": {
+        "negative:rear_120_to_lt150": 3156,
+        "negative:rear_150_to_180": 2236,
+        "positive:rear_120_to_lt150": 2905,
+        "positive:rear_150_to_180": 2947
+      },
+      "by_rear_yaw_bin": {
+        "negative:yaw_-180_to_lt-165": 1128,
+        "negative:yaw_-165_to_lt-150": 972,
+        "negative:yaw_-150_to_lt-135": 1532,
+        "negative:yaw_-135_to_-120": 1760,
+        "positive:yaw_120_to_lt135": 1544,
+        "positive:yaw_135_to_lt150": 1361,
+        "positive:yaw_150_to_lt165": 1500,
+        "positive:yaw_165_to_lt180": 1447
+      },
+      "human_corrected": 0,
+      "score_max": 0.7290468722774003
+    },
+    "top100": {
+      "count": 14049,
+      "by_source": {
+        "synthetic_001": 1909,
+        "synthetic_004": 7934,
+        "synthetic_005": 4206
+      },
+      "by_rear_bucket": {
+        "negative:rear_120_to_lt150": 3946,
+        "negative:rear_150_to_180": 2791,
+        "positive:rear_120_to_lt150": 3630,
+        "positive:rear_150_to_180": 3682
+      },
+      "by_rear_yaw_bin": {
+        "negative:yaw_-180_to_lt-165": 1410,
+        "negative:yaw_-165_to_lt-150": 1214,
+        "negative:yaw_-150_to_lt-135": 1914,
+        "negative:yaw_-135_to_-120": 2199,
+        "positive:yaw_120_to_lt135": 1929,
+        "positive:yaw_135_to_lt150": 1701,
+        "positive:yaw_150_to_lt165": 1874,
+        "positive:yaw_165_to_lt180": 1808
+      },
+      "human_corrected": 0,
+      "score_max": 0.9809574657412351
+    }
+  },
+  "teachers": {
+    "sixdrepnet360_base": {
+      "teacher_id": "sixdrepnet360_base",
+      "implementation": "birdManIkioiShota/hpe",
+      "implementation_revision": "recorded-by-source-sha256",
+      "checkpoint_path": "checkpoints/6DRepNet360_Full-Rotation_300W_LP+Panoptic.pth",
+      "checkpoint_sha256": "3ee08f1e04b8d452a6c4a40926a6f38051894ae6d0aaa6d191fe6d8bc6e4f9c6",
+      "input_preprocess": "Resize256-CenterCrop224-ImageNet normalization",
+      "yaw_adapter": "atan2(R[0,2],R[2,2]) -> degrees -> [-180,180)",
+      "prediction_sha256": "77b81dde4824ecb7150e3fa7896d397f1c81f248c038684f32d36370f69c2cca",
+      "count": 14049
+    },
+    "semiuhpe_effnetv2s": {
+      "teacher_id": "semiuhpe_effnetv2s",
+      "model": "SemiUHPE EfficientNetV2-S full-range",
+      "implementation": "hnuzhy/SemiUHPE",
+      "implementation_revision": "c8f67102bf5aba8869b3f23453ac67599f21aa1f",
+      "repository_path": "/home/hoge/learn/hpe_external/SemiUHPE",
+      "checkpoint_path": "/home/hoge/learn/hpe_external/SemiUHPE/weights/DAD-WildHead-EffNetV2-S-best.pth",
+      "checkpoint_sha256": "5f31ce5aa0d5e9da2a5dc66b96d248d4dd05d8d52053d8293f4fdf3445b60739",
+      "input_preprocess": "RGB PIL BICUBIC resize 224x224, ImageNet normalization",
+      "yaw_adapter": "matrix-Fisher SVD projection; transpose; scipy xyz Euler yaw; data-calibrated sign; wrap [-180,180)",
+      "yaw_convention_validation": {
+        "passed": true,
+        "method": "direction-verified synthetic YawPose rear samples",
+        "label_sources": [
+          "intent_s004",
+          "intent_s005"
+        ],
+        "count": 9138,
+        "positive_count": 4579,
+        "negative_count": 4559,
+        "max_abs_yaw_deg": 165.0,
+        "mean_error_sign_plus_deg": 122.13410050374092,
+        "mean_error_sign_minus_deg": 152.5514305732003,
+        "selected_sign": 1
+      },
+      "candidate_manifest_sha256": "2f5c2d6e9749971d4c794ff75c0a7c1fcc7cb49fb0a899a14fffd8be7b360ef8",
+      "prediction_sha256": "fee635b8510c7fad242b18a61e57a010de5a97e81878243271af277b24333b8b",
+      "count": 14049,
+      "prediction_path": "/home/hoge/learn/hpe/datasets/prepared/yawpose_teachers/semiuhpe_effnetv2s.jsonl",
+      "manifest_sha256": "442264f40b0bbd12545b9e449960f0ea284a167663a2b7fe910108309f4c8749"
+    },
+    "whenet": {
+      "teacher_id": "whenet",
+      "model": "WHENet wide-range yaw",
+      "implementation": "Ascend-Research/HeadPoseEstimation-WHENet",
+      "implementation_revision": "a0d7bdfb5e2ac97ae6b0ae3eef79fdcf4075ab82",
+      "repository_path": "/home/hoge/learn/hpe_external/HeadPoseEstimation-WHENet",
+      "checkpoint_path": "/home/hoge/learn/hpe_external/HeadPoseEstimation-WHENet/WHENet.h5",
+      "checkpoint_sha256": "8f8bcf924447f7126666cf2c725a633ec2b9ae06afa4699064d3242a02401f59",
+      "input_preprocess": "upstream WHENet RGB 224x224 and ImageNet normalization",
+      "yaw_adapter": "upstream yaw output; data-calibrated sign; wrap [-180,180)",
+      "yaw_convention_validation": {
+        "passed": true,
+        "method": "direction-verified synthetic YawPose rear samples",
+        "label_sources": [
+          "intent_s004",
+          "intent_s005"
+        ],
+        "count": 9138,
+        "positive_count": 4579,
+        "negative_count": 4559,
+        "max_abs_yaw_deg": 165.0,
+        "mean_error_sign_plus_deg": 29.6766206453707,
+        "mean_error_sign_minus_deg": 65.46487042365906,
+        "selected_sign": 1
+      },
+      "candidate_manifest_sha256": "2f5c2d6e9749971d4c794ff75c0a7c1fcc7cb49fb0a899a14fffd8be7b360ef8",
+      "prediction_sha256": "3aa5351dbd14a60f7c6daa86f7f578ffa3944857ce2bbfd0d71b92fd1284db53",
+      "count": 14049,
+      "prediction_path": "/home/hoge/learn/hpe/datasets/prepared/yawpose_teachers/whenet.jsonl",
+      "manifest_sha256": "f38c13ddc29638db72280c72f8b392ea7a4eb9116c93aa8e97a30977cbb77a8b"
+    }
+  },
+  "reliability_sha256": "06ea2e354da0470faa6abcf03865a7927b27af5961a39c5df1e369e3316a8716"
+}
