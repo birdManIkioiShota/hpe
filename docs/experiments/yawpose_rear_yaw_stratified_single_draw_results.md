@@ -74,10 +74,10 @@ canonical yawが次の条件を満たすサンプルだけをYawPose学習候補
 
 | 区分 | yaw範囲 |
 |---|---|
-| negative 180–165 | `[-180°, -165°)` |
-| negative 165–150 | `[-165°, -150°)` |
-| negative 150–135 | `[-150°, -135°)` |
-| negative 135–120 | `[-135°, -120°]` |
+| negative -180〜-165 | `[-180°, -165°)` |
+| negative -165〜-150 | `[-165°, -150°)` |
+| negative -150〜-135 | `[-150°, -135°)` |
+| negative -135〜-120 | `[-135°, -120°]` |
 | positive 120–135 | `[120°, 135°)` |
 | positive 135–150 | `[135°, 150°)` |
 | positive 150–165 | `[150°, 165°)` |
@@ -139,6 +139,8 @@ teacher `i`の予測yawを`t_i`、canonical yawを`y`とすると、teacherとca
 scoreが小さいほど、同じ15度yaw帯の中でteacher群とcanonical yawの整合度が相対的に高いサンプルとして扱います。
 
 このscoreはラベルが正しい確率ではありません。同じ15度帯に属する候補集合内での相対順位です。
+
+同一scoreが存在する場合は、`gt_median_error_deg`、`teacher_dispersion_deg`、`gt_max_error_deg`、`instance_id`の順でtie-breakします。この順序まで固定することで、同一入力から同じrankingを再生成できるようにしています。
 
 ### subset生成
 
