@@ -1,4 +1,4 @@
-"""Run the fixed YawPose rear-yaw adoption search."""
+"""Run a fixed YawPose adoption or top060 loss-weight comparison."""
 from __future__ import annotations
 
 import argparse
@@ -22,9 +22,12 @@ from experiments.common.run_directory import (
     experiment_run_path,
 )
 from experiments.common.yawpose_search import (
+    WEIGHT_SEARCH_KIND,
+    WEIGHT_SEARCH_RUN_ID,
     condition_records,
     summarize_search,
     yawpose_conditions,
+    yawpose_weight_conditions,
 )
 from hpe.datasets.common import sha256_file
 from training.audit import BASE_CHECKPOINT, BASE_SHA256
@@ -264,7 +267,10 @@ class SearchProgress:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--run-id", default="yawpose_rear_stratified_search")
+    parser.add_argument("--run-id")
+    parser.add_argument(
+        "--search-mode", choices=("adoption", "loss-weight"), default="adoption",
+    )
     parser.add_argument(
         "--reliability-run",
         default="yawpose_reliability_stratified15",
@@ -290,7 +296,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--clip-norm", type=float, default=1.0)
     parser.add_argument("--retain-distill-weight", type=float, default=1.0)
     parser.add_argument("--rear-flip-consistency-weight", type=float, default=0.2)
-    parser.add_argument("--yawpose-weight", type=float, default=0.2)
+    parser.add_argument("--yawpose-weight", type=float)
     parser.add_argument("--retention-tolerance-deg", type=float, default=0.0)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--parallel-conditions", type=int, default=1)
@@ -304,6 +310,9 @@ def _condition_command(
     *,
     resume: bool,
 ) -> list[str]:
+    yawpose_weight = getattr(condition, "yawpose_weight", args.yawpose_weight)
+    if yawpose_weight is None:
+        yawpose_weight = 0.2
     command = [
         sys.executable,
         "-m",
@@ -349,7 +358,7 @@ def _condition_command(
         "--rear-flip-consistency-weight",
         repr(args.rear_flip_consistency_weight),
         "--yawpose-weight",
-        repr(args.yawpose_weight),
+        repr(yawpose_weight),
         "--retention-tolerance-deg",
         repr(args.retention_tolerance_deg),
         "--seed",
@@ -538,30 +547,55 @@ def run_process_pool(
     return PoolResult(tuple(completed), max_active)
 
 
+def _search_config(args: argparse.Namespace) -> dict:
+    """Resolve mode-specific defaults without changing legacy run records."""
+    weight_search = args.search_mode == "loss-weight"
+    if weight_search and args.yawpose_weight is not None:
+        raise ValueError("loss-weight mode uses its fixed six coefficients")
+    if args.run_id is None:
+        args.run_id = (
+            WEIGHT_SEARCH_RUN_ID if weight_search else "yawpose_rear_stratified_search"
+        )
+    if args.yawpose_weight is None and not weight_search:
+        args.yawpose_weight = 0.2
+    excluded = {"run_id", "dry_run", "parallel_conditions", "search_mode"}
+    if weight_search:
+        excluded.add("yawpose_weight")
+    return {
+        "kind": WEIGHT_SEARCH_KIND if weight_search else "yawpose_rear_adoption_search",
+        "epochs": args.epochs,
+        "conditions": condition_records(args.search_mode),
+        "reliability_run": args.reliability_run,
+        "shared_training": {
+            key: value for key, value in vars(args).items() if key not in excluded
+        },
+    }
+
+
+def _validate_weight_inputs(provenance: dict, reference: dict) -> None:
+    expected_manifests = {**reference["train_manifests"], **reference["dev_manifests"]}
+    if provenance["training_manifests"] != expected_manifests:
+        raise ValueError("loss-weight comparison requires the previous VGG+DAD inputs")
+    selected = provenance["reliability_subsets"]["top060"]
+    previous = reference["yawpose_subset"]
+    if previous["count"] != 8433 or any(
+        selected[key] != previous[key] for key in ("path", "sha256")
+    ):
+        raise ValueError("loss-weight comparison requires the previous top060 subset")
+
+
 def main() -> None:
     args = build_parser().parse_args()
     if args.parallel_conditions <= 0:
         raise ValueError("parallel-conditions must be positive")
-    conditions = yawpose_conditions()
+    config = _search_config(args)
+    conditions = (
+        yawpose_weight_conditions()
+        if args.search_mode == "loss-weight"
+        else yawpose_conditions()
+    )
     reliability_dir = experiment_run_path(ROOT, args.reliability_run)
-    reliability_status = reliability_dir / "status.json"
-    if (
-        not reliability_status.is_file()
-        or json.loads(reliability_status.read_text()).get("status") != "completed"
-    ):
-        raise ValueError("completed reliability precompute run is required")
     reliability_summary = reliability_dir / "metrics" / "summary.json"
-    config = {
-        "kind": "yawpose_rear_adoption_search",
-        "epochs": args.epochs,
-        "conditions": condition_records(),
-        "reliability_run": args.reliability_run,
-        "shared_training": {
-            key: value
-            for key, value in vars(args).items()
-            if key not in {"run_id", "dry_run", "parallel_conditions"}
-        },
-    }
     if args.dry_run:
         print(
             json.dumps(
@@ -576,6 +610,13 @@ def main() -> None:
             )
         )
         return
+
+    reliability_status = reliability_dir / "status.json"
+    if (
+        not reliability_status.is_file()
+        or json.loads(reliability_status.read_text()).get("status") != "completed"
+    ):
+        raise ValueError("completed reliability precompute run is required")
 
     checkpoint = ROOT / BASE_CHECKPOINT
     if sha256_file(checkpoint) != BASE_SHA256:
@@ -633,6 +674,12 @@ def main() -> None:
             for path in SOURCE_FILES
         },
     }
+    if args.search_mode == "loss-weight":
+        reference = (
+            experiment_run_path(ROOT, "yawpose_rear_stratified_search")
+            / "conditions" / "Y_top60_vgg_dad" / "provenance.json"
+        )
+        _validate_weight_inputs(provenance, json.loads(reference.read_text()))
     run_path = experiment_run_path(ROOT, args.run_id)
     resumed_parent = run_path.exists()
     if resumed_parent:

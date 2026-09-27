@@ -323,3 +323,64 @@ twelve-condition search matrix:
 ```bash
 uv run python -m unittest discover -s src/tests -p test_yawpose_experiment.py -v
 ```
+
+## YawPose top_60固定の損失係数比較
+
+この実験では、VGGHeadsとDAD-3DHeadsの学習データを固定し、YawPoseの損失係数を比較します。実験対象はYawPoseを使用しないbaseと、係数0.2、0.4、0.6、0.8、1.0の計6条件です。YawPose使用条件では、採用率比較実験`yawpose_rear_stratified_search`で使用した、各15度yaw帯の信頼度上位60%に当たる8,433件を共通に使用します。
+
+採用一覧は`experiments/runs/yawpose_reliability_stratified15/predictions/subsets/top060.jsonl`です。学習開始前に、`experiments/runs/yawpose_rear_stratified_search/conditions/Y_top60_vgg_dad/provenance.json`の記録と照合し、VGGHeadsの学習・検証一覧、DAD-3DHeadsの学習一覧、YawPose採用一覧が一致することを確認します。採用一覧、画像、初期重み、信頼度計算の完了状態は学習機上に必要です。
+
+学習設定の標準値は10エポック、seed 42、batch size 64、勾配蓄積2回、BF16です。既存HPEデータは1エポックあたり417,024件、YawPoseは各画像を1エポックあたり1回使用します。全条件を同じ初期重みから独立して学習し、更新対象はResNet50のlayer4と回帰ヘッドです。損失係数は条件ごとに保存し、一括指定の`--yawpose-weight`はこの実験では受け付けません。
+
+次のコマンドは、学習を開始せずに6条件と共通設定を表示します。この確認には学習機上のデータを必要としません。
+
+```bash
+uv run python -m experiments.scripts.run_yawpose_rear_search \
+  --search-mode loss-weight \
+  --run-id yawpose_rear_weight_search \
+  --workers 4 \
+  --dry-run
+```
+
+次のコマンドで6条件を学習します。同じコマンドを再実行すると、完了済み条件を除いて学習を再開します。設定や入力が変更されている場合は再開を拒否します。
+
+```bash
+uv run python -m experiments.scripts.run_yawpose_rear_search \
+  --search-mode loss-weight \
+  --run-id yawpose_rear_weight_search \
+  --workers 4
+```
+
+全条件の完了後、次のコマンドでepoch 10の重みを評価します。最初のコマンドはAGORA-HPE、AFLW2000、300W-LPを、2番目はDAD-3DHeadsの公式検証データを評価します。評価条件は既存のFP32評価に揃えます。
+
+```bash
+uv run python -m experiments.scripts.evaluate_yawpose_rear_search \
+  --run-id yawpose_rear_weight_search \
+  --baseline-run baseline_fp32 \
+  --checkpoint-choice final
+
+uv run python -m experiments.scripts.evaluate_yawpose_rear_search \
+  --run-id yawpose_rear_weight_search \
+  --baseline-run baseline_dad_fp32 \
+  --checkpoint-choice final \
+  --name-suffix __dad
+```
+
+学習結果は`experiments/runs/yawpose_rear_weight_search/`へ保存します。条件IDは`Y_base_vgg_dad`、`Y_w020_vgg_dad`、`Y_w040_vgg_dad`、`Y_w060_vgg_dad`、`Y_w080_vgg_dad`、`Y_w100_vgg_dad`です。条件ごとの重みは`conditions/<条件ID>/checkpoints/epoch_010.pth`、学習記録は`conditions/<条件ID>/metrics/`、検証結果の一覧は`metrics/comparison.json`に保存します。
+
+評価結果は`eval/yawpose_rear_weight_search/`へ保存します。保存する結果の内訳は次のとおりです。
+
+| 相対パス | 内容 |
+|---|---|
+| `conditions/<評価名>/` | 各条件の評価指標と、使用した重みの記録を保存します。DAD検証の評価名には`__dad`が付きます。 |
+| `comparisons/` | 初期重みとの比較と、学習済みbaseとのSO(3)誤差などの比較を保存します。 |
+| `yaw_comparisons/` | 後方yaw誤差、AGORA-HPEの全周15度帯ごとのyaw誤差、および比較図を保存します。 |
+| `weight_summary.json` | 6条件の損失係数、採用集合、重みのパス、評価指標、baseとの差分を保存します。2回の評価結果を別々の評価データ群として保持します。 |
+
+SO(3)誤差は予測と正解の回転行列を比較します。後方yaw誤差は、予測行列から`atan2(R[0,2], R[2,2])`で求めた角度と、評価データのsource yawを比較します。AGORA-HPEの15度帯はsource yawで区分し、SO(3)誤差と後方yawと同じ定義のyaw誤差を別の項目に保存します。差分は各条件から学習済みbaseを引いた値で、負値が誤差の低下を表します。
+
+条件生成、入力の照合、係数の引き渡し、評価結果の集計は、次のテストで確認できます。
+
+```bash
+uv run python -m unittest discover -s src/tests -p 'test_yawpose*.py' -v
+```
