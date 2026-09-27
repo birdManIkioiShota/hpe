@@ -43,7 +43,7 @@ YawPoseの公開yawは`[0°, 360°)`です。本実験ではこれを`[-180°, 1
 
 既存HPE教師にはVGGHeadsとDAD-3DHeads trainを使用します。両データセットでは完全なrotation matrixを教師としてSO(3) supervised lossを計算します。
 
-| データ | train | development |
+| データ | train | dev |
 |---|---:|---:|
 | VGGHeads | 417,055 | 51,914 |
 | DAD-3DHeads train由来split | 34,035 | 本実験のcheckpoint選択には不使用 |
@@ -52,7 +52,7 @@ YawPoseの公開yawは`[0°, 360°)`です。本実験ではこれを`[-180°, 1
 
 両系列のexisting-HPE draw数は417,024件/epochへ固定します。この値はVGGHeads train件数をeffective batch size 128の境界へ切り下げた値です。そのため、DAD-3DHeadsを追加した系列ではtraining poolは増えますが、optimizer update数は増えません。
 
-checkpoint selectionに使用するdevデータは両系列ともVGGHeads dev 51,914件へ固定します。したがって、DAD有無の比較は、固定training budgetと固定development集合のもとで学習poolだけを変更した比較です。
+checkpoint選択には、両系列ともVGGHeads dev 51,914件を使用します。したがって、DAD有無の比較では、学習量とcheckpoint選択用データを固定し、学習poolだけを変更しています。
 
 ## 用語と評価指標
 
@@ -66,7 +66,7 @@ YawPoseの公開yawは次式でsigned yawへ変換します。
 
 ### 姿勢区分
 
-内部development評価では、rotation matrixからhead-localの`+Z`軸をhead-forward方向として取り出し、そのXZ平面上のazimuthを姿勢区分に使用します。外部評価では、各evaluation manifestに保存されたsource yawを姿勢区分に使用します。
+VGGHeads devの評価では、rotation matrixからhead-localの`+Z`軸をhead-forward方向として取り出し、そのXZ平面上のazimuthを姿勢区分に使用します。外部評価では、各evaluation manifestに保存されたsource yawを姿勢区分に使用します。
 
 姿勢帯の境界は次のとおりです。
 
@@ -78,7 +78,7 @@ YawPoseの公開yawは次式でsigned yawへ変換します。
 | rear-near | `120° <= |yaw| < 150°` |
 | rear-deep | `150° <= |yaw| <= 180°` |
 
-内部developmentのazimuthと外部評価のsource yawは同一のデータ源ではないため、個々のsampleについて同じ数値量として直接比較しません。姿勢帯の意味を揃えた集計単位として使用します。
+VGGHeads devで使用するazimuthと外部評価で使用するsource yawは同一のデータ源ではないため、個々のsampleについて同じ数値量として直接比較しません。姿勢帯の意味を揃えた集計単位として使用します。
 
 ### SO(3) geodesic error
 
