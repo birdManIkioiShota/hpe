@@ -1,0 +1,29 @@
+{
+  "base_checkpoint": {
+    "path": "checkpoints/6DRepNet360_Full-Rotation_300W_LP+Panoptic.pth",
+    "sha256": "3ee08f1e04b8d452a6c4a40926a6f38051894ae6d0aaa6d191fe6d8bc6e4f9c6"
+  },
+  "training_manifests": {
+    "datasets/prepared/vgg_data/train.jsonl": "087e644fa095374c730b0d10e38af8e8371556ffbb9c2d617aa1f5d3a644b394",
+    "datasets/prepared/vgg_data/dev.jsonl": "ba83be1e197275697e8919959519e4a5da314d460a34d5457ac9788f1a18d13b",
+    "datasets/prepared/dad3dheads_train/train.jsonl": "52be88952ab12c96bfa34ee8eab352ced96ba2e4d5863e712db7efed0c4e4bb8"
+  },
+  "reliability_subsets": {
+    "top060": {
+      "path": "experiments/runs/yawpose_reliability_stratified15/predictions/subsets/top060.jsonl",
+      "sha256": "09da8f26931c73af3dd0e49606242b00c6664c2cf35d4925c7f4bf46d46194b4"
+    }
+  },
+  "reliability_run": {
+    "run_id": "yawpose_reliability_stratified15",
+    "config_sha256": "77535fde1533a3120dbabaccd8c237419f1ef6bef9ba7e7d1e40d015578fdb53",
+    "provenance_sha256": "61912160cde977cd18824279d6fd407a85236216a5ea142e66f1675d66698cbb",
+    "summary_sha256": "aa4a6099e5a63d1952c540e3e9e6697d518ae2df4ccea4497d00a676a8da8eb8"
+  },
+  "source_sha256": {
+    "src/experiments/common/yawpose.py": "41df088be84d985e27b83c9a5481abc8f0b0c8bb245bb01ccd65f4999b2fa3ae",
+    "src/experiments/common/yawpose_search.py": "00334bc22e19336360b01b7bbfae4772042e0b01780210f9d071bdce7b70b86a",
+    "src/experiments/scripts/run_yawpose_rear_search.py": "9e57d06c500131edc29f73ca816a751af6ab027f7618936a397ce1561bab8fb1",
+    "src/experiments/scripts/train_yawpose_rear.py": "591361375715111785dddca73c8003eeca9a6bf136a772be81da05acbd06ce9d"
+  }
+}

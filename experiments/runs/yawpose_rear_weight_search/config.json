@@ -1,0 +1,77 @@
+{
+  "kind": "yawpose_rear_loss_weight_search",
+  "epochs": 10,
+  "conditions": [
+    {
+      "condition_id": "Y_base_vgg_dad",
+      "subset": "base",
+      "adoption_ratio": 0.0,
+      "hpe_regime": "vgg_plus_dad",
+      "use_dad": true,
+      "yawpose_weight": 0.0
+    },
+    {
+      "condition_id": "Y_w020_vgg_dad",
+      "subset": "top060",
+      "adoption_ratio": 0.6,
+      "hpe_regime": "vgg_plus_dad",
+      "use_dad": true,
+      "yawpose_weight": 0.2
+    },
+    {
+      "condition_id": "Y_w040_vgg_dad",
+      "subset": "top060",
+      "adoption_ratio": 0.6,
+      "hpe_regime": "vgg_plus_dad",
+      "use_dad": true,
+      "yawpose_weight": 0.4
+    },
+    {
+      "condition_id": "Y_w060_vgg_dad",
+      "subset": "top060",
+      "adoption_ratio": 0.6,
+      "hpe_regime": "vgg_plus_dad",
+      "use_dad": true,
+      "yawpose_weight": 0.6
+    },
+    {
+      "condition_id": "Y_w080_vgg_dad",
+      "subset": "top060",
+      "adoption_ratio": 0.6,
+      "hpe_regime": "vgg_plus_dad",
+      "use_dad": true,
+      "yawpose_weight": 0.8
+    },
+    {
+      "condition_id": "Y_w100_vgg_dad",
+      "subset": "top060",
+      "adoption_ratio": 0.6,
+      "hpe_regime": "vgg_plus_dad",
+      "use_dad": true,
+      "yawpose_weight": 1.0
+    }
+  ],
+  "reliability_run": "yawpose_reliability_stratified15",
+  "shared_training": {
+    "reliability_run": "yawpose_reliability_stratified15",
+    "vgg_data_id": "vgg_data",
+    "dad_data_id": "dad3dheads_train",
+    "device": "cuda:0",
+    "precision": "bf16",
+    "update_scope": "layer4",
+    "epochs": 10,
+    "samples_per_epoch": null,
+    "batch_size": 64,
+    "accumulation": 2,
+    "workers": 4,
+    "backbone_lr": 1e-06,
+    "head_lr": 3e-05,
+    "weight_decay": 0.0001,
+    "warmup_updates": 100,
+    "clip_norm": 1.0,
+    "retain_distill_weight": 1.0,
+    "rear_flip_consistency_weight": 0.2,
+    "retention_tolerance_deg": 0.0,
+    "seed": 42
+  }
+}
