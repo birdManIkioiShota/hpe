@@ -1,22 +1,22 @@
-# YawPose後方yaw・15度層別・single-draw実験結果
+# YawPose後方yaw・15度層別・1回/epoch投入実験結果
 
 ## 概要
 
-本実験では、Head Pose Estimation（HPE）の全周推定モデルSixDRepNet360-ResNet50に、YawPoseの後方合成画像を追加して学習した場合の効果を再評価しました。YawPoseはPINTO0309/YawNetで公開されている合成データセットで、yawを中心に構成され、一部にpitch情報を持ちますがroll情報は持ちません。本実験ではYawPoseのyawだけを教師信号として使用します。
+本実験では、Head Pose Estimation（HPE）の全周推定モデルSixDRepNet360-ResNet50に対して、YawPoseの後方合成画像をyawだけの追加教師として使用したときの効果を再評価しました。YawPoseはPINTO0309/YawNetで公開されている合成データセットで、yawを中心に構成され、一部にpitch情報を持ちますがroll情報は持ちません。本実験ではYawPoseのpitchとrollを教師信号として使用せず、yawだけを使用します。
 
-先行実験は`docs/experiments/yawpose_rear_yaw_reliability_results.md`で報告しています。先行実験では14,049件の後方候補全体で信頼度順位を計算し、YawPoseの総使用回数を約451,000件/エポックへ固定していました。そのため、採用率を変えると信頼度だけでなく、yaw帯の構成と1画像あたりの反復回数も同時に変化していました。
+比較対象となる先行実験は`docs/experiments/yawpose_rear_yaw_reliability_results.md`です。先行実験では、後方候補14,049件をまとめて信頼度順に並べ、採用率にかかわらずYawPoseを約451,000件/epoch使用していました。そのため、採用率を変えると、採用する画像の信頼度だけでなく、yaw帯の構成と同一画像の反復回数も同時に変化していました。
 
-今回の実験では、後方候補をsigned yawの15度単位で8区分へ分け、各区分の中で独立して信頼度順位を計算しました。また、選択したYawPoseの各サンプルは1エポックにつき1回だけ学習に使用し、採用数が少ない条件でも同じサンプルを繰り返して使用回数を揃えません。本レポートでは、この方式を`single-draw`と呼びます。
+今回の実験では、後方候補を15度ごとの8区分に分け、各区分の中で信頼度順に並べます。各条件では、それぞれの区分から上位20%、40%、60%、80%、100%を採用します。また、採用した画像は1エポックにつき1回だけ学習に使用し、同じエポック内では繰り返し使用しません。
 
-既存のHPE学習データにはVGGHeadsを全条件で使用し、DAD-3DHeads trainを使用しない系列と使用する系列を比較しました。10エポック目のcheckpointを使った比較では、YawPose追加による平均性能の変化は先行実験より小さくなりました。一方、AGORA-HPEを15度ごとに分けて評価すると、120–150°付近では誤差が低下し、165–180°付近では誤差が増加する傾向が両系列で確認されました。
+既存のHPE学習データにはVGGHeadsを必ず使用し、DAD-3DHeadsを加えない系列と加える系列を比較しました。
 
 ## 目的
 
 本実験では、次の3点を確認します。
 
-1. 後方yaw帯の構成を揃え、同一サンプルを1エポック内で反復しない条件で、YawPoseの信頼度採用率による性能変化を再評価します。
-2. AGORA-HPEを全周15度単位で評価し、後方全体の平均だけでは見えない角度依存の変化を確認します。
-3. VGGHeadsを全条件で使用したうえで、DAD-3DHeads trainを追加した場合と追加しない場合を比較します。
+1. yaw帯の偏りと同一画像の反復を抑えた条件で、YawPoseの信頼度による選別が後方姿勢推定へ与える影響を確認します。
+2. AGORA-HPEを15度ごとのyaw帯に分け、後方全体の平均だけでは見えない角度依存の変化を確認します。
+3. VGGHeadsだけを使用した場合と、VGGHeadsにDAD-3DHeadsを加えた場合を比較します。
 
 DAD-3DHeadsは非商用条件を含むため、最終的な学習構成から除外することを前提としています。
 
@@ -24,12 +24,12 @@ DAD-3DHeadsは非商用条件を含むため、最終的な学習構成から除
 
 ### YawPose
 
-本実験では、`PINTO0309/YawNet`の`resources` releaseで公開されているYawPoseを使用します。使用したデータの出典情報は次のとおりです。
+本実験では、`PINTO0309/YawNet`の`resources` releaseで公開されているYawPoseを使用します。使用した公開データは次のとおりです。
 
 | 項目 | 値 |
 |---|---|
-| repository | `PINTO0309/YawNet` |
-| documentation revision | `4af7fa9d73e94790688c518376d3be7c41c74cc3` |
+| upstream repository | `PINTO0309/YawNet` |
+| dataset documentation revision | `4af7fa9d73e94790688c518376d3be7c41c74cc3` |
 | release | `resources` |
 | archive | `yawpose.tar.gz` |
 | archive SHA-256 | `08df8f2e5df8d2c5c0509475688cf1366c69b96b393f1cbbbf87aeb9ced9118a` |
@@ -37,34 +37,34 @@ DAD-3DHeadsは非商用条件を含むため、最終的な学習構成から除
 | image crops | 43,258件 |
 | image size | 320×320 |
 
-YawPoseの公開yawは`[0°, 360°)`です。本実験では`[-180°, 180°)`へ変換し、`|yaw| >= 120°`のサンプルだけを学習候補とします。
+YawPoseの公開yawは`[0°, 360°)`です。本実験では`[-180°, 180°)`へ変換し、`|yaw| >= 120°`の14,049件だけを学習候補とします。
 
 ### 既存HPE学習データ
 
-既存HPE学習データにはVGGHeadsとDAD-3DHeads trainを使用します。どちらもrotation matrixを教師としてSO(3) supervised lossを計算します。
+既存のHPE教師にはVGGHeadsとDAD-3DHeadsを使用します。両データセットではrotation matrixを教師としてSO(3) lossを計算します。
 
-| データ | 学習用 | 検証用 |
+| データ | 学習用 | checkpoint選択用 |
 |---|---:|---:|
 | VGGHeads | 417,055 | 51,914 |
-| DAD-3DHeads train由来split | 34,035 | checkpoint選択には不使用 |
+| DAD-3DHeads | 34,035 | 使用しない |
 
-`vgg_only`系列ではVGGHeads trainだけを使用します。`vgg_plus_dad`系列ではVGGHeads trainとDAD-3DHeads trainを同じ学習データとして使用します。
+VGGHeads-only系列ではVGGHeadsだけを使用します。VGGHeads+DAD-3DHeads系列では、VGGHeadsとDAD-3DHeadsを同じ学習データ集合へ入れます。
 
-既存HPEデータの使用数は、両系列とも417,024件/エポックへ固定します。この値はVGGHeads trainの件数をeffective batch size 128に合わせて切り下げた値です。そのため、DAD-3DHeadsを追加しても1エポックあたりの更新回数は増えません。
+両系列とも、既存HPEデータは417,024件/epochだけ使用します。そのため、DAD-3DHeadsを加えても1エポックあたりの更新回数は増えず、VGGHeadsの一部がDAD-3DHeadsへ置き換わる構成になります。
 
-checkpoint選択には、両系列ともVGGHeads dev 51,914件を使用します。DAD有無の比較では、学習量とcheckpoint選択用データを固定し、学習に使用するデータ構成だけを変更しています。
+checkpoint選択には、両系列ともVGGHeads dev 51,914件を使用します。
 
 ## 評価指標
 
-### yawの表現と姿勢区分
+モデルの出力は3×3 rotation matrixです。姿勢全体の誤差にはSO(3) geodesic errorを使用し、値が小さいほどGT rotationに近いことを表します。
 
-YawPoseの公開yawは次式でsigned yawへ変換します。
+後方yawの評価では、予測rotation `R`から次式でhead-forward yawを求めます。
 
-`yaw_signed = ((yaw_deg + 180) mod 360) - 180`
+`yaw_head_forward = atan2(R[0,2], R[2,2])`
 
-値域は`[-180°, 180°)`です。0°を正面、±90°付近を側面、±180°付近を完全後方として扱います。
+AGORA-HPEでは、manifestに保存されたsource yawをyaw評価の正解として使用し、予測したhead-forward yawとの円周角度差を求めます。
 
-姿勢帯の境界は次のとおりです。
+姿勢帯は次のように区分します。
 
 | 姿勢帯 | 定義 |
 |---|---|
@@ -74,21 +74,7 @@ YawPoseの公開yawは次式でsigned yawへ変換します。
 | rear-near | `120° <= |yaw| < 150°` |
 | rear-deep | `150° <= |yaw| <= 180°` |
 
-VGGHeads devの評価では、rotation matrixからhead-localの`+Z`軸をhead-forward方向として取り出し、そのXZ平面上のazimuthを姿勢区分に使用します。AGORA-HPEなどの外部評価では、evaluation manifestに保存されたsource yawを姿勢区分に使用します。
-
-### SO(3) geodesic error
-
-モデルの主要出力は3×3 rotation matrixです。予測rotationとGT rotationの回転差をSO(3) geodesic errorとして度数で評価します。値が小さいほど誤差が小さいことを表します。
-
-### head-forward yaw error
-
-予測rotation `R`からhead-forward yawを求める場合は、次式を使用します。
-
-`yaw_head_forward = atan2(R[0,2], R[2,2])`
-
-AGORA-HPEでは、予測したhead-forward yawとmanifestに保存されたsource yawの円周距離をyaw誤差として使用します。
-
-通常の外部評価で保存しているEuler yaw errorは、rotation matrixを`RzRyRx` Euler表現へ変換して求める別の指標です。head-forward yaw errorとは同一ではありません。
+VGGHeads devではrotation matrixから求めたhead-forward azimuthを姿勢帯の判定に使用します。AGORA-HPEなどの外部評価では、各manifestに保存されたsource yawを姿勢帯の判定に使用します。
 
 ## 学習条件
 
@@ -113,28 +99,30 @@ AGORA-HPEでは、予測したhead-forward yawとmanifestに保存されたsourc
 
 `L_total = L_supervised + 1.0 L_distillation + 0.2 L_flip + 0.2 L_yawpose`
 
-各損失の適用対象は次のとおりです。
+各損失の役割は次のとおりです。
 
 | 損失 | 適用対象 | 内容 |
 |---|---|---|
-| `L_supervised` | 既存HPEデータ全体 | GT rotation matrixに対するSO(3) geodesic loss |
-| `L_distillation` | 既存HPEデータの非rear | 初期checkpointのpredictionを保持するSO(3) distillation loss |
-| `L_flip` | 既存HPEデータのrear | horizontal flip前後のpredictionを元座標系で一致させるSO(3) consistency loss |
-| `L_yawpose` | 選択したYawPose rear | canonical yawに対する周期的yaw absolute error |
+| `L_supervised` | 既存HPEデータ全体 | GT rotation matrixに対するSO(3) loss |
+| `L_distillation` | 既存HPEデータの非rear | 初期checkpointの予測を保持するためのSO(3) distillation loss |
+| `L_flip` | 既存HPEデータのrear | 水平反転前後の予測を元の座標系で一致させるSO(3) consistency loss |
+| `L_yawpose` | 採用したYawPose後方画像 | 基準yawに対する周期的yaw absolute error |
 
-`Y_base`ではYawPoseを使用しないため、`L_yawpose`のweightを0とします。その他の主要な学習条件は同じ系列内で固定します。
-
-条件間の比較では、checkpoint選択時期の違いを混ぜないため、全条件で10エポック目のcheckpointを使用します。
+`Y_base`ではYawPoseを使用しないため、`L_yawpose`を0とします。
 
 ## YawPoseの選別方法
 
-### canonical yawと後方候補
+### 基準yawと後方候補
 
-YawPoseのcanonical yawは、公開`labels_fixed.jsonl`のyawをsigned yawへ変換した値です。`manual_corrections.jsonl`に修正値が存在する場合だけ、`corrected_yaw`で上書きします。
+YawPoseの公開yawは、次式で`[-180°, 180°)`へ変換します。
 
-今回使用した14,049件の後方候補にはmanual correction対象が含まれていないため、canonical yawは`labels_fixed.jsonl`に由来します。教師モデルの予測値でcanonical yawを置き換えることはありません。
+`yaw_signed = ((yaw_deg + 180) mod 360) - 180`
 
-canonical yawが`|yaw| >= 120°`のサンプルだけを後方候補とし、次の8区分へ分けます。
+本レポートでは、この変換後に学習と選別の基準として使用するyawを基準yawと呼びます。`manual_corrections.jsonl`に修正値が存在する場合は、その値で上書きします。
+
+今回使用した14,049件の後方候補にはmanual correction対象が含まれていないため、実際の基準yawはすべて`labels_fixed.jsonl`に由来します。
+
+基準yawが`|yaw| >= 120°`の画像だけを後方候補とし、次の8区分へ分けます。
 
 | yaw帯 |
 |---|
@@ -147,8 +135,6 @@ canonical yawが`|yaw| >= 120°`のサンプルだけを後方候補とし、次
 | `[150°, 165°)` |
 | `[165°, 180°)` |
 
-180°はsigned yawへ変換すると-180°になるため、negative側の最深部へ入ります。
-
 ### 教師モデル
 
 信頼度計算には次の3モデルを使用します。
@@ -159,9 +145,7 @@ canonical yawが`|yaw| >= 120°`のサンプルだけを後方候補とし、次
 | `semiuhpe_effnetv2s` | SemiUHPE EfficientNetV2-S |
 | `whenet` | WHENet |
 
-SemiUHPEとWHENetの予測値には、モデルID、実装revision、checkpoint SHA-256、候補データのmanifest SHA-256、yaw符号較正結果を記録しています。信頼度計算では、これらの情報を確認してから予測値を使用します。
-
-yaw符号較正には、YawPose生成時の方向情報を確認済みの`intent_s004`と`intent_s005`を使用します。これはSemiUHPEとWHENetのyaw方向を共通規約へ合わせるための検証用データであり、信頼度順位の教師ラベルとしては使用しません。
+教師モデルの予測で基準yawを書き換えることはしません。各モデルのyaw予測を同じ`[-180°, 180°)`の規約へ揃え、基準yawとの一致度と教師モデル同士の一致度を信頼度計算に使用します。
 
 ### 信頼度スコア
 
@@ -169,19 +153,19 @@ yaw符号較正には、YawPose生成時の方向情報を確認済みの`intent
 
 `d_circ(a,b) = |((a - b + 180) mod 360) - 180|`
 
-各サンプルについて、3教師モデルとcanonical yawの誤差から`gt_median_error_deg`と`gt_max_error_deg`を求めます。さらに、3教師モデル間の全組み合わせについて円周距離を計算し、その中央値を`teacher_dispersion_deg`とします。
+各画像について、3教師モデルと基準yawの誤差から`gt_median_error_deg`と`gt_max_error_deg`を求め、教師モデル間の全組み合わせの円周距離から`teacher_dispersion_deg`を求めます。
 
 各15度yaw帯の中で、この3指標をそれぞれ0から1のpercentile rankへ変換し、その平均を信頼度スコアとします。
 
 `reliability_score = (r_median + r_dispersion + r_max) / 3`
 
-スコアが小さいほど、同じ15度yaw帯の中でcanonical yawと教師モデル群の整合度が相対的に高いサンプルです。この値はラベルが正しい確率ではありません。
+スコアが小さいほど、同じ15度yaw帯の中で基準yawと教師モデル群の整合度が相対的に高い画像です。この値は、ラベルが正しい確率を表すものではありません。
 
 同一スコアの場合は、`gt_median_error_deg`、`teacher_dispersion_deg`、`gt_max_error_deg`、`instance_id`の順で順位を確定します。
 
 ### 採用集合
 
-各15度yaw帯の中で信頼度スコア順に並べ、各帯から同じ割合を採用します。
+各15度yaw帯の中で信頼度スコア順に並べ、それぞれ同じ割合だけ採用します。
 
 | 条件 | 各15度帯からの採用率 | 採用数 |
 |---|---:|---:|
@@ -191,30 +175,30 @@ yaw符号較正には、YawPose生成時の方向情報を確認済みの`intent
 | top80 | 80% | 11,244 |
 | top100 | 100% | 14,049 |
 
-各帯の中では`top20 ⊂ top40 ⊂ top60 ⊂ top80 ⊂ top100`の関係を維持します。これにより、採用率を変えてもrear-nearとrear-deepの構成比が大きく変わらないようにしています。
+各yaw帯の中では`top20 ⊂ top40 ⊂ top60 ⊂ top80 ⊂ top100`の関係を維持します。これにより、採用率を変更してもrear-nearとrear-deepの比率が大きく変化しないようにしています。
 
-生成元の構成は採用率によって変化するため、信頼度採用率と生成元の影響は完全には分離されていません。
+生成元の構成は採用率によって変化するため、信頼度と生成元の影響は完全には分離されていません。
 
 ## YawPoseの学習への投入方法
 
-選択したYawPoseの各サンプルは、1エポックにつき1回だけ学習に使用します。各エポックの開始時に使用順を固定乱数で入れ替え、同じエポック内で同一サンプルを繰り返し使用しません。
+採用したYawPoseの各画像は、1エポックにつき1回だけ学習に使用します。各エポックの開始時に使用順を固定乱数で入れ替え、同じエポック内で同一画像を繰り返し使用しません。
 
 1エポックあたりのYawPose使用数は、top20で2,812件、top40で5,623件、top60で8,433件、top80で11,244件、top100で14,049件です。採用率を増やすと、1エポックあたりのYawPose教師信号の総量も増加します。
 
 ## 実験条件
 
-YawPoseを使用しない対照条件と5段階の採用率を、VGGHeads-onlyとVGGHeads+DAD-3DHeadsの2系列で実行しました。
+YawPoseを使用しない基準条件と5段階の採用率を、VGGHeads-onlyとVGGHeads+DAD-3DHeadsの2系列で実行しました。
 
 | 系列 | 条件 |
 |---|---|
 | VGGHeads-only | `Y_base_vgg`、`Y_top20_vgg`、`Y_top40_vgg`、`Y_top60_vgg`、`Y_top80_vgg`、`Y_top100_vgg` |
 | VGGHeads+DAD-3DHeads | `Y_base_vgg_dad`、`Y_top20_vgg_dad`、`Y_top40_vgg_dad`、`Y_top60_vgg_dad`、`Y_top80_vgg_dad`、`Y_top100_vgg_dad` |
 
-VGGHeads devによるcheckpoint選択では、VGGHeads-only系列の全条件が8エポック目、VGGHeads+DAD-3DHeads系列の全条件が10エポック目で最小誤差となりました。条件間の比較では全条件の10エポック目を使用します。
+VGGHeads devによるcheckpoint選択では、VGGHeads-only系列の全条件がepoch 8、VGGHeads+DAD-3DHeads系列の全条件がepoch 10でbestとなりました。条件間の比較ではcheckpoint選択時期を揃えるため、すべてepoch 10を評価します。
 
 ## 評価条件
 
-評価にはAGORA-HPE、AFLW2000、300W-LP、DAD-3DHeads official validationを使用します。これらのデータは学習やcheckpoint選択には使用しません。
+評価にはAGORA-HPE、AFLW2000、300W-LP、DAD-3DHeads official validationを使用します。これらは学習やcheckpoint選択には使用しません。
 
 | 項目 | 設定 |
 |---|---|
@@ -225,21 +209,17 @@ VGGHeads devによるcheckpoint選択では、VGGHeads-only系列の全条件が
 | deterministic algorithms | 有効 |
 | crop | evaluation manifestのGT crop |
 
-AGORA-HPE、AFLW2000、300W-LP、DAD-3DHeads validationのSO(3)評価では、各データセットのGT rotation matrixを正解として使用します。
+AGORA-HPE、AFLW2000、300W-LP、DAD-3DHeads validationの全体評価では、各データセットのGT rotation matrixを正解としてSO(3) geodesic errorを計算します。
 
-AGORA-HPEの後方yaw評価では、manifestのsource yawが`|yaw| >= 120°`の2,644件を対象とし、source yawを正解としてhead-forward yaw errorを計算します。
+AGORA-HPEの後方yaw評価では、manifestのsource yawが`|yaw| >= 120°`の2,644件だけを対象とし、source yawを正解としてhead-forward yaw errorを計算します。
 
-保存済みbootstrap CIは各候補モデルと初期checkpointの差に対する区間です。同系列の`Y_base`と`Y_top20`〜`Y_top100`の差には直接CIを計算していません。
+保存済みのbootstrap CIは、各条件と初期checkpointとの差に対して計算したものです。同系列の`Y_base`と`Y_top20`〜`Y_top100`の差には直接CIを計算していません。
 
 ## 結果
 
-### checkpointの選択
-
-VGGHeads-only系列では全条件が8エポック目、VGGHeads+DAD-3DHeads系列では全条件が10エポック目でVGGHeads devの誤差が最小となりました。以降の結果は、比較条件を揃えるため、すべて10エポック目のcheckpointを使用しています。
-
 ### データセット全体のSO(3)誤差
 
-各データセット全体のSO(3) geodesic meanは次のとおりです。
+各条件のepoch 10 checkpointを、AGORA-HPE、AFLW2000、300W-LP、DAD-3DHeads validationのGT rotation matrixに対して評価しました。表の値はSO(3) geodesic errorの平均であり、小さいほど誤差が小さいことを表します。
 
 | 条件 | AGORA-HPE | AFLW2000 | 300W-LP | DAD validation |
 |---|---:|---:|---:|---:|
@@ -257,11 +237,11 @@ VGGHeads-only系列では全条件が8エポック目、VGGHeads+DAD-3DHeads系�
 | Y_top80_vgg_dad | 44.377° | 6.541° | 5.795° | 29.453° |
 | Y_top100_vgg_dad | 44.392° | 6.541° | 5.798° | 29.450° |
 
-同系列の`Y_base`との差は、AGORA-HPEで最大約-0.050°、AFLW2000で約+0.001〜+0.008°、300W-LPで約-0.002〜-0.009°です。
+同系列の`Y_base`と比べたYawPose追加条件の差は、AGORA-HPEで最大約-0.050°、AFLW2000で約+0.001〜+0.008°、300W-LPで約-0.002〜-0.009°です。
 
 ### AGORA-HPEの後方yaw誤差
 
-AGORA-HPEのうち`|yaw| >= 120°`に該当する2,644件について、head-forward yaw errorの平均を比較します。
+各条件のepoch 10 checkpointを、AGORA-HPEのうちsource yawが`|yaw| >= 120°`の2,644件に対して評価しました。正解にはsource yawを使用し、表の値はhead-forward yaw errorの平均です。
 
 | 条件 | VGGHeads-only | VGGHeads+DAD-3DHeads |
 |---|---:|---:|
@@ -272,11 +252,11 @@ AGORA-HPEのうち`|yaw| >= 120°`に該当する2,644件について、head-for
 | Y_top80 | 27.303° | 27.758° |
 | Y_top100 | 27.301° | 27.765° |
 
-VGGHeads-onlyの`Y_base → Y_top80`は約-0.030°、VGGHeads+DAD-3DHeadsの`Y_base → Y_top80`は約-0.018°です。初期checkpointの後方yaw誤差は30.800°です。
+初期checkpointの後方yaw誤差は30.800°です。同系列の`Y_base`から`Y_top80`への変化は、VGGHeads-onlyで-0.030°、VGGHeads+DAD-3DHeadsで-0.018°です。
 
-### AGORA-HPEの15度別SO(3)誤差
+### AGORA-HPEの15度yaw帯
 
-AGORA-HPEをsource yawで15度ごとに分け、各区間のGT rotation matrixに対するSO(3) geodesic meanを比較します。代表として、両系列で変化が比較的大きかったtop80と各系列の`Y_base`との差を示します。
+AGORA-HPEをsource yawで15度ごとに分け、それぞれの区間でGT rotation matrixに対するSO(3) geodesic errorを計算しました。次の表は、各系列の`Y_top80`から`Y_base`を引いた差です。
 
 | yaw帯 | VGGHeads-only | VGGHeads+DAD-3DHeads |
 |---|---:|---:|
@@ -289,45 +269,33 @@ AGORA-HPEをsource yawで15度ごとに分け、各区間のGT rotation matrix�
 | +150〜+165° | -0.000° | +0.010° |
 | +165〜+180° | +0.114° | +0.099° |
 
-負値は`Y_base`より誤差が小さく、正値は誤差が大きいことを表します。両系列とも120–150°付近では誤差が低下し、150–165°付近ではほぼ変化せず、165–180°付近では誤差が増加しています。
-
-### DAD-3DHeadsの後方yaw誤差
-
-DAD-3DHeads official validationのうち`|yaw| >= 120°`に該当するサンプルは47件です。head-forward yaw errorの平均は、VGGHeads-only系列で約50.20〜50.41°、VGGHeads+DAD-3DHeads系列で約51.25〜51.40°でした。
-
-サンプル数が47件と少ないため、この結果は後方性能の補助的な確認として扱います。
+負値は`Y_base`より誤差が小さく、正値は誤差が大きいことを表します。両系列とも120〜150°付近では誤差が低下し、150〜165°付近ではほとんど変化せず、165〜180°付近では誤差が増加しています。
 
 ## 考察
 
 ### 先行実験との差
 
-先行実験ではYawPoseの総使用回数を約451,000件/エポックへ固定していたため、top20では1画像あたり平均約160.5回/エポック、top100でも約32.1回/エポック使用していました。また、後方候補全体で信頼度順位を計算していたため、top20の97.6%が120–150°へ集中していました。
+先行実験ではYawPoseを約451,000件/epoch使用していたため、top20では同じ画像を平均約160.5回/epoch、top100でも平均約32.1回/epoch使用していました。また、後方候補全体をまとめて信頼度順に並べていたため、top20の97.6%が120〜150°へ集中していました。
 
-AGORA-HPEの後方yaw誤差における`Y_base → Y_top80`の変化は、先行実験では約-0.334°でしたが、今回のVGGHeads-onlyでは約-0.030°、VGGHeads+DAD-3DHeadsでは約-0.018°でした。先行実験で観測されたAFLW2000の0.3〜0.5°規模の悪化も、今回は再現していません。
+今回の実験では、各15度yaw帯から同じ割合を採用し、各画像を1エポックにつき1回だけ使用しています。
 
-今回の実験では反復回数とyaw帯ごとの選別方法を同時に変更しているため、差の縮小をどちらか一方だけへ帰属することはできません。
+AGORA-HPEの後方yaw誤差における`Y_base → Y_top80`の変化は、先行実験では約-0.334°でしたが、今回はVGGHeads-onlyで約-0.030°、VGGHeads+DAD-3DHeadsで約-0.018°でした。先行実験で観測されたAFLW2000の0.3〜0.5°規模の悪化も、今回は再現していません。
 
-### 信頼度採用率
+今回の再設計では、同一画像の反復回数とyaw帯ごとの選別方法を同時に変更しています。そのため、効果の縮小をどちらか一方だけへ帰属することはできません。
 
-top20が他の採用率より一貫して低い誤差を示す結果にはなっていません。AGORA-HPE全体のSO(3)誤差では、両系列ともtop60〜80付近まで誤差が小さくなり、top100で一部戻っています。
+### 信頼度による選別
 
-ただし、採用率を増やすと1エポックあたりのYawPose使用数も増えるため、採用率間の差には信頼度閾値と教師信号量の両方が含まれます。また、15度yaw帯の比率は揃えていますが、生成元の構成は採用率によって変化します。
+top20が他の採用率より一貫して低い誤差を示す結果にはなっていません。AGORA-HPEのSO(3)誤差では、両系列ともtop60〜80付近までわずかに低下し、top100で一部戻っています。
 
-### 角度依存
-
-AGORA-HPEの15度別評価では、VGGHeads-onlyとVGGHeads+DAD-3DHeadsの両系列で、120–150°付近の誤差低下と165–180°付近の誤差増加が確認されました。
-
-同じ方向の変化はhead-forward yaw errorでも確認されています。後方全体の平均では、各角度帯の改善と悪化が相殺されるため、YawPose追加による平均値の変化は数百分の一度まで小さくなっています。
+ただし、採用率を増やすと1エポックあたりのYawPose使用数も増えるため、採用率間の差には信頼度と教師信号量の両方が含まれます。また、15度yaw帯の比率は揃えていますが、生成元の構成は採用率によって変化します。
 
 ### DAD-3DHeadsの影響
 
-YawPoseを使用しない`Y_base`同士を比較すると、DAD-3DHeadsを使用する系列では、AGORA-HPE、AFLW2000、300W-LP、DAD validationの全体SO(3)誤差がわずかに低くなっています。一方、AGORA-HPEの後方yaw誤差はVGGHeads-onlyの27.333°に対してVGGHeads+DAD-3DHeadsでは27.775°で、0.442°高くなっています。
+YawPoseを使用しない`Y_base`同士を比較すると、DAD-3DHeadsを含む系列はAGORA-HPE、AFLW2000、300W-LP、DAD-3DHeads validationのSO(3)誤差がわずかに低い一方、AGORA-HPEの後方yaw誤差はVGGHeads-onlyより0.442°高くなっています。
 
-VGGHeads devのrear SO(3)誤差も、`Y_base_vgg`の25.712°に対して`Y_base_vgg_dad`は26.483°でした。
+AGORA-HPEの15度集計でも、DAD-3DHeads追加の影響はyaw帯によって異なります。`Y_base_vgg_dad - Y_base_vgg`は、-105〜-90°で約-1.078°、-90〜-75°で約-0.993°ですが、+135〜+150°で約+0.609°、+150〜+165°で約+0.895°、+165〜+180°で約+0.960°です。
 
-AGORA-HPEの15度別評価では、DAD-3DHeads追加の影響もyaw帯によって異なります。`Y_base_vgg_dad - Y_base_vgg`は-105〜-90°で約-1.078°、-90〜-75°で約-0.993°ですが、+135〜+150°で約+0.609°、+150〜+165°で約+0.895°、+165〜+180°で約+0.960°です。
-
-したがって、DAD-3DHeadsによる全体SO(3)誤差の変化は、全角度帯が一様に改善した結果ではありません。
+したがって、DAD-3DHeadsを加えた場合の変化は、全角度帯で同じ方向に現れているわけではありません。
 
 ### 教師モデル
 
@@ -339,22 +307,22 @@ SemiUHPEはYawPoseの後方画像に対する絶対誤差が大きく、`gt_max_
 
 本実験の解釈には次の制約があります。
 
-- 学習はseed 42の1回だけであり、seed間分散を測定していません。
-- 同系列の`Y_base`とYawPose条件の差には直接paired bootstrap CIを計算していないため、0.01〜0.05°規模の差について統計的な方向は確定していません。
+- 学習はseed 42の1回だけであり、seed間のばらつきを測定していません。
+- 同系列の`Y_base`とYawPose追加条件の差には直接paired bootstrap CIを計算していないため、0.01〜0.05°規模の差について統計的な方向は確定していません。
 - YawPoseの採用率と1エポックあたりのYawPose教師信号量が連動しています。
 - 15度yaw帯内の採用率は固定していますが、生成元の構成は採用率によって変化します。
 - 信頼度スコアはラベル正解確率ではなく、同一15度yaw帯内の相対順位です。
 - 教師モデルにはYawPoseの後方画像に対する誤差が大きいSemiUHPEが含まれます。
-- DAD有無の比較では既存HPEデータの使用数を固定しているため、DADあり系列ではVGGHeadsの一部がDAD-3DHeadsへ置き換わります。
-- DAD-3DHeads validationのrearは47件であり、細かなrear角度帯を安定して評価できる件数ではありません。
+- DAD-3DHeadsの有無を比較するときも既存HPEデータの使用数は固定しているため、DAD-3DHeadsを加えた系列ではVGGHeadsの一部がDAD-3DHeadsへ置き換わります。
+- DAD-3DHeads validationの後方画像は47件であり、細かな後方yaw帯を安定して評価できる件数ではありません。
 
 ## 結論
 
-今回のsingle-draw条件では、YawPose追加による全体平均と後方平均の変化は先行実験より小さくなりました。AGORA-HPEの後方yaw誤差における`Y_base → Y_top80`は、VGGHeads-onlyで約-0.030°、VGGHeads+DAD-3DHeadsで約-0.018°です。
+各15度yaw帯で信頼度順に選別し、採用したYawPose画像を1エポックにつき1回だけ使用した今回の実験では、YawPose追加による全体平均と後方平均の変化は先行実験より小さくなりました。AGORA-HPEの後方yaw誤差における`Y_base → Y_top80`の変化は、VGGHeads-onlyで約-0.030°、VGGHeads+DAD-3DHeadsで約-0.018°です。
 
-一方、15度単位では両系列に共通して120–150°付近の誤差低下と165–180°付近の誤差増加が確認されました。YawPoseの影響は後方全体へ一様に現れるのではなく、yaw帯によって方向が異なっています。
+一方、15度単位では両系列に共通して120〜150°付近の誤差低下と165〜180°付近の誤差増加が観測されました。YawPoseの影響は後方全体へ一様に現れるのではなく、yaw帯によって方向が異なっています。
 
-信頼度上位20%だけが他の採用率より明確に低い誤差を示す関係は確認されませんでした。また、DAD-3DHeadsを使用しない系列でもYawPoseによる角度依存の変化は確認されています。
+信頼度上位20%だけが他の採用率より明確に低い誤差を示す関係は確認されませんでした。また、DAD-3DHeadsを使用しない系列でもYawPoseによる角度依存の変化は観測されています。
 
 ## 保存成果物
 
@@ -363,10 +331,10 @@ SemiUHPEはYawPoseの後方画像に対する絶対誤差が大きく、`gt_max_
 - 実験計画は`docs/experiments/yawpose_rear_yaw_stratified_single_draw_plan.md`です。
 - 先行YawPose実験結果は`docs/experiments/yawpose_rear_yaw_reliability_results.md`です。
 - 信頼度計算の設定は`experiments/runs/yawpose_reliability_stratified15/config.json`です。
-- 信頼度集計は`experiments/runs/yawpose_reliability_stratified15/metrics/summary.json`です。
-- サンプル単位の信頼度は`experiments/runs/yawpose_reliability_stratified15/predictions/reliability.jsonl`です。
-- 12条件の学習結果は`experiments/runs/yawpose_rear_stratified_search/`です。
-- 条件別の外部評価結果は`eval/yawpose_rear_stratified_search/conditions/`です。
+- 信頼度の集計結果は`experiments/runs/yawpose_reliability_stratified15/metrics/summary.json`です。
+- 画像ごとの信頼度は`experiments/runs/yawpose_reliability_stratified15/predictions/reliability.jsonl`です。
+- 学習条件ごとの結果は`experiments/runs/yawpose_rear_stratified_search/`です。
+- 外部評価結果は`eval/yawpose_rear_stratified_search/conditions/`です。
 - head-forward yawの比較結果は`eval/yawpose_rear_stratified_search/yaw_comparisons/`です。
 - AGORA-HPE、AFLW2000、300W-LPのyaw集計は`eval/yawpose_rear_stratified_search/yaw_summary_baseline_fp32_final.json`です。
 - DAD-3DHeads validationのyaw集計は`eval/yawpose_rear_stratified_search/yaw_summary_baseline_dad_fp32_final__dad.json`です。
