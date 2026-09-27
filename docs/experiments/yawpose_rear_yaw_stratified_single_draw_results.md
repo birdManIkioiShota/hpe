@@ -39,7 +39,7 @@ DAD-3DHeadsは非商用条件を含むため、最終的な学習構成から除
 
 YawPoseの公開yawは`[0°, 360°)`です。本実験ではこれを`[-180°, 180°)`へ変換し、`|yaw| >= 120°`のsampleだけを学習候補とします。YawPoseから使用する教師信号はyawだけであり、pitchとrollは使用しません。
 
-### Existing-HPE data
+### 既存HPEデータ
 
 既存HPE教師にはVGGHeadsとDAD-3DHeads trainを使用します。両データセットでは完全なrotation matrixを教師としてSO(3) supervised lossを計算します。
 
@@ -52,7 +52,7 @@ YawPoseの公開yawは`[0°, 360°)`です。本実験ではこれを`[-180°, 1
 
 両系列のexisting-HPE draw数は417,024件/epochへ固定します。この値はVGGHeads train件数をeffective batch size 128の境界へ切り下げた値です。そのため、DAD-3DHeadsを追加した系列ではtraining poolは増えますが、optimizer update数は増えません。
 
-checkpoint selectionに使用するdevelopment splitは両系列ともVGGHeads dev 51,914件へ固定します。したがって、DAD有無の比較は、固定training budgetと固定development集合のもとで学習poolだけを変更した比較です。
+checkpoint selectionに使用するdevデータは両系列ともVGGHeads dev 51,914件へ固定します。したがって、DAD有無の比較は、固定training budgetと固定development集合のもとで学習poolだけを変更した比較です。
 
 ## 用語と評価指標
 
@@ -96,7 +96,7 @@ rotation matrixからhead-forward yawを求める場合は、予測rotation `R`�
 
 ### Euler yaw error
 
-通常のexternal evaluationでは、targetとpredictionのrotation matrixをcanonical `RzRyRx` Euler表現へ変換したaxis errorも保存します。このEuler yaw errorとhead-forward yaw errorは定義が異なるため、同一指標として扱いません。
+通常の外部評価では、targetとpredictionのrotation matrixをcanonical `RzRyRx` Euler表現へ変換したaxis errorも保存します。このEuler yaw errorとhead-forward yaw errorは定義が異なるため、同一指標として扱いません。
 
 ## 対象モデルと学習方法
 
@@ -128,9 +128,9 @@ rotation matrixからhead-forward yawを求める場合は、予測rotation `R`�
 
 | 損失 | 適用対象 | 内容 |
 |---|---|---|
-| `L_supervised` | existing-HPE data全体 | GT rotation matrixに対するSO(3) geodesic loss |
-| `L_distillation` | existing-HPE dataの非rear | 初期checkpointのpredictionを保持するSO(3) distillation loss |
-| `L_flip` | existing-HPE dataのrear | horizontal flip前後の予測を元座標系で一致させるSO(3) consistency loss |
+| `L_supervised` | 既存HPEデータ全体 | GT rotation matrixに対するSO(3) geodesic loss |
+| `L_distillation` | 既存HPEデータの非rear | 初期checkpointのpredictionを保持するSO(3) distillation loss |
+| `L_flip` | 既存HPEデータのrear | horizontal flip前後の予測を元座標系で一致させるSO(3) consistency loss |
 | `L_yawpose` | 選択されたYawPose rear | canonical yawに対する周期的yaw absolute error |
 
 `Y_base`ではYawPose streamを使用しないため、`L_yawpose`のweightを0とします。その他の主要学習条件は同系列内で固定します。
@@ -264,7 +264,7 @@ YawPose batchはexisting-HPE epoch全体へ決定論的に分散して配置し�
 
 ## 条件行列
 
-YawPose採用率6条件とexisting-HPE data 2系列を組み合わせ、合計12条件を比較しました。
+YawPose採用率6条件と既存HPEデータ 2系列を組み合わせ、合計12条件を比較しました。
 
 | 系列 | 条件 |
 |---|---|
@@ -275,7 +275,7 @@ YawPose採用率6条件とexisting-HPE data 2系列を組み合わせ、合計12
 
 ## 評価条件
 
-外部評価にはAGORA-HPE、AFLW2000、300W-LP、DAD-3DHeads official validationを使用します。外部benchmarkは学習やcheckpoint selectionには使用しません。
+外部評価にはAGORA-HPE、AFLW2000、300W-LP、DAD-3DHeads official validationを使用します。評価データセットは学習やcheckpoint selectionには使用しません。
 
 主要なinference設定は次のとおりです。
 
@@ -302,39 +302,11 @@ AGORA-HPEでは通常の30度yaw集計に加え、source yaw全周を15度単位
 
 ## 結果
 
-### 内部development
+### Checkpoint選択
 
-checkpoint selectionに使用したVGGHeads devの固定epoch 10結果は次のとおりです。
+checkpoint選択にはVGGHeads devを使用しました。best epochはVGGHeads-only系列の全条件で8、VGGHeads+DAD-3DHeads系列の全条件で10でした。条件間の比較ではcheckpoint選択時期を揃えるため、以降の評価には全条件のepoch 10 checkpointを使用します。
 
-#### VGGHeads-only
-
-| 条件 | rear SO(3) mean | rear P90 | front mean | side mean | rear yaw mean | rear yaw P90 | best epoch |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| Y_base | 25.712° | 51.564° | 19.695° | 20.935° | 22.277° | 49.312° | 8 |
-| Y_top20 | 25.711° | 51.654° | 19.686° | 20.934° | 22.276° | 49.309° | 8 |
-| Y_top40 | 25.696° | 51.545° | 19.689° | 20.924° | 22.258° | 49.288° | 8 |
-| Y_top60 | 25.693° | 51.482° | 19.701° | 20.915° | 22.248° | 49.271° | 8 |
-| Y_top80 | 25.688° | 51.520° | 19.694° | 20.911° | 22.241° | 49.256° | 8 |
-| Y_top100 | 25.673° | 51.482° | 19.700° | 20.918° | 22.234° | 49.274° | 8 |
-
-VGGHeads-onlyでは`Y_base → Y_top100`でrear SO(3) meanが約-0.039°、rear yaw meanが約-0.043°です。
-
-#### VGGHeads+DAD-3DHeads
-
-| 条件 | rear SO(3) mean | rear P90 | front mean | side mean | rear yaw mean | rear yaw P90 | best epoch |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| Y_base | 26.483° | 53.624° | 19.886° | 21.016° | 22.914° | 50.700° | 10 |
-| Y_top20 | 26.477° | 53.613° | 19.883° | 21.016° | 22.906° | 50.342° | 10 |
-| Y_top40 | 26.474° | 53.419° | 19.881° | 21.009° | 22.901° | 49.799° | 10 |
-| Y_top60 | 26.482° | 53.541° | 19.888° | 21.001° | 22.906° | 50.364° | 10 |
-| Y_top80 | 26.487° | 53.596° | 19.884° | 20.995° | 22.912° | 50.410° | 10 |
-| Y_top100 | 26.461° | 53.357° | 19.881° | 21.003° | 22.884° | 49.810° | 10 |
-
-VGGHeads+DAD系列では`Y_base → Y_top100`でrear SO(3) meanが約-0.022°、rear yaw meanが約-0.029°です。
-
-内部best epochはVGGHeads-only系列の全条件が8、VGGHeads+DAD系列の全条件が10でした。主比較には全条件のepoch 10を使用しています。
-
-### 外部benchmark全体
+### 評価データセット全体
 
 固定epoch 10のSO(3) geodesic meanは次のとおりです。
 
@@ -387,21 +359,6 @@ VGGHeads-onlyの`Y_base → Y_top80`は約-0.030°、VGGHeads+DADの`Y_base → 
 | +165〜+180° | +0.114° | +0.099° |
 
 head-forward yaw errorでも同じ方向の変化が観測されます。VGGHeads-onlyの`Y_top80`では、学習対象外の-120〜-105°で約-0.239°、+105〜+120°で約-0.193°のhead-forward yaw mean低下も観測されています。
-
-### DAD-3DHeads利用有無
-
-YawPoseを使用しない`Y_base`同士の結果は次のとおりです。
-
-| 評価 | VGGHeads-only | VGGHeads+DAD | DADあり − VGG-only |
-|---|---:|---:|---:|
-| AGORA-HPE overall | 44.498° | 44.415° | -0.083° |
-| AFLW2000 overall | 6.541° | 6.535° | -0.006° |
-| 300W-LP overall | 5.809° | 5.803° | -0.007° |
-| DAD validation overall | 29.497° | 29.460° | -0.037° |
-| AGORA rear yaw mean | 27.333° | 27.775° | +0.442° |
-| VGGHeads dev rear SO(3) | 25.712° | 26.483° | +0.771° |
-
-AGORA-HPEの15度SO(3)では、`Y_base_vgg_dad - Y_base_vgg`が-105〜-90°で約-1.078°、-90〜-75°で約-0.993°、+135〜+150°で約+0.609°、+150〜+165°で約+0.895°、+165〜+180°で約+0.960°です。
 
 ### DAD-3DHeads validation
 
