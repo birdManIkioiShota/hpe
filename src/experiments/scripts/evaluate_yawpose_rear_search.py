@@ -12,8 +12,10 @@ import pandas as pd
 from tqdm import tqdm
 
 from experiments.common.run_directory import experiment_run_path
-from hpe.datasets.common import write_json_atomic
+from experiments.common.yawpose_search import WEIGHT_SEARCH_KIND, condition_records
+from hpe.datasets.common import sha256_file, write_json_atomic
 from hpe.evaluation import compare_runs
+from hpe.evaluation.comparison import _check_compatible
 from hpe.evaluation.reporting import write_yaw_comparison_radar
 from training.prepare_data import ROOT
 
@@ -286,6 +288,150 @@ def _write_agora_yaw15_comparison_plot(
     )
 
 
+def _validate_weight_evaluation(
+    result_dir: Path,
+    checkpoint: Path,
+    reference_metadata: dict,
+) -> None:
+    metadata = json.loads((result_dir / "run.json").read_text())
+    if metadata["checkpoint"]["sha256"] != sha256_file(checkpoint):
+        raise ValueError(
+            f"evaluation checkpoint differs from training: {result_dir.name}"
+        )
+    _check_compatible(reference_metadata, metadata)
+
+
+def _weight_comparisons(
+    output_root: Path,
+    conditions: list[dict],
+    *,
+    suffix: str,
+    reference_key: str,
+    repetitions: int,
+    sample_limit: int,
+) -> None:
+    """Compare trained candidates to the no-YawPose control in the same suite."""
+    control = next(row for row in conditions if row["subset"] == "base")
+    control_name = control["condition_id"] + suffix
+    control_dir = output_root / "conditions" / control_name
+    control_run = json.loads((control_dir / "run.json").read_text())
+    control_datasets = {row["dataset"]: row for row in control_run["datasets"]}
+    rows = []
+    for condition in conditions:
+        name = condition["condition_id"] + suffix
+        result_dir = output_root / "conditions" / name
+        result_run = json.loads((result_dir / "run.json").read_text())
+        _check_compatible(control_run, result_run)
+        comparison_name = f"{control_name}_vs_{name}"
+        if name != control_name:
+            comparison_dir = output_root / "comparisons" / comparison_name
+            if comparison_dir.exists():
+                previous = json.loads((comparison_dir / "run.json").read_text())
+                expected = {
+                    "baseline_checkpoint_sha256": control_run["checkpoint"]["sha256"],
+                    "candidate_checkpoint_sha256": result_run["checkpoint"]["sha256"],
+                    "bootstrap_repetitions": repetitions,
+                    "bootstrap_sample_limit": sample_limit,
+                }
+                if any(previous.get(key) != value for key, value in expected.items()):
+                    raise ValueError(
+                        f"saved control comparison settings changed: {comparison_name}"
+                    )
+            else:
+                compare_runs(
+                    control_dir,
+                    result_dir,
+                    output_root,
+                    name=comparison_name,
+                    bootstrap_repetitions=repetitions,
+                    bootstrap_sample_limit=sample_limit,
+                )
+        yaw_rows = _yaw_comparison(
+            control_dir,
+            result_dir,
+            repetitions=repetitions,
+            sample_limit=sample_limit,
+        )
+        if name != control_name:
+            write_json_atomic(
+                output_root / "yaw_comparisons" / f"{comparison_name}.json", yaw_rows
+            )
+            _write_agora_yaw15_comparison_plot(
+                yaw_rows,
+                output_path=output_root
+                / "yaw_comparisons"
+                / "plots"
+                / f"{comparison_name}_agora_yaw15.png",
+                baseline_label=control_name,
+                candidate_label=name,
+            )
+        so3 = []
+        for dataset in result_run["datasets"]:
+            dataset_name = dataset["dataset"]
+            control_dataset = control_datasets[dataset_name]
+            mean = dataset["overall"]["geodesic_error_deg_mean"]
+            control_mean = control_dataset["overall"]["geodesic_error_deg_mean"]
+            item = {
+                "dataset": dataset_name,
+                "count": dataset["count"],
+                "mean_deg": mean,
+                "control_mean_deg": control_mean,
+                "delta_candidate_minus_control_deg": mean - control_mean,
+            }
+            if dataset_name == "agora_hpe":
+                relative = Path("datasets/agora_hpe/metrics/yaw_bins_15.json")
+                control_bins = {
+                    row["yaw_bin"]: row
+                    for row in json.loads((control_dir / relative).read_text())
+                }
+                candidate_bins = json.loads((result_dir / relative).read_text())
+                if len(candidate_bins) != 24 or len(control_bins) != 24:
+                    raise ValueError("AGORA SO(3) comparison requires 24 yaw bins")
+                bins = []
+                for row in candidate_bins:
+                    base = control_bins[row["yaw_bin"]]
+                    if row["count"] != base["count"]:
+                        raise ValueError("AGORA yaw-bin counts differ")
+                    value = row["geodesic_error_deg_mean"]
+                    base_value = base["geodesic_error_deg_mean"]
+                    bins.append(
+                        {
+                            "yaw_bin": row["yaw_bin"],
+                            "count": row["count"],
+                            "mean_deg": value,
+                            "control_mean_deg": base_value,
+                            "delta_candidate_minus_control_deg": (
+                                value - base_value if row["count"] else None
+                            ),
+                        }
+                    )
+                item["yaw_bins_15"] = bins
+            so3.append(item)
+        rows.append(
+            {
+                **condition,
+                "evaluation_name": name,
+                "checkpoint": result_run["checkpoint"],
+                "so3": so3,
+                "head_forward_yaw": yaw_rows,
+            }
+        )
+    summary_path = output_root / "weight_summary.json"
+    summary = (
+        json.loads(summary_path.read_text())
+        if summary_path.exists()
+        else {"kind": WEIGHT_SEARCH_KIND, "checkpoint_choice": "final", "suites": {}}
+    )
+    summary["suites"][reference_key] = {
+        "control_condition": control["condition_id"],
+        "control_checkpoint": control_run["checkpoint"],
+        "delta_definition": "candidate minus no-YawPose control; negative is improvement",
+        "head_forward_yaw_definition": "atan2(R[0,2], R[2,2]) versus manifest source yaw",
+        "conditions": rows,
+    }
+    write_json_atomic(summary_path, summary)
+
+
 def main() -> None:
     args = build_parser().parse_args()
     suffix = _safe_suffix(args.name_suffix)
@@ -301,6 +447,12 @@ def main() -> None:
         )
     search_config = json.loads((run_dir / "config.json").read_text())
     conditions = search_config["conditions"]
+    weight_search = search_config["kind"] == WEIGHT_SEARCH_KIND
+    if weight_search:
+        if args.checkpoint_choice != "final":
+            raise ValueError("loss-weight comparison requires the fixed final checkpoint")
+        if conditions != condition_records("loss-weight"):
+            raise ValueError("loss-weight comparison requires the fixed six conditions")
     output_root = ROOT / "eval" / args.run_id
     output_root.mkdir(parents=True, exist_ok=True)
     baseline = (
@@ -337,6 +489,14 @@ def main() -> None:
             / "conditions"
             / evaluation_name
         )
+        existing_result = result_dir.is_dir()
+        if weight_search:
+            checkpoint = (
+                run_dir / "conditions" / condition_id / "checkpoints"
+                / f"epoch_{int(search_config['epochs']):03d}.pth"
+            )
+            if existing_result:
+                _validate_weight_evaluation(result_dir, checkpoint, baseline_metadata)
         comparison_name = f"{baseline_metadata['run_name']}_vs_{evaluation_name}"
         comparison_dir = output_root / "comparisons" / comparison_name
         if result_dir.is_dir() and not comparison_dir.exists():
@@ -376,6 +536,9 @@ def main() -> None:
                 check=True,
             )
 
+        if weight_search and not existing_result:
+            _validate_weight_evaluation(result_dir, checkpoint, baseline_metadata)
+
         yaw_rows = _yaw_comparison(
             baseline,
             result_dir,
@@ -402,6 +565,10 @@ def main() -> None:
                     "adoption_ratio": condition["adoption_ratio"],
                     "hpe_regime": condition["hpe_regime"],
                     "use_dad": condition["use_dad"],
+                    **(
+                        {"yawpose_weight": condition["yawpose_weight"]}
+                        if weight_search else {}
+                    ),
                     **row,
                 }
             )
@@ -413,6 +580,12 @@ def main() -> None:
         output_root / f"yaw_summary_{key}.json",
         summary,
     )
+    if weight_search:
+        _weight_comparisons(
+            output_root, conditions, suffix=suffix, reference_key=key,
+            repetitions=args.bootstrap_repetitions,
+            sample_limit=args.bootstrap_sample_limit,
+        )
 
 
 if __name__ == "__main__":
