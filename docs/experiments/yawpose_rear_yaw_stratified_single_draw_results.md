@@ -2,7 +2,7 @@
 
 ## 概要
 
-本実験では、Head Pose Estimation（HPE）の全周推定モデルSixDRepNet360-ResNet50に対して、YawPoseの後方合成画像をyawだけの追加教師として使用したときの効果を再評価しました。YawPoseはPINTO0309/YawNetで公開されている合成データセットで、yawを中心に構成され、一部にpitch情報を持ちますがroll情報は持ちません。本実験ではYawPoseのpitchとrollを教師信号として使用せず、yawだけを使用します。
+本実験では、Head Pose Estimation（HPE）の全周推定モデルSixDRepNet360-ResNet50に対して、YawPoseの後方合成画像をyawだけの追加教師として使用したときの効果を再評価しました。
 
 比較対象となる先行実験は`docs/experiments/yawpose_rear_yaw_reliability_results.md`です。先行実験では、後方候補14,049件をまとめて信頼度順に並べ、採用率にかかわらずYawPoseを1エポックあたり約451,000件使用していました。そのため、採用率を変えると、採用する画像の信頼度だけでなく、yaw帯の構成と同一画像の反復回数も同時に変化していました。
 
@@ -24,7 +24,7 @@ DAD-3DHeadsは非商用条件を含むため、最終的な学習構成から除
 
 ### YawPose
 
-本実験では、`PINTO0309/YawNet`の`resources` releaseで公開されているYawPoseを使用します。使用した公開データは次のとおりです。
+YawPoseは`PINTO0309/YawNet`の`resources` releaseで公開されている合成データセットで、yawを中心に構成され、一部にpitch情報を持ちますがroll情報は持ちません。本実験ではYawPoseのpitchとrollを教師信号として使用せず、yawだけを使用します。使用した公開データは次のとおりです。
 
 | 項目 | 値 |
 |---|---|
