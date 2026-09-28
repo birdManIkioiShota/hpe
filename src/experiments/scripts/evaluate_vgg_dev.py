@@ -45,6 +45,14 @@ def _select_targets(args: argparse.Namespace) -> list[VggDevEvaluationTarget]:
     raise AssertionError("One target selector is required")
 
 
+def _comparison_name(args: argparse.Namespace) -> str:
+    if args.all:
+        return "all"
+    if args.experiment is not None:
+        return args.experiment
+    return args.condition.replace(":", "__")
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
@@ -117,7 +125,7 @@ def main() -> None:
             verify_target_record(ROOT, target)
         for checkpoint_sha in groups:
             model_dir = output_root / "models" / checkpoint_sha
-            regenerate_aggregate(model_dir)
+            regenerate_aggregate(model_dir, input_identity=input_identity)
     else:
         for checkpoint_sha, aliases in groups.items():
             print(
@@ -135,7 +143,11 @@ def main() -> None:
                 overwrite_stale=args.overwrite_stale,
             )
 
-    write_comparison_outputs(output_root, targets)
+    write_comparison_outputs(
+        output_root,
+        targets,
+        comparison_name=_comparison_name(args),
+    )
 
 
 if __name__ == "__main__":
