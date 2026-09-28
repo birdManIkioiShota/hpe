@@ -8,7 +8,6 @@ from experiments.common.vgg_dev_evaluation import (
     evaluate_model_group,
     regenerate_aggregate,
     regroup_targets_by_checkpoint,
-    verify_target_record,
     verify_vgg_dev_input,
     write_comparison_outputs,
 )
@@ -86,7 +85,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--aggregate-only",
         action="store_true",
-        help="Regenerate aggregate files from completed saved predictions without inference.",
+        help=(
+            "Regenerate aggregate files from completed saved predictions without "
+            "loading checkpoints or running inference."
+        ),
     )
     parser.add_argument(
         "--overwrite-stale",
@@ -121,8 +123,6 @@ def main() -> None:
     )
 
     if args.aggregate_only:
-        for target in targets:
-            verify_target_record(ROOT, target)
         for checkpoint_sha in groups:
             model_dir = output_root / "models" / checkpoint_sha
             regenerate_aggregate(model_dir, input_identity=input_identity)
