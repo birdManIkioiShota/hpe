@@ -1,0 +1,19 @@
+[
+  {
+    "count": 1988,
+    "pitch_error_deg_mean": 5.932726301542229,
+    "yaw_error_deg_mean": 3.4891166030346845,
+    "roll_error_deg_mean": 4.0464992899745935,
+    "mean_axis_error_deg_mean": 4.489447398183835,
+    "geodesic_error_deg_mean": 6.552032336555082,
+    "vec1_error_deg_mean": 4.883041595935529,
+    "vec2_error_deg_mean": 4.628019065118182,
+    "vec3_error_deg_mean": 5.728310254490317,
+    "vmae_deg_mean": 5.0797903051813424,
+    "geodesic_error_deg_median": 5.322373363743335,
+    "geodesic_error_deg_p90": 11.27814885100097,
+    "geodesic_error_deg_p95": 14.419140180468474,
+    "geodesic_error_deg_gt90_count": 3,
+    "geodesic_error_deg_gt90_percent": 0.15090543259557343
+  }
+]

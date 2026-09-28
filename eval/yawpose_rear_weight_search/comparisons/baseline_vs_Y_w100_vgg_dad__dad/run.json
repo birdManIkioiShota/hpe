@@ -1,0 +1,14 @@
+{
+  "comparison_name": "baseline_vs_Y_w100_vgg_dad__dad",
+  "baseline": "/home/hoge/learn/hpe/eval/baseline_dad_fp32/evaluations/baseline",
+  "baseline_checkpoint_sha256": "3ee08f1e04b8d452a6c4a40926a6f38051894ae6d0aaa6d191fe6d8bc6e4f9c6",
+  "candidate": "/home/hoge/learn/hpe/eval/yawpose_rear_weight_search/conditions/Y_w100_vgg_dad__dad",
+  "candidate_checkpoint_sha256": "c949e6c50ec1b74690e7e20c8af00cc6062eb6207802926911e3f70337cdbe7b",
+  "datasets": [
+    "dad3dheads"
+  ],
+  "bootstrap_repetitions": 1000,
+  "bootstrap_sample_limit": 10000,
+  "seed": 0,
+  "delta_definition": "candidate minus baseline; negative is improvement"
+}
