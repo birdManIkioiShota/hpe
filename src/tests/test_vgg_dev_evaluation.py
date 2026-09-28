@@ -15,6 +15,7 @@ from experiments.common.vgg_dev_evaluation import (
     aggregate_predictions,
     evaluation_fingerprint,
     full_range_yaw_degrees,
+    prediction_instance_ids_sha256,
     regroup_targets_by_checkpoint,
     yaw_bin_index,
     yaw_bin_record,
@@ -94,7 +95,7 @@ class GeometryAndBinningTests(unittest.TestCase):
         )
         self.assertAlmostEqual(float(error.item()), 2.0, places=12)
 
-    def test_identical_rotation_has_zero_geometric_yaw_change(self) -> None:
+    def test_head_forward_yaw_uses_full_range_rotation_geometry(self) -> None:
         matrix = euler_degrees_to_matrix(
             torch.tensor([[0.0, 135.0, 0.0]], dtype=torch.float64)
         )[0].numpy()
@@ -170,6 +171,12 @@ class AggregationTests(unittest.TestCase):
             "mean_axis_maae_deg",
         ):
             self.assertAlmostEqual(actual["overall"][key], expected["overall"][key], places=12)
+
+    def test_instance_id_digest_is_order_sensitive(self) -> None:
+        frame = _prediction_frame()
+        original = prediction_instance_ids_sha256(frame)
+        reordered = prediction_instance_ids_sha256(frame.iloc[::-1].reset_index(drop=True))
+        self.assertNotEqual(original, reordered)
 
     def test_duplicate_instance_ids_are_rejected(self) -> None:
         frame = _prediction_frame()
