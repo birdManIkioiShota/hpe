@@ -37,6 +37,8 @@ Thumbs.db
 # comparisons, provenance, configurations, epoch metrics, and plots stay tracked.
 /eval/**/predictions/
 /eval/**/input_lock/
+/eval/**/image_read_errors/
+/eval/**/*.partial/
 /eval/**/*.csv
 /eval/**/*.csv.gz
 /eval/**/events.jsonl
