@@ -17,6 +17,8 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from experiments.common.datasets import PoseManifestDataset, validate_rotation
+from experiments.common.pose import UndefinedAzimuthError, forward_azimuth_degrees
+from experiments.common.vgg_dev_targets import TARGETS as ALL_TARGETS
 from experiments.common.vgg_dev_targets import VggDevEvaluationTarget
 from hpe.datasets.common import sha256_file, write_json_atomic
 from hpe.geometry.rotations import (
@@ -79,6 +81,12 @@ def _sha256_text(lines: Iterable[str]) -> str:
     return digest.hexdigest()
 
 
+def prediction_instance_ids_sha256(frame: pd.DataFrame) -> str:
+    if "instance_id" not in frame:
+        raise ValueError("Prediction table has no instance_id column")
+    return _sha256_text(frame["instance_id"].astype(str).tolist())
+
+
 def verify_vgg_dev_input(
     project_root: Path,
     *,
@@ -121,6 +129,7 @@ def verify_vgg_dev_input(
             seen.add(instance_id)
             ids.append(instance_id)
             validate_rotation(row["rotation_matrix"])
+
             image_path = Path(str(row.get("image_path", "")))
             if not image_path.parts or image_path.is_absolute() or ".." in image_path.parts:
                 raise ValueError(f"{manifest}:{line_number}: invalid image_path")
@@ -187,7 +196,7 @@ def git_revision(project_root: Path) -> dict[str, Any]:
         return result.stdout.strip() if result.returncode == 0 else None
 
     revision = run("rev-parse", "HEAD")
-    dirty_output = run("status", "--porcelain")
+    dirty_output = run("status", "--porcelain", "--untracked-files=no")
     return {
         "commit": revision,
         "dirty": None if dirty_output is None else bool(dirty_output),
@@ -237,14 +246,10 @@ def evaluation_fingerprint(payload: dict[str, Any]) -> str:
 
 
 def full_range_yaw_degrees(rotation: np.ndarray, *, eps: float = 1e-8) -> float:
-    matrix = np.asarray(rotation, dtype=np.float64)
-    if matrix.shape != (3, 3) or not np.isfinite(matrix).all():
-        raise ValueError("rotation must be a finite 3x3 matrix")
-    direction = matrix[:, 2]
-    horizontal = math.hypot(float(direction[0]), float(direction[2]))
-    if horizontal < eps:
+    try:
+        return forward_azimuth_degrees(rotation, eps=eps)
+    except UndefinedAzimuthError:
         return float("nan")
-    return math.degrees(math.atan2(float(direction[0]), float(direction[2])))
 
 
 def yaw_bin_index(yaw_deg: float) -> int | None:
@@ -427,15 +432,8 @@ def _aggregate_close(left: dict[str, Any], right: dict[str, Any]) -> bool:
         or left["overall"]["undefined_yaw_count"] != right["overall"]["undefined_yaw_count"]
     ):
         return False
-    for key in SUMMARY_KEYS:
-        if not math.isclose(
-            float(left["overall"][key]),
-            float(right["overall"][key]),
-            rel_tol=0,
-            abs_tol=1e-10,
-        ):
-            return False
-    for lrow, rrow in zip(left["yaw_bins_15"], right["yaw_bins_15"], strict=True):
+
+    def same_metrics(lrow: dict[str, Any], rrow: dict[str, Any]) -> bool:
         if lrow["count"] != rrow["count"]:
             return False
         for key in SUMMARY_KEYS:
@@ -445,7 +443,14 @@ def _aggregate_close(left: dict[str, Any], right: dict[str, Any]) -> bool:
                     return False
             elif not math.isclose(float(lvalue), float(rvalue), rel_tol=0, abs_tol=1e-10):
                 return False
-    return True
+        return True
+
+    if not same_metrics(left["overall"], right["overall"]):
+        return False
+    for lrow, rrow in zip(left["yaw_bins_15"], right["yaw_bins_15"], strict=True):
+        if not same_metrics(lrow, rrow):
+            return False
+    return same_metrics(left["undefined_yaw"], right["undefined_yaw"])
 
 
 def _configure_determinism(device: torch.device) -> None:
@@ -496,6 +501,7 @@ def _prediction_frame(
 
     identity = torch.eye(3, dtype=torch.float64, device=device)
     processed = 0
+    error_sum = 0.0
     try:
         with torch.inference_mode(), tqdm(
             total=len(dataset),
@@ -546,10 +552,12 @@ def _prediction_frame(
                     for column in range(3):
                         extend(f"gt_R_{row}{column}", target64[:, row, column])
                         extend(f"pred_R_{row}{column}", predicted64[:, row, column])
+
                 processed += batch_count
+                error_sum += float(geodesic.sum())
                 progress.update(batch_count)
                 progress.set_postfix(
-                    so3_deg=f"{float(geodesic.sum()) / batch_count:.3f}",
+                    so3_deg=f"{error_sum / processed:.3f}",
                     refresh=False,
                 )
     finally:
@@ -660,11 +668,18 @@ def evaluate_model_group(
         if run_path.is_file() and status_path.is_file():
             previous = json.loads(run_path.read_text(encoding="utf-8"))
             status = json.loads(status_path.read_text(encoding="utf-8"))
-            if (
+            predictions_path = final_dir / PREDICTION_FILENAME
+            aggregate_path = final_dir / "metrics" / "aggregate.json"
+            artifacts = previous.get("artifacts", {})
+            reusable = (
                 status.get("status") == "completed"
                 and previous.get("evaluation_fingerprint") == fingerprint
-                and (final_dir / PREDICTION_FILENAME).is_file()
-            ):
+                and predictions_path.is_file()
+                and aggregate_path.is_file()
+                and artifacts.get("predictions_sha256") == sha256_file(predictions_path)
+                and artifacts.get("aggregate_sha256") == sha256_file(aggregate_path)
+            )
+            if reusable:
                 return final_dir
         if not overwrite_stale:
             raise ValueError(
@@ -726,6 +741,12 @@ def evaluate_model_group(
         )
         if len(frame) != input_identity.count:
             raise RuntimeError("Inference did not produce the fixed VGGHeads dev count")
+        observed_ids_sha256 = prediction_instance_ids_sha256(frame)
+        if observed_ids_sha256 != input_identity.instance_ids_sha256:
+            raise RuntimeError(
+                "Inference instance IDs/order differ from the fixed VGGHeads dev manifest"
+            )
+
         predictions_path = partial_dir / PREDICTION_FILENAME
         frame.to_csv(
             predictions_path,
@@ -739,12 +760,22 @@ def evaluate_model_group(
         reloaded = aggregate_prediction_file(predictions_path)
         if not _aggregate_close(aggregate, reloaded):
             raise RuntimeError("Saved predictions do not reproduce the in-memory aggregate")
+
         regression_checks = _regression_check(aggregate, targets)
         _write_aggregate_files(partial_dir, aggregate)
+        aggregate_path = partial_dir / "metrics" / "aggregate.json"
+        run_metadata["artifacts"] = {
+            "predictions": PREDICTION_FILENAME,
+            "predictions_sha256": sha256_file(predictions_path),
+            "aggregate": "metrics/aggregate.json",
+            "aggregate_sha256": sha256_file(aggregate_path),
+        }
+        write_json_atomic(partial_dir / "run.json", run_metadata)
         write_json_atomic(
             partial_dir / "validation.json",
             {
                 "prediction_reaggregation_matches": True,
+                "instance_ids_sha256_matches_manifest": True,
                 "weighted_yaw_bins_reconstruct_overall": True,
                 "count": aggregate["overall"]["count"],
                 "regression_checks": regression_checks,
@@ -773,25 +804,46 @@ def regroup_targets_by_checkpoint(
     return groups
 
 
-def regenerate_aggregate(model_dir: Path) -> dict[str, Any]:
+def regenerate_aggregate(
+    model_dir: Path,
+    *,
+    input_identity: DevInputIdentity | None = None,
+) -> dict[str, Any]:
     prediction_path = model_dir / PREDICTION_FILENAME
     if not prediction_path.is_file():
         raise FileNotFoundError(prediction_path)
-    aggregate = aggregate_prediction_file(prediction_path)
+    frame = pd.read_csv(prediction_path)
+    if input_identity is not None:
+        if len(frame) != input_identity.count:
+            raise ValueError("Saved prediction count differs from the fixed VGGHeads dev input")
+        if prediction_instance_ids_sha256(frame) != input_identity.instance_ids_sha256:
+            raise ValueError("Saved prediction IDs/order differ from the fixed VGGHeads dev input")
+    aggregate = aggregate_predictions(frame)
     _write_aggregate_files(model_dir, aggregate)
+
+    run_path = model_dir / "run.json"
+    if run_path.is_file():
+        run = json.loads(run_path.read_text(encoding="utf-8"))
+        run.setdefault("artifacts", {})["predictions"] = PREDICTION_FILENAME
+        run["artifacts"]["predictions_sha256"] = sha256_file(prediction_path)
+        aggregate_path = model_dir / "metrics" / "aggregate.json"
+        run["artifacts"]["aggregate"] = "metrics/aggregate.json"
+        run["artifacts"]["aggregate_sha256"] = sha256_file(aggregate_path)
+        write_json_atomic(run_path, run)
     return aggregate
 
 
 def _format_metric(value: Any) -> str:
-    return "NA" if value is None or (isinstance(value, float) and math.isnan(value)) else f"{float(value):.6f}"
+    if value is None or (isinstance(value, float) and math.isnan(value)):
+        return "NA"
+    return f"{float(value):.6f}"
 
 
 def _write_markdown_reports(
-    output_root: Path,
+    reports: Path,
     overall_rows: list[dict[str, Any]],
     bin_rows: list[dict[str, Any]],
 ) -> None:
-    reports = output_root / "reports"
     reports.mkdir(parents=True, exist_ok=True)
     experiments = sorted({row["experiment_id"] for row in overall_rows})
     for experiment in experiments:
@@ -815,7 +867,10 @@ def _write_markdown_reports(
                     axis=_format_metric(row["mean_axis_maae_deg"]),
                 )
             )
-        (reports / f"{experiment}_overall.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+        (reports / f"{experiment}_overall.md").write_text(
+            "\n".join(lines) + "\n",
+            encoding="utf-8",
+        )
 
         bins = [row for row in bin_rows if row["experiment_id"] == experiment]
         lines = [
@@ -846,13 +901,17 @@ def _write_markdown_reports(
 def write_comparison_outputs(
     output_root: Path,
     targets: Iterable[VggDevEvaluationTarget],
+    *,
+    comparison_name: str = "all",
 ) -> None:
+    if not comparison_name or Path(comparison_name).name != comparison_name:
+        raise ValueError("comparison_name must be one path-safe name")
     selected = list(targets)
-    comparison_dir = output_root / "comparisons"
+    comparison_dir = output_root / "comparisons" / comparison_name
     comparison_dir.mkdir(parents=True, exist_ok=True)
     overall_rows: list[dict[str, Any]] = []
     bin_rows: list[dict[str, Any]] = []
-    by_sha = regroup_targets_by_checkpoint(selected)
+    all_groups = regroup_targets_by_checkpoint(ALL_TARGETS)
 
     for target in selected:
         model_dir = output_root / "models" / target.checkpoint_sha256
@@ -867,7 +926,7 @@ def write_comparison_outputs(
                 "logical_id": target.logical_id,
                 "epoch": target.epoch,
                 "checkpoint_sha256": target.checkpoint_sha256,
-                "shared_prediction_result": len(by_sha[target.checkpoint_sha256]) > 1,
+                "shared_prediction_result": len(all_groups[target.checkpoint_sha256]) > 1,
                 **aggregate["overall"],
             }
         )
@@ -915,4 +974,8 @@ def write_comparison_outputs(
             for target in selected
         ],
     )
-    _write_markdown_reports(output_root, overall_rows, bin_rows)
+    _write_markdown_reports(
+        output_root / "reports" / comparison_name,
+        overall_rows,
+        bin_rows,
+    )
