@@ -1,0 +1,7 @@
+{
+  "prediction_reaggregation_matches": true,
+  "instance_ids_sha256_matches_manifest": true,
+  "weighted_yaw_bins_reconstruct_overall": true,
+  "count": 51914,
+  "regression_checks": []
+}

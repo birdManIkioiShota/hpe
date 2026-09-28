@@ -1,0 +1,73 @@
+{
+  "schema": "vgg_dev_all_conditions_v1",
+  "evaluation_fingerprint": "00f64900c821d8ae521a72e7dd5a75fcad7b7378858f4b73f16dc83be7d9aa89",
+  "checkpoint": {
+    "path": "experiments/runs/yawpose_rear_stratified_search/conditions/Y_top40_vgg/checkpoints/epoch_010.pth",
+    "sha256": "986e669f7e680bcc855644324a3519807aecee8e3c4a76d6a53bc831946d4179"
+  },
+  "logical_targets": [
+    "experiment_7_yawpose_stratified:Y_top40_vgg"
+  ],
+  "input": {
+    "manifest_path": "datasets/prepared/vgg_data/dev.jsonl",
+    "manifest_sha256": "ba83be1e197275697e8919959519e4a5da314d460a34d5457ac9788f1a18d13b",
+    "instance_ids_sha256": "6a1bee7ec400144e26a373a21a3cccd11951282510ca2bf036f536f360bacb2c",
+    "count": 51914,
+    "dataset": "vggheads",
+    "split": "dev",
+    "metadata_sha256": "796e98cce6fc7269fcb021a09a990975e3b3cc16fcd251d2cd49c63f91b2811a"
+  },
+  "settings": {
+    "schema": "vgg_dev_all_conditions_v1",
+    "model": "SixDRepNet360-ResNet50",
+    "rotation_normalization": "fp32",
+    "inference_precision": "fp32",
+    "amp": false,
+    "metric_dtype": "float64",
+    "geodesic_formula": "stable_atan2",
+    "axis_error_representation": "canonical RzRyRx Euler for target and prediction",
+    "yaw_bin_source": "GT head-forward +Z azimuth atan2(R[0,2], R[2,2])",
+    "yaw_bins": "24 x 15 degree bins from [-180,-165) through [165,180]",
+    "undefined_yaw": "horizontal norm of GT head-forward vector below 1e-8",
+    "resize": 256,
+    "center_crop": 224,
+    "normalization_mean": [
+      0.485,
+      0.456,
+      0.406
+    ],
+    "normalization_std": [
+      0.229,
+      0.224,
+      0.225
+    ],
+    "shuffle": false,
+    "device": "cuda:0",
+    "batch_size": 256,
+    "workers": 8,
+    "deterministic": true,
+    "cuda_matmul_fp32_precision": "ieee",
+    "cudnn_conv_fp32_precision": "ieee"
+  },
+  "source_hashes": {
+    "src/experiments/common/vgg_dev_evaluation.py": "4457bc2f2571a80671bda74ed969fe315dc3229d635d06e6e61c18db72490557",
+    "src/experiments/common/vgg_dev_targets.py": "9ce6f46451f44bf1fa99bbcceeeca29e0aa7717bdf3764e39ad30ef5ed3e3e0e",
+    "src/experiments/common/datasets.py": "2c5c28d04bd018f579bbc50ef8717cff05a7e0dfb874f96f3daf188444346d67",
+    "src/experiments/common/pose.py": "c8c3d3763b9e7d9e342018476171c2922eb7f573e45b2b1ba0657beee9c38299",
+    "src/hpe/data/dataset.py": "92e4157e9bc766b240434e6caafded3d97668cea3b3eea753a9f18a5a954cc87",
+    "src/hpe/geometry/rotations.py": "232e605225ceba11e24de96d80ee7f784c2c50f4b114d914e2ac6c855b1722d6",
+    "src/hpe/models/checkpoint.py": "bdef13c0eb78bf3c325b1af94e8747c09fb0faf9031b6b799e03270daf210321",
+    "src/hpe/models/sixdrepnet360.py": "9e4ff8d9f4be26fd2aed4a7387bf128c4f242c8a9e9f4f4c513f0d01e90089a0",
+    "pyproject.toml": "c3674b24c4357cdcf4acdc51783a5735a885d4a4362ab73466d6823f219ed71b"
+  },
+  "git": {
+    "commit": "31c08d7d937e0f21ec4cc8038d283ae07370f8b5",
+    "dirty": false
+  },
+  "artifacts": {
+    "predictions": "predictions.csv.gz",
+    "predictions_sha256": "155e485f6a8a33b691b738438df86ecdd382cde37052a9319c9600ff4a926d53",
+    "aggregate": "metrics/aggregate.json",
+    "aggregate_sha256": "fc8f9e7b04b457a84ebd8f36f9d02bb1c866dfeff0a2e1466f6da54ea5ce1ae1"
+  }
+}

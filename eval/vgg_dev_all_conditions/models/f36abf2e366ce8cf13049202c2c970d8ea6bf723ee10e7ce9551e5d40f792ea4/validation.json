@@ -1,0 +1,16 @@
+{
+  "prediction_reaggregation_matches": true,
+  "instance_ids_sha256_matches_manifest": true,
+  "weighted_yaw_bins_reconstruct_overall": true,
+  "count": 51914,
+  "regression_checks": [
+    {
+      "logical_id": "experiment_1_vgg_ft:best",
+      "metric": "so3_mean_deg",
+      "expected_deg": 2.919495880048786,
+      "actual_deg": 2.919495888718608,
+      "delta_deg": 8.669822193496657e-09,
+      "tolerance_deg": 0.0001
+    }
+  ]
+}

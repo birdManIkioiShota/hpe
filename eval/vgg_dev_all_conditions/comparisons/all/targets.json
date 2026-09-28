@@ -1,0 +1,382 @@
+[
+  {
+    "experiment_id": "initial",
+    "condition_id": "audited_base",
+    "checkpoint_path": "checkpoints/6DRepNet360_Full-Rotation_300W_LP+Panoptic.pth",
+    "checkpoint_sha256": "3ee08f1e04b8d452a6c4a40926a6f38051894ae6d0aaa6d191fe6d8bc6e4f9c6",
+    "reference_run_path": "eval/baseline_fp32/evaluations/baseline/run.json",
+    "epoch": 0,
+    "reference_vgg_dev_so3_mean_deg": 21.426986640470798,
+    "logical_id": "initial:audited_base"
+  },
+  {
+    "experiment_id": "experiment_1_vgg_ft",
+    "condition_id": "best",
+    "checkpoint_path": "ft_runs/vgg_ft/best.pth",
+    "checkpoint_sha256": "f36abf2e366ce8cf13049202c2c970d8ea6bf723ee10e7ce9551e5d40f792ea4",
+    "reference_run_path": "eval/vgg_ft/run.json",
+    "epoch": 19,
+    "reference_vgg_dev_so3_mean_deg": 2.919495880048786,
+    "logical_id": "experiment_1_vgg_ft:best"
+  },
+  {
+    "experiment_id": "experiment_2_weight_interpolation",
+    "condition_id": "alpha_025",
+    "checkpoint_path": "experiments/runs/weight_interp_a025/checkpoints/best.pth",
+    "checkpoint_sha256": "c7b60cecdca9dcc9fcbcb8c05d856f7a9164521aeab1824ddb42a0bdb0fcc650",
+    "reference_run_path": "eval/weight_interp_a025/run.json",
+    "epoch": null,
+    "reference_vgg_dev_so3_mean_deg": null,
+    "logical_id": "experiment_2_weight_interpolation:alpha_025"
+  },
+  {
+    "experiment_id": "experiment_3_rear_distillation",
+    "condition_id": "best",
+    "checkpoint_path": "experiments/runs/dad_vgg_rear_distill/checkpoints/best.pth",
+    "checkpoint_sha256": "b9a38260a57bae6d4e2502d25cbe95096f4aa3222f565d7953308fe0473444eb",
+    "reference_run_path": "eval/dad_vgg_rear_distill/run.json",
+    "epoch": 7,
+    "reference_vgg_dev_so3_mean_deg": null,
+    "logical_id": "experiment_3_rear_distillation:best"
+  },
+  {
+    "experiment_id": "experiment_4_rear_flip_consistency",
+    "condition_id": "best",
+    "checkpoint_path": "experiments/runs/dad_vgg_rear_flip_consistency/checkpoints/best.pth",
+    "checkpoint_sha256": "1f1bc2ec8f6e92615d001b125437171151dd8d6eadae741d468cdbee456f359a",
+    "reference_run_path": "eval/dad_vgg_rear_flip_consistency_bench/run.json",
+    "epoch": 8,
+    "reference_vgg_dev_so3_mean_deg": null,
+    "logical_id": "experiment_4_rear_flip_consistency:best"
+  },
+  {
+    "experiment_id": "experiment_5_rear_fraction_flip_weight",
+    "condition_id": "rear_natural_flip_000",
+    "checkpoint_path": "experiments/runs/rear_flip_search/conditions/rear_natural_flip_000/checkpoints/epoch_010.pth",
+    "checkpoint_sha256": "9e85b7a492f5fa4459aa2a4cd2e5304616384668d0b42af1cb30eb125a130faa",
+    "reference_run_path": "eval/rear_flip_search/conditions/rear_natural_flip_000/run.json",
+    "epoch": 10,
+    "reference_vgg_dev_so3_mean_deg": null,
+    "logical_id": "experiment_5_rear_fraction_flip_weight:rear_natural_flip_000"
+  },
+  {
+    "experiment_id": "experiment_5_rear_fraction_flip_weight",
+    "condition_id": "rear_natural_flip_020",
+    "checkpoint_path": "experiments/runs/rear_flip_search/conditions/rear_natural_flip_020/checkpoints/epoch_010.pth",
+    "checkpoint_sha256": "d55aa613311cef890a1664e768dd15ccec511a740220867c22a13c593b942ca8",
+    "reference_run_path": "eval/rear_flip_search/conditions/rear_natural_flip_020/run.json",
+    "epoch": 10,
+    "reference_vgg_dev_so3_mean_deg": null,
+    "logical_id": "experiment_5_rear_fraction_flip_weight:rear_natural_flip_020"
+  },
+  {
+    "experiment_id": "experiment_5_rear_fraction_flip_weight",
+    "condition_id": "rear_natural_flip_100",
+    "checkpoint_path": "experiments/runs/rear_flip_search/conditions/rear_natural_flip_100/checkpoints/epoch_010.pth",
+    "checkpoint_sha256": "e19c5654f3633117e5aa7d26d0c3fadef78390860326fe69553fd8ae85920868",
+    "reference_run_path": "eval/rear_flip_search/conditions/rear_natural_flip_100/run.json",
+    "epoch": 10,
+    "reference_vgg_dev_so3_mean_deg": null,
+    "logical_id": "experiment_5_rear_fraction_flip_weight:rear_natural_flip_100"
+  },
+  {
+    "experiment_id": "experiment_5_rear_fraction_flip_weight",
+    "condition_id": "rear_005_flip_000",
+    "checkpoint_path": "experiments/runs/rear_flip_search/conditions/rear_005_flip_000/checkpoints/epoch_010.pth",
+    "checkpoint_sha256": "916eb72361647dafd9fee6dcfdcb585fbee46433de2f27f82f68475523620622",
+    "reference_run_path": "eval/rear_flip_search/conditions/rear_005_flip_000/run.json",
+    "epoch": 10,
+    "reference_vgg_dev_so3_mean_deg": null,
+    "logical_id": "experiment_5_rear_fraction_flip_weight:rear_005_flip_000"
+  },
+  {
+    "experiment_id": "experiment_5_rear_fraction_flip_weight",
+    "condition_id": "rear_005_flip_020",
+    "checkpoint_path": "experiments/runs/rear_flip_search/conditions/rear_005_flip_020/checkpoints/epoch_010.pth",
+    "checkpoint_sha256": "c2b4569a6ed885f166281cdbed9c01425efca6bb5f5cb308609eda6c43fc4fd5",
+    "reference_run_path": "eval/rear_flip_search/conditions/rear_005_flip_020/run.json",
+    "epoch": 10,
+    "reference_vgg_dev_so3_mean_deg": null,
+    "logical_id": "experiment_5_rear_fraction_flip_weight:rear_005_flip_020"
+  },
+  {
+    "experiment_id": "experiment_5_rear_fraction_flip_weight",
+    "condition_id": "rear_005_flip_100",
+    "checkpoint_path": "experiments/runs/rear_flip_search/conditions/rear_005_flip_100/checkpoints/epoch_010.pth",
+    "checkpoint_sha256": "0126c5ba4489db90776883cca6133acd78368a543f5abdd833559c78ee5fd196",
+    "reference_run_path": "eval/rear_flip_search/conditions/rear_005_flip_100/run.json",
+    "epoch": 10,
+    "reference_vgg_dev_so3_mean_deg": null,
+    "logical_id": "experiment_5_rear_fraction_flip_weight:rear_005_flip_100"
+  },
+  {
+    "experiment_id": "experiment_5_rear_fraction_flip_weight",
+    "condition_id": "rear_025_flip_000",
+    "checkpoint_path": "experiments/runs/rear_flip_search/conditions/rear_025_flip_000/checkpoints/epoch_010.pth",
+    "checkpoint_sha256": "4a94f2fc95eccc2c3b66fdf70c416bede8264677044469652fd939ec757c7ba4",
+    "reference_run_path": "eval/rear_flip_search/conditions/rear_025_flip_000/run.json",
+    "epoch": 10,
+    "reference_vgg_dev_so3_mean_deg": null,
+    "logical_id": "experiment_5_rear_fraction_flip_weight:rear_025_flip_000"
+  },
+  {
+    "experiment_id": "experiment_5_rear_fraction_flip_weight",
+    "condition_id": "rear_025_flip_020",
+    "checkpoint_path": "experiments/runs/rear_flip_search/conditions/rear_025_flip_020/checkpoints/epoch_010.pth",
+    "checkpoint_sha256": "082568cc8e273542a333a22b6b7906eb252097012a3f2364c2929b324a618b4e",
+    "reference_run_path": "eval/rear_flip_search/conditions/rear_025_flip_020/run.json",
+    "epoch": 10,
+    "reference_vgg_dev_so3_mean_deg": null,
+    "logical_id": "experiment_5_rear_fraction_flip_weight:rear_025_flip_020"
+  },
+  {
+    "experiment_id": "experiment_5_rear_fraction_flip_weight",
+    "condition_id": "rear_025_flip_100",
+    "checkpoint_path": "experiments/runs/rear_flip_search/conditions/rear_025_flip_100/checkpoints/epoch_010.pth",
+    "checkpoint_sha256": "bf8c743fa3fde228aee00cb66daf6ae6e935802759c3a58c7b91876582477940",
+    "reference_run_path": "eval/rear_flip_search/conditions/rear_025_flip_100/run.json",
+    "epoch": 10,
+    "reference_vgg_dev_so3_mean_deg": null,
+    "logical_id": "experiment_5_rear_fraction_flip_weight:rear_025_flip_100"
+  },
+  {
+    "experiment_id": "experiment_6_yawpose_reliability",
+    "condition_id": "Y_base",
+    "checkpoint_path": "experiments/runs/yawpose_rear_search/conditions/Y_base/checkpoints/epoch_010.pth",
+    "checkpoint_sha256": "d6ca00665976edd3149cb68d64a16515ae964568aa07e7559bdd007becbe5441",
+    "reference_run_path": "eval/yawpose_rear_search/conditions/Y_base/run.json",
+    "epoch": 10,
+    "reference_vgg_dev_so3_mean_deg": null,
+    "logical_id": "experiment_6_yawpose_reliability:Y_base"
+  },
+  {
+    "experiment_id": "experiment_6_yawpose_reliability",
+    "condition_id": "Y_top20",
+    "checkpoint_path": "experiments/runs/yawpose_rear_search/conditions/Y_top20/checkpoints/epoch_010.pth",
+    "checkpoint_sha256": "8df7331515fe99eba2eda0dc5b4452031f1ace3a9dd372730d1f40a692440d44",
+    "reference_run_path": "eval/yawpose_rear_search/conditions/Y_top20/run.json",
+    "epoch": 10,
+    "reference_vgg_dev_so3_mean_deg": null,
+    "logical_id": "experiment_6_yawpose_reliability:Y_top20"
+  },
+  {
+    "experiment_id": "experiment_6_yawpose_reliability",
+    "condition_id": "Y_top40",
+    "checkpoint_path": "experiments/runs/yawpose_rear_search/conditions/Y_top40/checkpoints/epoch_010.pth",
+    "checkpoint_sha256": "8f00b85ef296742561c2935fbaa69d098d88bc70e1716b675206a7f9afd5ae0c",
+    "reference_run_path": "eval/yawpose_rear_search/conditions/Y_top40/run.json",
+    "epoch": 10,
+    "reference_vgg_dev_so3_mean_deg": null,
+    "logical_id": "experiment_6_yawpose_reliability:Y_top40"
+  },
+  {
+    "experiment_id": "experiment_6_yawpose_reliability",
+    "condition_id": "Y_top60",
+    "checkpoint_path": "experiments/runs/yawpose_rear_search/conditions/Y_top60/checkpoints/epoch_010.pth",
+    "checkpoint_sha256": "e3ac174529bbe75dcf08088f25fc1b9ce026f11b5e926c25419545575570ba0f",
+    "reference_run_path": "eval/yawpose_rear_search/conditions/Y_top60/run.json",
+    "epoch": 10,
+    "reference_vgg_dev_so3_mean_deg": null,
+    "logical_id": "experiment_6_yawpose_reliability:Y_top60"
+  },
+  {
+    "experiment_id": "experiment_6_yawpose_reliability",
+    "condition_id": "Y_top80",
+    "checkpoint_path": "experiments/runs/yawpose_rear_search/conditions/Y_top80/checkpoints/epoch_010.pth",
+    "checkpoint_sha256": "85cd78c6d967bd4a9e95e2e49790599d49fba14c32fbd82c7345e064ff39f98e",
+    "reference_run_path": "eval/yawpose_rear_search/conditions/Y_top80/run.json",
+    "epoch": 10,
+    "reference_vgg_dev_so3_mean_deg": null,
+    "logical_id": "experiment_6_yawpose_reliability:Y_top80"
+  },
+  {
+    "experiment_id": "experiment_6_yawpose_reliability",
+    "condition_id": "Y_top100",
+    "checkpoint_path": "experiments/runs/yawpose_rear_search/conditions/Y_top100/checkpoints/epoch_010.pth",
+    "checkpoint_sha256": "b21ca84ecc2424705d1da385f5900e96ae9953cfcdb310f7c9b5177130e38614",
+    "reference_run_path": "eval/yawpose_rear_search/conditions/Y_top100/run.json",
+    "epoch": 10,
+    "reference_vgg_dev_so3_mean_deg": null,
+    "logical_id": "experiment_6_yawpose_reliability:Y_top100"
+  },
+  {
+    "experiment_id": "experiment_7_yawpose_stratified",
+    "condition_id": "Y_base_vgg",
+    "checkpoint_path": "experiments/runs/yawpose_rear_stratified_search/conditions/Y_base_vgg/checkpoints/epoch_010.pth",
+    "checkpoint_sha256": "3eaffc0b0ef4ca17958ff1234fae1ba35b174345d44c79312cabc393f2d07024",
+    "reference_run_path": "eval/yawpose_rear_stratified_search/conditions/Y_base_vgg/run.json",
+    "epoch": 10,
+    "reference_vgg_dev_so3_mean_deg": null,
+    "logical_id": "experiment_7_yawpose_stratified:Y_base_vgg"
+  },
+  {
+    "experiment_id": "experiment_7_yawpose_stratified",
+    "condition_id": "Y_top20_vgg",
+    "checkpoint_path": "experiments/runs/yawpose_rear_stratified_search/conditions/Y_top20_vgg/checkpoints/epoch_010.pth",
+    "checkpoint_sha256": "7565e2917f54fe0cd7df383e9f209b5334bb53e19c59aed4cf851850c5480480",
+    "reference_run_path": "eval/yawpose_rear_stratified_search/conditions/Y_top20_vgg/run.json",
+    "epoch": 10,
+    "reference_vgg_dev_so3_mean_deg": null,
+    "logical_id": "experiment_7_yawpose_stratified:Y_top20_vgg"
+  },
+  {
+    "experiment_id": "experiment_7_yawpose_stratified",
+    "condition_id": "Y_top40_vgg",
+    "checkpoint_path": "experiments/runs/yawpose_rear_stratified_search/conditions/Y_top40_vgg/checkpoints/epoch_010.pth",
+    "checkpoint_sha256": "986e669f7e680bcc855644324a3519807aecee8e3c4a76d6a53bc831946d4179",
+    "reference_run_path": "eval/yawpose_rear_stratified_search/conditions/Y_top40_vgg/run.json",
+    "epoch": 10,
+    "reference_vgg_dev_so3_mean_deg": null,
+    "logical_id": "experiment_7_yawpose_stratified:Y_top40_vgg"
+  },
+  {
+    "experiment_id": "experiment_7_yawpose_stratified",
+    "condition_id": "Y_top60_vgg",
+    "checkpoint_path": "experiments/runs/yawpose_rear_stratified_search/conditions/Y_top60_vgg/checkpoints/epoch_010.pth",
+    "checkpoint_sha256": "ffd82b9b3610d8c3913f93167b359ed6c37ddf0c48866e1f7d59ad00c6807c73",
+    "reference_run_path": "eval/yawpose_rear_stratified_search/conditions/Y_top60_vgg/run.json",
+    "epoch": 10,
+    "reference_vgg_dev_so3_mean_deg": null,
+    "logical_id": "experiment_7_yawpose_stratified:Y_top60_vgg"
+  },
+  {
+    "experiment_id": "experiment_7_yawpose_stratified",
+    "condition_id": "Y_top80_vgg",
+    "checkpoint_path": "experiments/runs/yawpose_rear_stratified_search/conditions/Y_top80_vgg/checkpoints/epoch_010.pth",
+    "checkpoint_sha256": "2e2704923dbc510690717c4097c1b5c0ec4fdf64d7aa8da3d1de03ec86b50c0e",
+    "reference_run_path": "eval/yawpose_rear_stratified_search/conditions/Y_top80_vgg/run.json",
+    "epoch": 10,
+    "reference_vgg_dev_so3_mean_deg": null,
+    "logical_id": "experiment_7_yawpose_stratified:Y_top80_vgg"
+  },
+  {
+    "experiment_id": "experiment_7_yawpose_stratified",
+    "condition_id": "Y_top100_vgg",
+    "checkpoint_path": "experiments/runs/yawpose_rear_stratified_search/conditions/Y_top100_vgg/checkpoints/epoch_010.pth",
+    "checkpoint_sha256": "57d6da2db7b6f6218a81e1d99e420ee8d31060b626185c225e186351b94bb27e",
+    "reference_run_path": "eval/yawpose_rear_stratified_search/conditions/Y_top100_vgg/run.json",
+    "epoch": 10,
+    "reference_vgg_dev_so3_mean_deg": null,
+    "logical_id": "experiment_7_yawpose_stratified:Y_top100_vgg"
+  },
+  {
+    "experiment_id": "experiment_7_yawpose_stratified",
+    "condition_id": "Y_base_vgg_dad",
+    "checkpoint_path": "experiments/runs/yawpose_rear_stratified_search/conditions/Y_base_vgg_dad/checkpoints/epoch_010.pth",
+    "checkpoint_sha256": "f26bbe4b5540a22aec916797523a0673462c9517d73daa01fd33cbed22b7637f",
+    "reference_run_path": "eval/yawpose_rear_stratified_search/conditions/Y_base_vgg_dad/run.json",
+    "epoch": 10,
+    "reference_vgg_dev_so3_mean_deg": null,
+    "logical_id": "experiment_7_yawpose_stratified:Y_base_vgg_dad"
+  },
+  {
+    "experiment_id": "experiment_7_yawpose_stratified",
+    "condition_id": "Y_top20_vgg_dad",
+    "checkpoint_path": "experiments/runs/yawpose_rear_stratified_search/conditions/Y_top20_vgg_dad/checkpoints/epoch_010.pth",
+    "checkpoint_sha256": "9aaa5eac8235dbd8022457ad301a9b727c61be804fcf0e54653d566596d4fdad",
+    "reference_run_path": "eval/yawpose_rear_stratified_search/conditions/Y_top20_vgg_dad/run.json",
+    "epoch": 10,
+    "reference_vgg_dev_so3_mean_deg": null,
+    "logical_id": "experiment_7_yawpose_stratified:Y_top20_vgg_dad"
+  },
+  {
+    "experiment_id": "experiment_7_yawpose_stratified",
+    "condition_id": "Y_top40_vgg_dad",
+    "checkpoint_path": "experiments/runs/yawpose_rear_stratified_search/conditions/Y_top40_vgg_dad/checkpoints/epoch_010.pth",
+    "checkpoint_sha256": "2020290cfbe34b091715c1be0565588f18181a8681d839b99abf46a072d79e33",
+    "reference_run_path": "eval/yawpose_rear_stratified_search/conditions/Y_top40_vgg_dad/run.json",
+    "epoch": 10,
+    "reference_vgg_dev_so3_mean_deg": null,
+    "logical_id": "experiment_7_yawpose_stratified:Y_top40_vgg_dad"
+  },
+  {
+    "experiment_id": "experiment_7_yawpose_stratified",
+    "condition_id": "Y_top60_vgg_dad",
+    "checkpoint_path": "experiments/runs/yawpose_rear_stratified_search/conditions/Y_top60_vgg_dad/checkpoints/epoch_010.pth",
+    "checkpoint_sha256": "e7a8b8788ea0d9c206332e0ace8078f4b8bc579a111afed176b3d9b37a19ccd2",
+    "reference_run_path": "eval/yawpose_rear_stratified_search/conditions/Y_top60_vgg_dad/run.json",
+    "epoch": 10,
+    "reference_vgg_dev_so3_mean_deg": null,
+    "logical_id": "experiment_7_yawpose_stratified:Y_top60_vgg_dad"
+  },
+  {
+    "experiment_id": "experiment_7_yawpose_stratified",
+    "condition_id": "Y_top80_vgg_dad",
+    "checkpoint_path": "experiments/runs/yawpose_rear_stratified_search/conditions/Y_top80_vgg_dad/checkpoints/epoch_010.pth",
+    "checkpoint_sha256": "83fe774d03c8735dc9c79e958eb1b2494154c966ab74dfd64796c96a941bffca",
+    "reference_run_path": "eval/yawpose_rear_stratified_search/conditions/Y_top80_vgg_dad/run.json",
+    "epoch": 10,
+    "reference_vgg_dev_so3_mean_deg": null,
+    "logical_id": "experiment_7_yawpose_stratified:Y_top80_vgg_dad"
+  },
+  {
+    "experiment_id": "experiment_7_yawpose_stratified",
+    "condition_id": "Y_top100_vgg_dad",
+    "checkpoint_path": "experiments/runs/yawpose_rear_stratified_search/conditions/Y_top100_vgg_dad/checkpoints/epoch_010.pth",
+    "checkpoint_sha256": "adce7efe6322c54070a31026b8055862b605dab63fe510b8d0d2afa89f152853",
+    "reference_run_path": "eval/yawpose_rear_stratified_search/conditions/Y_top100_vgg_dad/run.json",
+    "epoch": 10,
+    "reference_vgg_dev_so3_mean_deg": null,
+    "logical_id": "experiment_7_yawpose_stratified:Y_top100_vgg_dad"
+  },
+  {
+    "experiment_id": "experiment_8_yawpose_loss_weight",
+    "condition_id": "Y_base_vgg_dad",
+    "checkpoint_path": "experiments/runs/yawpose_rear_weight_search/conditions/Y_base_vgg_dad/checkpoints/epoch_010.pth",
+    "checkpoint_sha256": "f26bbe4b5540a22aec916797523a0673462c9517d73daa01fd33cbed22b7637f",
+    "reference_run_path": "eval/yawpose_rear_weight_search/conditions/Y_base_vgg_dad/run.json",
+    "epoch": 10,
+    "reference_vgg_dev_so3_mean_deg": null,
+    "logical_id": "experiment_8_yawpose_loss_weight:Y_base_vgg_dad"
+  },
+  {
+    "experiment_id": "experiment_8_yawpose_loss_weight",
+    "condition_id": "Y_w020_vgg_dad",
+    "checkpoint_path": "experiments/runs/yawpose_rear_weight_search/conditions/Y_w020_vgg_dad/checkpoints/epoch_010.pth",
+    "checkpoint_sha256": "e7a8b8788ea0d9c206332e0ace8078f4b8bc579a111afed176b3d9b37a19ccd2",
+    "reference_run_path": "eval/yawpose_rear_weight_search/conditions/Y_w020_vgg_dad/run.json",
+    "epoch": 10,
+    "reference_vgg_dev_so3_mean_deg": null,
+    "logical_id": "experiment_8_yawpose_loss_weight:Y_w020_vgg_dad"
+  },
+  {
+    "experiment_id": "experiment_8_yawpose_loss_weight",
+    "condition_id": "Y_w040_vgg_dad",
+    "checkpoint_path": "experiments/runs/yawpose_rear_weight_search/conditions/Y_w040_vgg_dad/checkpoints/epoch_010.pth",
+    "checkpoint_sha256": "a9190bf96981bf1e0f22dd9ebc76b7bc41e5a93aeb1a947e82ab17452d7138e5",
+    "reference_run_path": "eval/yawpose_rear_weight_search/conditions/Y_w040_vgg_dad/run.json",
+    "epoch": 10,
+    "reference_vgg_dev_so3_mean_deg": null,
+    "logical_id": "experiment_8_yawpose_loss_weight:Y_w040_vgg_dad"
+  },
+  {
+    "experiment_id": "experiment_8_yawpose_loss_weight",
+    "condition_id": "Y_w060_vgg_dad",
+    "checkpoint_path": "experiments/runs/yawpose_rear_weight_search/conditions/Y_w060_vgg_dad/checkpoints/epoch_010.pth",
+    "checkpoint_sha256": "91f35cc218ba348ba1a9d2fe352149807ab96e82d2f6d8d9c31b254bb14f5feb",
+    "reference_run_path": "eval/yawpose_rear_weight_search/conditions/Y_w060_vgg_dad/run.json",
+    "epoch": 10,
+    "reference_vgg_dev_so3_mean_deg": null,
+    "logical_id": "experiment_8_yawpose_loss_weight:Y_w060_vgg_dad"
+  },
+  {
+    "experiment_id": "experiment_8_yawpose_loss_weight",
+    "condition_id": "Y_w080_vgg_dad",
+    "checkpoint_path": "experiments/runs/yawpose_rear_weight_search/conditions/Y_w080_vgg_dad/checkpoints/epoch_010.pth",
+    "checkpoint_sha256": "f2c9c9cef4b934882e4eb89b86662e842af80bb51407bb01f70b1c4bffcd34c6",
+    "reference_run_path": "eval/yawpose_rear_weight_search/conditions/Y_w080_vgg_dad/run.json",
+    "epoch": 10,
+    "reference_vgg_dev_so3_mean_deg": null,
+    "logical_id": "experiment_8_yawpose_loss_weight:Y_w080_vgg_dad"
+  },
+  {
+    "experiment_id": "experiment_8_yawpose_loss_weight",
+    "condition_id": "Y_w100_vgg_dad",
+    "checkpoint_path": "experiments/runs/yawpose_rear_weight_search/conditions/Y_w100_vgg_dad/checkpoints/epoch_010.pth",
+    "checkpoint_sha256": "c949e6c50ec1b74690e7e20c8af00cc6062eb6207802926911e3f70337cdbe7b",
+    "reference_run_path": "eval/yawpose_rear_weight_search/conditions/Y_w100_vgg_dad/run.json",
+    "epoch": 10,
+    "reference_vgg_dev_so3_mean_deg": null,
+    "logical_id": "experiment_8_yawpose_loss_weight:Y_w100_vgg_dad"
+  }
+]

@@ -1,0 +1,16 @@
+{
+  "prediction_reaggregation_matches": true,
+  "instance_ids_sha256_matches_manifest": true,
+  "weighted_yaw_bins_reconstruct_overall": true,
+  "count": 51914,
+  "regression_checks": [
+    {
+      "logical_id": "initial:audited_base",
+      "metric": "so3_mean_deg",
+      "expected_deg": 21.426986640470798,
+      "actual_deg": 21.42698670227567,
+      "delta_deg": 6.180487233109488e-08,
+      "tolerance_deg": 0.0001
+    }
+  ]
+}
