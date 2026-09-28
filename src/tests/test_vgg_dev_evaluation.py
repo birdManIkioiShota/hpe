@@ -21,7 +21,11 @@ from experiments.common.vgg_dev_evaluation import (
     yaw_bin_record,
 )
 from experiments.common.vgg_dev_targets import TARGETS, validate_target_registry
-from hpe.geometry.rotations import circular_error_degrees, euler_degrees_to_matrix
+from hpe.geometry.rotations import (
+    circular_error_degrees,
+    euler_degrees_to_matrix,
+    geodesic_error_degrees,
+)
 
 
 def _prediction_frame() -> pd.DataFrame:
@@ -88,6 +92,13 @@ class TargetRegistryTests(unittest.TestCase):
 
 
 class GeometryAndBinningTests(unittest.TestCase):
+    def test_identical_rotation_has_zero_so3_error(self) -> None:
+        matrix = euler_degrees_to_matrix(
+            torch.tensor([[17.0, 135.0, -23.0]], dtype=torch.float64)
+        )
+        error = geodesic_error_degrees(matrix, matrix, stable=True)
+        self.assertAlmostEqual(float(error.item()), 0.0, places=12)
+
     def test_circular_179_minus_minus179_is_two_degrees(self) -> None:
         error = circular_error_degrees(
             torch.tensor([179.0], dtype=torch.float64),
