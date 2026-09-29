@@ -1,0 +1,50 @@
+[
+  {
+    "experiment_id": "vgg_rear_flip_no_distill",
+    "condition_id": "rear_005_flip_000",
+    "logical_id": "vgg_rear_flip_no_distill:rear_005_flip_000",
+    "epoch": 10,
+    "checkpoint_sha256": "6d3f6d57a353c3ac8932e11af637d5194ea628f9794c378ac6b91bede4ef5455",
+    "shared_prediction_result": false,
+    "count": 51914,
+    "so3_mean_deg": 5.790809863913429,
+    "pitch_maae_deg": 4.28434894689193,
+    "yaw_maae_deg": 3.1761274864169247,
+    "roll_maae_deg": 3.5401854601847895,
+    "mean_axis_maae_deg": 3.666887297831215,
+    "defined_yaw_count": 51914,
+    "undefined_yaw_count": 0
+  },
+  {
+    "experiment_id": "vgg_rear_flip_no_distill",
+    "condition_id": "rear_natural_flip_020",
+    "logical_id": "vgg_rear_flip_no_distill:rear_natural_flip_020",
+    "epoch": 10,
+    "checkpoint_sha256": "b463acf78c9924e805c7506ec2e5757dd0ff5d7f7a2eeae02a4cf0e9c73369a1",
+    "shared_prediction_result": false,
+    "count": 51914,
+    "so3_mean_deg": 6.26719441589347,
+    "pitch_maae_deg": 4.621623845330252,
+    "yaw_maae_deg": 3.4021614580205557,
+    "roll_maae_deg": 3.854577512665723,
+    "mean_axis_maae_deg": 3.95945427200551,
+    "defined_yaw_count": 51914,
+    "undefined_yaw_count": 0
+  },
+  {
+    "experiment_id": "vgg_rear_flip_no_distill",
+    "condition_id": "rear_005_flip_020",
+    "logical_id": "vgg_rear_flip_no_distill:rear_005_flip_020",
+    "epoch": 10,
+    "checkpoint_sha256": "517bb98ca6579a3e68f3f599c6172d72a542291ef819475552e18641294a4647",
+    "shared_prediction_result": false,
+    "count": 51914,
+    "so3_mean_deg": 6.363691086532032,
+    "pitch_maae_deg": 4.669198036223907,
+    "yaw_maae_deg": 3.4598976443009715,
+    "roll_maae_deg": 3.8873718499894245,
+    "mean_axis_maae_deg": 4.005489176838101,
+    "defined_yaw_count": 51914,
+    "undefined_yaw_count": 0
+  }
+]
