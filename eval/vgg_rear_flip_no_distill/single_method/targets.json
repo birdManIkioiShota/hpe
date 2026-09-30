@@ -1,0 +1,52 @@
+[
+  {
+    "experiment_id": "vgg_rear_flip_no_distill",
+    "condition_id": "rear_natural_flip_000",
+    "checkpoint_path": "experiments/runs/vgg_rear_flip_no_distill/conditions/rear_natural_flip_000/checkpoints/epoch_010.pth",
+    "checkpoint_sha256": "707e9b97aa2e182865f8084fe4285ea03f6a79cf5c00ca83ff313a5f6f0ec544",
+    "reference_run_path": "experiments/runs/vgg_rear_flip_no_distill/conditions/rear_natural_flip_000/status.json",
+    "epoch": 10,
+    "reference_vgg_dev_so3_mean_deg": null,
+    "reference_kind": "training"
+  },
+  {
+    "experiment_id": "vgg_rear_flip_no_distill",
+    "condition_id": "rear_005_flip_000",
+    "checkpoint_path": "experiments/runs/vgg_rear_flip_no_distill/conditions/rear_005_flip_000/checkpoints/epoch_010.pth",
+    "checkpoint_sha256": "6d3f6d57a353c3ac8932e11af637d5194ea628f9794c378ac6b91bede4ef5455",
+    "reference_run_path": "experiments/runs/vgg_rear_flip_no_distill/conditions/rear_005_flip_000/status.json",
+    "epoch": 10,
+    "reference_vgg_dev_so3_mean_deg": null,
+    "reference_kind": "training"
+  },
+  {
+    "experiment_id": "vgg_rear_flip_no_distill",
+    "condition_id": "rear_natural_flip_020",
+    "checkpoint_path": "experiments/runs/vgg_rear_flip_no_distill/conditions/rear_natural_flip_020/checkpoints/epoch_010.pth",
+    "checkpoint_sha256": "b463acf78c9924e805c7506ec2e5757dd0ff5d7f7a2eeae02a4cf0e9c73369a1",
+    "reference_run_path": "experiments/runs/vgg_rear_flip_no_distill/conditions/rear_natural_flip_020/status.json",
+    "epoch": 10,
+    "reference_vgg_dev_so3_mean_deg": null,
+    "reference_kind": "training"
+  },
+  {
+    "experiment_id": "vgg_rear_flip_no_distill",
+    "condition_id": "rear_natural_distill_100",
+    "checkpoint_path": "experiments/runs/vgg_rear_flip_no_distill/conditions/rear_natural_distill_100/checkpoints/epoch_010.pth",
+    "checkpoint_sha256": "7082ccdbadd2250017d6e1ea6d347ebf1b74114141e545a5167c262d541dac37",
+    "reference_run_path": "experiments/runs/vgg_rear_flip_no_distill/conditions/rear_natural_distill_100/status.json",
+    "epoch": 10,
+    "reference_vgg_dev_so3_mean_deg": null,
+    "reference_kind": "training"
+  },
+  {
+    "experiment_id": "vgg_rear_flip_no_distill",
+    "condition_id": "rear_natural_yawpose_100",
+    "checkpoint_path": "experiments/runs/vgg_rear_flip_no_distill/conditions/rear_natural_yawpose_100/checkpoints/epoch_010.pth",
+    "checkpoint_sha256": "af6177f513150706a4974c9199c4bc937d6062ee79dec25c826a741a30eea3c2",
+    "reference_run_path": "experiments/runs/vgg_rear_flip_no_distill/conditions/rear_natural_yawpose_100/status.json",
+    "epoch": 10,
+    "reference_vgg_dev_so3_mean_deg": null,
+    "reference_kind": "training"
+  }
+]

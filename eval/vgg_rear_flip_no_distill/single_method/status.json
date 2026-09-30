@@ -1,0 +1,12 @@
+{
+  "status": "completed",
+  "conditions": [
+    "rear_natural_flip_000",
+    "rear_005_flip_000",
+    "rear_natural_flip_020",
+    "rear_natural_distill_100",
+    "rear_natural_yawpose_100"
+  ],
+  "vgg_count": 51914,
+  "vgg_yaw_bin_rows": 120
+}

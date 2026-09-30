@@ -1,0 +1,142 @@
+[
+  {
+    "condition_id": "rear_natural_flip_000",
+    "dataset": "agora_hpe",
+    "group": "overall",
+    "count": 7505,
+    "full_yaw_maae_deg": 37.227927778866494
+  },
+  {
+    "condition_id": "rear_natural_flip_000",
+    "dataset": "agora_hpe",
+    "group": "front_lt60",
+    "count": 2681,
+    "full_yaw_maae_deg": 28.434923987407174
+  },
+  {
+    "condition_id": "rear_natural_flip_000",
+    "dataset": "agora_hpe",
+    "group": "side_60_to_lt120",
+    "count": 2180,
+    "full_yaw_maae_deg": 38.99129121368114
+  },
+  {
+    "condition_id": "rear_natural_flip_000",
+    "dataset": "agora_hpe",
+    "group": "rear_ge120",
+    "count": 2644,
+    "full_yaw_maae_deg": 44.69007258862689
+  },
+  {
+    "condition_id": "rear_005_flip_000",
+    "dataset": "agora_hpe",
+    "group": "overall",
+    "count": 7505,
+    "full_yaw_maae_deg": 36.423810118803914
+  },
+  {
+    "condition_id": "rear_005_flip_000",
+    "dataset": "agora_hpe",
+    "group": "front_lt60",
+    "count": 2681,
+    "full_yaw_maae_deg": 32.86867457631879
+  },
+  {
+    "condition_id": "rear_005_flip_000",
+    "dataset": "agora_hpe",
+    "group": "side_60_to_lt120",
+    "count": 2180,
+    "full_yaw_maae_deg": 40.520542294393636
+  },
+  {
+    "condition_id": "rear_005_flip_000",
+    "dataset": "agora_hpe",
+    "group": "rear_ge120",
+    "count": 2644,
+    "full_yaw_maae_deg": 36.65090627864393
+  },
+  {
+    "condition_id": "rear_natural_flip_020",
+    "dataset": "agora_hpe",
+    "group": "overall",
+    "count": 7505,
+    "full_yaw_maae_deg": 39.360170321665514
+  },
+  {
+    "condition_id": "rear_natural_flip_020",
+    "dataset": "agora_hpe",
+    "group": "front_lt60",
+    "count": 2681,
+    "full_yaw_maae_deg": 27.098316766514575
+  },
+  {
+    "condition_id": "rear_natural_flip_020",
+    "dataset": "agora_hpe",
+    "group": "side_60_to_lt120",
+    "count": 2180,
+    "full_yaw_maae_deg": 42.596990571042106
+  },
+  {
+    "condition_id": "rear_natural_flip_020",
+    "dataset": "agora_hpe",
+    "group": "rear_ge120",
+    "count": 2644,
+    "full_yaw_maae_deg": 49.12483039644565
+  },
+  {
+    "condition_id": "rear_natural_distill_100",
+    "dataset": "agora_hpe",
+    "group": "overall",
+    "count": 7505,
+    "full_yaw_maae_deg": 40.1265841844743
+  },
+  {
+    "condition_id": "rear_natural_distill_100",
+    "dataset": "agora_hpe",
+    "group": "front_lt60",
+    "count": 2681,
+    "full_yaw_maae_deg": 47.69256216192165
+  },
+  {
+    "condition_id": "rear_natural_distill_100",
+    "dataset": "agora_hpe",
+    "group": "side_60_to_lt120",
+    "count": 2180,
+    "full_yaw_maae_deg": 43.05976488797396
+  },
+  {
+    "condition_id": "rear_natural_distill_100",
+    "dataset": "agora_hpe",
+    "group": "rear_ge120",
+    "count": 2644,
+    "full_yaw_maae_deg": 30.036296404154438
+  },
+  {
+    "condition_id": "rear_natural_yawpose_100",
+    "dataset": "agora_hpe",
+    "group": "overall",
+    "count": 7505,
+    "full_yaw_maae_deg": 37.11371517006983
+  },
+  {
+    "condition_id": "rear_natural_yawpose_100",
+    "dataset": "agora_hpe",
+    "group": "front_lt60",
+    "count": 2681,
+    "full_yaw_maae_deg": 28.373847942828302
+  },
+  {
+    "condition_id": "rear_natural_yawpose_100",
+    "dataset": "agora_hpe",
+    "group": "side_60_to_lt120",
+    "count": 2180,
+    "full_yaw_maae_deg": 38.892313728913464
+  },
+  {
+    "condition_id": "rear_natural_yawpose_100",
+    "dataset": "agora_hpe",
+    "group": "rear_ge120",
+    "count": 2644,
+    "full_yaw_maae_deg": 44.50941833873677
+  }
+]

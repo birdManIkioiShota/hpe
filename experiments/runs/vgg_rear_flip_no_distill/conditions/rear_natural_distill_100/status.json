@@ -1,0 +1,48 @@
+{
+  "status": "completed",
+  "epochs": 10,
+  "global_step": 32580,
+  "best_epoch": 10,
+  "final_checkpoint": "experiments/runs/vgg_rear_flip_no_distill/conditions/rear_natural_distill_100/checkpoints/epoch_010.pth",
+  "final_checkpoint_sha256": "7082ccdbadd2250017d6e1ea6d347ebf1b74114141e545a5167c262d541dac37",
+  "best_selection_score": [
+    0.0,
+    81.69566857930765,
+    66.92785181205299,
+    9.322033898305085,
+    31.723148622213053,
+    -0.4753448468239938,
+    20.59685963857024,
+    21.936781986405382,
+    45.84347869860479,
+    71.2205111161464
+  ],
+  "best_rear": {
+    "count": 1023,
+    "mean_deg": 31.723148622213053,
+    "median_deg": 20.95550929324446,
+    "p90_deg": 66.92785181205299,
+    "over90_percent": 6.256109481915933
+  },
+  "best_front": {
+    "count": 48260,
+    "mean_deg": 20.59685963857024,
+    "median_deg": 7.209566396656289,
+    "p90_deg": 45.84347869860479,
+    "over90_percent": 7.540406133443846
+  },
+  "best_side": {
+    "count": 2631,
+    "mean_deg": 21.936781986405382,
+    "median_deg": 8.122160431236653,
+    "p90_deg": 71.2205111161464,
+    "over90_percent": 7.8297225389585705
+  },
+  "best_retention": {
+    "count": 50891,
+    "mean_deg": 20.66613192045023,
+    "median_deg": 7.271345618335364,
+    "p90_deg": 47.33738997164554,
+    "over90_percent": 7.555363423788096
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "path": "eval/vgg_rear_flip_no_distill/conditions/rear_natural_yawpose_100",
+  "checkpoint_sha256": "af6177f513150706a4974c9199c4bc937d6062ee79dec25c826a741a30eea3c2",
+  "prediction_sha256": {
+    "agora_hpe": "8d58680e30c2d55820c1566e092dc75cb344b80df1551968bace568bf9d78d5c",
+    "aflw2000": "316c7803abefd85319e38e628fea8c6cde882811ad948434d556b1650aa26331",
+    "300w_lp": "5732fb0c26852fbd41ff60f5cc0e60f9774da61228ed47221568fe351b6b1e2f"
+  }
+}

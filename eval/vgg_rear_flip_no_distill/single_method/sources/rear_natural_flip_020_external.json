@@ -1,0 +1,9 @@
+{
+  "path": "eval/vgg_rear_flip_no_distill/conditions/rear_natural_flip_020",
+  "checkpoint_sha256": "b463acf78c9924e805c7506ec2e5757dd0ff5d7f7a2eeae02a4cf0e9c73369a1",
+  "prediction_sha256": {
+    "agora_hpe": "f5f37de543c0455e8d8df57d3be0524b263a643540d1e9f01c45019db87dd5b3",
+    "aflw2000": "2a16154c7530e7d11e22dfc473c5ceb118251bd3425908a040dfcf393bb2ee1a",
+    "300w_lp": "bcaa6d447dbed94a6158b886353d3dea5530349a967fc786027eaa04e96476e1"
+  }
+}

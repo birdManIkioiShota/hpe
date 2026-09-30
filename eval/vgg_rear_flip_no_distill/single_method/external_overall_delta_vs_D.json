@@ -1,0 +1,134 @@
+[
+  {
+    "dataset": "agora_hpe",
+    "condition_id": "rear_005_flip_000",
+    "reference_condition": "rear_natural_flip_000",
+    "count": 7505.0,
+    "geodesic_error_deg_mean_delta": -0.6925661145463025,
+    "yaw_error_deg_mean_delta": 0.06600810017955538,
+    "roll_error_deg_mean_delta": -1.4110864728906378,
+    "pitch_error_deg_mean_delta": -1.3196184365563397,
+    "mean_axis_error_deg_mean_delta": -0.8882322697558038
+  },
+  {
+    "dataset": "aflw2000",
+    "condition_id": "rear_005_flip_000",
+    "reference_condition": "rear_natural_flip_000",
+    "count": 1988.0,
+    "geodesic_error_deg_mean_delta": 0.08155700848428005,
+    "yaw_error_deg_mean_delta": 0.025325793962530874,
+    "roll_error_deg_mean_delta": 0.026394025229021345,
+    "pitch_error_deg_mean_delta": 0.12270009598443643,
+    "mean_axis_error_deg_mean_delta": 0.058139971725329254
+  },
+  {
+    "dataset": "300w_lp",
+    "condition_id": "rear_005_flip_000",
+    "reference_condition": "rear_natural_flip_000",
+    "count": 122217.0,
+    "geodesic_error_deg_mean_delta": -0.014066393843982006,
+    "yaw_error_deg_mean_delta": -0.049619401507233984,
+    "roll_error_deg_mean_delta": 0.0414536642128942,
+    "pitch_error_deg_mean_delta": 0.0811683678480124,
+    "mean_axis_error_deg_mean_delta": 0.024334210184557392
+  },
+  {
+    "dataset": "agora_hpe",
+    "condition_id": "rear_natural_flip_020",
+    "reference_condition": "rear_natural_flip_000",
+    "count": 7505.0,
+    "geodesic_error_deg_mean_delta": 2.0295094491507513,
+    "yaw_error_deg_mean_delta": 0.5684154526030767,
+    "roll_error_deg_mean_delta": 1.3230948030791225,
+    "pitch_error_deg_mean_delta": 1.521193817107644,
+    "mean_axis_error_deg_mean_delta": 1.1375680242632882
+  },
+  {
+    "dataset": "aflw2000",
+    "condition_id": "rear_natural_flip_020",
+    "reference_condition": "rear_natural_flip_000",
+    "count": 1988.0,
+    "geodesic_error_deg_mean_delta": 0.1052771987393335,
+    "yaw_error_deg_mean_delta": -0.011644387507851572,
+    "roll_error_deg_mean_delta": 0.03040944875621676,
+    "pitch_error_deg_mean_delta": 0.16893805005651608,
+    "mean_axis_error_deg_mean_delta": 0.0625677037682939
+  },
+  {
+    "dataset": "300w_lp",
+    "condition_id": "rear_natural_flip_020",
+    "reference_condition": "rear_natural_flip_000",
+    "count": 122217.0,
+    "geodesic_error_deg_mean_delta": 0.392854312734662,
+    "yaw_error_deg_mean_delta": 0.3865459086484422,
+    "roll_error_deg_mean_delta": 0.07269199473984678,
+    "pitch_error_deg_mean_delta": 0.17436383063246463,
+    "mean_axis_error_deg_mean_delta": 0.2112005780069186
+  },
+  {
+    "dataset": "agora_hpe",
+    "condition_id": "rear_natural_distill_100",
+    "reference_condition": "rear_natural_flip_000",
+    "count": 7505.0,
+    "geodesic_error_deg_mean_delta": 2.7127392938105643,
+    "yaw_error_deg_mean_delta": 2.510477247890769,
+    "roll_error_deg_mean_delta": -0.4971702399305684,
+    "pitch_error_deg_mean_delta": -1.3523136540280802,
+    "mean_axis_error_deg_mean_delta": 0.2203311179773806
+  },
+  {
+    "dataset": "aflw2000",
+    "condition_id": "rear_natural_distill_100",
+    "reference_condition": "rear_natural_flip_000",
+    "count": 1988.0,
+    "geodesic_error_deg_mean_delta": -1.7290079334439676,
+    "yaw_error_deg_mean_delta": 0.1393871740293009,
+    "roll_error_deg_mean_delta": -1.892177449471804,
+    "pitch_error_deg_mean_delta": -3.4837990748059475,
+    "mean_axis_error_deg_mean_delta": -1.74552978341615
+  },
+  {
+    "dataset": "300w_lp",
+    "condition_id": "rear_natural_distill_100",
+    "reference_condition": "rear_natural_flip_000",
+    "count": 122217.0,
+    "geodesic_error_deg_mean_delta": 0.220887522039515,
+    "yaw_error_deg_mean_delta": 0.2955464991692254,
+    "roll_error_deg_mean_delta": 0.11351166379359423,
+    "pitch_error_deg_mean_delta": 0.13694713825277383,
+    "mean_axis_error_deg_mean_delta": 0.18200176707186433
+  },
+  {
+    "dataset": "agora_hpe",
+    "condition_id": "rear_natural_yawpose_100",
+    "reference_condition": "rear_natural_flip_000",
+    "count": 7505.0,
+    "geodesic_error_deg_mean_delta": -0.11015992862090229,
+    "yaw_error_deg_mean_delta": -0.02834054232249983,
+    "roll_error_deg_mean_delta": -0.06497050721338127,
+    "pitch_error_deg_mean_delta": -0.05426548934009645,
+    "mean_axis_error_deg_mean_delta": -0.04919217962531519
+  },
+  {
+    "dataset": "aflw2000",
+    "condition_id": "rear_natural_yawpose_100",
+    "reference_condition": "rear_natural_flip_000",
+    "count": 1988.0,
+    "geodesic_error_deg_mean_delta": 0.0786065710557402,
+    "yaw_error_deg_mean_delta": 0.038995697240033156,
+    "roll_error_deg_mean_delta": 0.29652018953224246,
+    "pitch_error_deg_mean_delta": 0.2833567421711418,
+    "mean_axis_error_deg_mean_delta": 0.20629087631447174
+  },
+  {
+    "dataset": "300w_lp",
+    "condition_id": "rear_natural_yawpose_100",
+    "reference_condition": "rear_natural_flip_000",
+    "count": 122217.0,
+    "geodesic_error_deg_mean_delta": -0.11215385875287254,
+    "yaw_error_deg_mean_delta": -0.16054699156458563,
+    "roll_error_deg_mean_delta": 0.5292472386087965,
+    "pitch_error_deg_mean_delta": 0.4637104957269189,
+    "mean_axis_error_deg_mean_delta": 0.27747024759037586
+  }
+]

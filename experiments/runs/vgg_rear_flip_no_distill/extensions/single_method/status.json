@@ -1,0 +1,8 @@
+{
+  "status": "completed",
+  "completed_conditions": [
+    "rear_natural_distill_100",
+    "rear_natural_yawpose_100"
+  ],
+  "pending_conditions": []
+}
