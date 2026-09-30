@@ -1,0 +1,43 @@
+{
+  "description": "Full-circle yaw metrics for the combined method and the initial reference, aggregated from saved AGORA-HPE predictions without inference.",
+  "formula": "mean(abs((degrees(atan2(pred_R_02, pred_R_22)) - gt_source_yaw_deg + 180) % 360 - 180))",
+  "rear_definition": "abs(gt_source_yaw_deg) >= 120",
+  "records": [
+    {
+      "condition_id": "rear_005_flip_020",
+      "dataset": "agora_hpe",
+      "group": "overall",
+      "count": 7505,
+      "full_yaw_maae_deg": 38.35241125223917,
+      "prediction_source": "eval/vgg_rear_flip_no_distill/conditions/rear_005_flip_020/predictions/agora_hpe.csv.gz",
+      "prediction_sha256": "8bfdb44bb14948dde6a27e50948755ec75cdc6162cb033cd8dc391745609a012"
+    },
+    {
+      "condition_id": "rear_005_flip_020",
+      "dataset": "agora_hpe",
+      "group": "rear_ge120",
+      "count": 2644,
+      "full_yaw_maae_deg": 38.15587247367597,
+      "prediction_source": "eval/vgg_rear_flip_no_distill/conditions/rear_005_flip_020/predictions/agora_hpe.csv.gz",
+      "prediction_sha256": "8bfdb44bb14948dde6a27e50948755ec75cdc6162cb033cd8dc391745609a012"
+    },
+    {
+      "condition_id": "audited_base",
+      "dataset": "agora_hpe",
+      "group": "overall",
+      "count": 7505,
+      "full_yaw_maae_deg": 40.45698797656011,
+      "prediction_source": "eval/baseline_fp32/evaluations/baseline/predictions/agora_hpe.csv.gz",
+      "prediction_sha256": "a673c87557b85d73b4646d05567ad7f3e15f53069d1ef86215555696dfb16ceb"
+    },
+    {
+      "condition_id": "audited_base",
+      "dataset": "agora_hpe",
+      "group": "rear_ge120",
+      "count": 2644,
+      "full_yaw_maae_deg": 30.8001938837517,
+      "prediction_source": "eval/baseline_fp32/evaluations/baseline/predictions/agora_hpe.csv.gz",
+      "prediction_sha256": "a673c87557b85d73b4646d05567ad7f3e15f53069d1ef86215555696dfb16ceb"
+    }
+  ]
+}
