@@ -1,0 +1,57 @@
+[
+  {
+    "condition_id": "rear_natural_flip_000",
+    "count": 51914,
+    "so3_mean_deg": 5.600377817496118,
+    "pitch_maae_deg": 4.1335854162450945,
+    "yaw_maae_deg": 3.074884413602964,
+    "roll_maae_deg": 3.413693341045996,
+    "mean_axis_maae_deg": 3.540721056964685,
+    "defined_yaw_count": 51914,
+    "undefined_yaw_count": 0
+  },
+  {
+    "condition_id": "rear_005_flip_000",
+    "count": 51914,
+    "so3_mean_deg": 5.790809863913429,
+    "pitch_maae_deg": 4.28434894689193,
+    "yaw_maae_deg": 3.1761274864169247,
+    "roll_maae_deg": 3.5401854601847895,
+    "mean_axis_maae_deg": 3.666887297831215,
+    "defined_yaw_count": 51914,
+    "undefined_yaw_count": 0
+  },
+  {
+    "condition_id": "rear_natural_flip_020",
+    "count": 51914,
+    "so3_mean_deg": 6.26719441589347,
+    "pitch_maae_deg": 4.621623845330252,
+    "yaw_maae_deg": 3.4021614580205557,
+    "roll_maae_deg": 3.854577512665723,
+    "mean_axis_maae_deg": 3.95945427200551,
+    "defined_yaw_count": 51914,
+    "undefined_yaw_count": 0
+  },
+  {
+    "condition_id": "rear_natural_distill_100",
+    "count": 51914,
+    "so3_mean_deg": 20.88401786432125,
+    "pitch_maae_deg": 17.280992724072732,
+    "yaw_maae_deg": 9.518712778400053,
+    "roll_maae_deg": 16.64559008297641,
+    "mean_axis_maae_deg": 14.481765195149729,
+    "defined_yaw_count": 51914,
+    "undefined_yaw_count": 0
+  },
+  {
+    "condition_id": "rear_natural_yawpose_100",
+    "count": 51914,
+    "so3_mean_deg": 5.614830469418345,
+    "pitch_maae_deg": 4.142923564567061,
+    "yaw_maae_deg": 3.087935774639634,
+    "roll_maae_deg": 3.4232761701342396,
+    "mean_axis_maae_deg": 3.551378503113645,
+    "defined_yaw_count": 51914,
+    "undefined_yaw_count": 0
+  }
+]

@@ -1,0 +1,57 @@
+[
+  {
+    "condition_id": "rear_natural_flip_000",
+    "count": 1023,
+    "so3_mean_deg": 34.58741634665673,
+    "pitch_maae_deg": 30.060308035060682,
+    "yaw_maae_deg": 16.221642501798613,
+    "roll_maae_deg": 29.480648560855556,
+    "mean_axis_maae_deg": 25.254199699238285,
+    "so3_p90_deg": 124.34976642747645,
+    "so3_over90_percent": 13.196480938416421
+  },
+  {
+    "condition_id": "rear_005_flip_000",
+    "count": 1023,
+    "so3_mean_deg": 26.968965894417316,
+    "pitch_maae_deg": 20.698470780021516,
+    "yaw_maae_deg": 14.736478836031944,
+    "roll_maae_deg": 20.014173894050856,
+    "mean_axis_maae_deg": 18.48304117003477,
+    "so3_p90_deg": 71.61021150283146,
+    "so3_over90_percent": 8.60215053763441
+  },
+  {
+    "condition_id": "rear_natural_flip_020",
+    "count": 1023,
+    "so3_mean_deg": 40.43219620673314,
+    "pitch_maae_deg": 37.598029047658116,
+    "yaw_maae_deg": 16.016303764232223,
+    "roll_maae_deg": 37.2101076081846,
+    "mean_axis_maae_deg": 30.27481347335831,
+    "so3_p90_deg": 148.0060069245181,
+    "so3_over90_percent": 17.49755620723363
+  },
+  {
+    "condition_id": "rear_natural_distill_100",
+    "count": 1023,
+    "so3_mean_deg": 31.72314878427843,
+    "pitch_maae_deg": 20.135635633932793,
+    "yaw_maae_deg": 21.720074453012494,
+    "roll_maae_deg": 19.79742794008369,
+    "mean_axis_maae_deg": 20.551046009009657,
+    "so3_p90_deg": 66.92785831936521,
+    "so3_over90_percent": 6.256109481915933
+  },
+  {
+    "condition_id": "rear_natural_yawpose_100",
+    "count": 1023,
+    "so3_mean_deg": 34.54468495235311,
+    "pitch_maae_deg": 30.016555773369006,
+    "yaw_maae_deg": 16.196667658817777,
+    "roll_maae_deg": 29.345064680068912,
+    "mean_axis_maae_deg": 25.186096037418565,
+    "so3_p90_deg": 123.33580442661422,
+    "so3_over90_percent": 13.196480938416421
+  }
+]

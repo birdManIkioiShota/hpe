@@ -1,0 +1,152 @@
+{
+  "kind": "experiment9_single_method_v1",
+  "run_id": "vgg_rear_flip_no_distill",
+  "train_conditions": [
+    "rear_natural_distill_100",
+    "rear_natural_yawpose_100"
+  ],
+  "evaluation_conditions": [
+    "rear_natural_flip_000",
+    "rear_005_flip_000",
+    "rear_natural_flip_020",
+    "rear_natural_distill_100",
+    "rear_natural_yawpose_100"
+  ],
+  "reference_condition": "rear_natural_flip_000",
+  "labels": {
+    "rear_natural_flip_000": "D: control",
+    "rear_005_flip_000": "A: rear 5%",
+    "rear_natural_flip_020": "B: flip consistency",
+    "rear_natural_distill_100": "E: self-distillation",
+    "rear_natural_yawpose_100": "F: YawPose"
+  },
+  "shared_training": {
+    "profile": "vgg-no-distill",
+    "vgg_data_id": "vgg_data",
+    "dad_data_id": null,
+    "device": "cuda:0",
+    "precision": "bf16",
+    "update_scope": "layer4",
+    "epochs": 10,
+    "samples_per_epoch": null,
+    "batch_size": 64,
+    "accumulation": 2,
+    "workers": 8,
+    "backbone_lr": 1e-06,
+    "head_lr": 3e-05,
+    "weight_decay": 0.0001,
+    "warmup_updates": 100,
+    "clip_norm": 1.0,
+    "rear_supervised_weight": 1.0,
+    "replay_supervised_weight": 1.0,
+    "retain_distill_weight": 0.0,
+    "retention_tolerance_deg": 0.0,
+    "seed": 42
+  },
+  "epoch_sampling": {
+    "source_count": 417055,
+    "requested_samples": null,
+    "resolved_samples": 417024,
+    "basis": "dataset_size"
+  },
+  "expected_updates": 32580,
+  "yawpose_subset": {
+    "path": "experiments/runs/yawpose_reliability_stratified15/predictions/subsets/top060.jsonl",
+    "sha256": "09da8f26931c73af3dd0e49606242b00c6664c2cf35d4925c7f4bf46d46194b4",
+    "count": 8433
+  },
+  "yawpose_weight": 1.0,
+  "original_condition_records": {
+    "rear_005_flip_000": {
+      "config.json": "4bc0b1106685566cd8d2534f74e00b4a9c3410dcd2e86f5025260adcd9c6a8e0",
+      "metrics/dev_baseline.json": "89f93e9c79be1e628493366df3d0ca590b6c0701ec0117ae96c2fc967c6030ce",
+      "metrics/epoch_001.json": "906018096355824c7432a4772c087cdc0f7b69f890d1c40f6625f91bcd664645",
+      "metrics/epoch_002.json": "89772105f18bee1ef595bb5bde34033e0e36f7391072083d611b21804e66c427",
+      "metrics/epoch_003.json": "3b320b7c0ca02b8d1494f33eed65284564151ad93a2334e5d7901a840472b51c",
+      "metrics/epoch_004.json": "9ab0ec01852e78b09da2f5e13fc11404fd9633d2848449918f426824f0e73f53",
+      "metrics/epoch_005.json": "ec999379d4803049920c4935450c3d7de41f0a3d749aa18cc39eb4c728e8c915",
+      "metrics/epoch_006.json": "afda6868f996aef4848df2a135cbf69387321888ccbb0f54898ca13f8bd87233",
+      "metrics/epoch_007.json": "46ea8034ca151b0cab40474abbae7880f140d2aedabb1f0e4f01c1e871483e13",
+      "metrics/epoch_008.json": "4c9dc45198a85cb66ae7b29625b02bcd480a636cbae419c2ea69fe682455151a",
+      "metrics/epoch_009.json": "d878637a30945717f3060b3621bb5d22488889d712f4614f257963321f8167d7",
+      "metrics/epoch_010.json": "325033bbf7f322f7692d6ccc74ecc6378b3a30b850d469ca7061f44a41a5a766",
+      "provenance.json": "4d56f316a7d8f09aea63d3adfe0f570d86999e2454060cddd61fe0ddfe904348",
+      "status.json": "2ed145fde1e2fda17e398e0666c362b9d73d7edb3206085fe899e3473587e57a"
+    },
+    "rear_natural_flip_020": {
+      "config.json": "7c4941a0a07f7a55614b1622e1688df13ccf456ea3cac8366b2cf75fc645d395",
+      "metrics/dev_baseline.json": "89f93e9c79be1e628493366df3d0ca590b6c0701ec0117ae96c2fc967c6030ce",
+      "metrics/epoch_001.json": "21eeb14a9f14ca2bef3f112b453b734728411e2966707522eaa6dbee20556ee3",
+      "metrics/epoch_002.json": "a53a466104dafbd1e85a8693e38a5aaf684129be894fef06793ef0d37a7a3861",
+      "metrics/epoch_003.json": "e77b1affd380a009bb67916a861e18e8e001ff6a7577be63935c81791173113e",
+      "metrics/epoch_004.json": "293a1ddc93a587f7a943e1a2c4e958582989a4543e0dd2a9d0962b1eb668e376",
+      "metrics/epoch_005.json": "a66020262f3767147dd6f2af874abefbf2732adb1ac83f063a67ace5ea5b45be",
+      "metrics/epoch_006.json": "ccfc5384a89a1f7cc596a19d6e2fa53345e5a3e8e409da5658e3607ca097fac9",
+      "metrics/epoch_007.json": "3ff74ab8c3b18103b356f1468047a262d6e858fdaf39f3c16dcb5423bb7c7b03",
+      "metrics/epoch_008.json": "b44c25731cfab3f83b8ca497f9721fbd3d61bfa22f775a3dbba916a5f3b865cd",
+      "metrics/epoch_009.json": "3bc726df0a031f4af82c96fa05fee221031a7e0d7a24c554a73a1777cac4cfb7",
+      "metrics/epoch_010.json": "0c957bd64b4182634a0a979ddd967e6204c5495cc32d4793bd86bf48b7becd4a",
+      "provenance.json": "4d56f316a7d8f09aea63d3adfe0f570d86999e2454060cddd61fe0ddfe904348",
+      "status.json": "4a72f126b5d3323a282ec3f40060f5708144dd239e42475afc46bff64eadd295"
+    },
+    "rear_005_flip_020": {
+      "config.json": "d880cc0783c36ac3df212de0fee5ecc368cf6870297e89438fbb13b6847b3e75",
+      "metrics/dev_baseline.json": "89f93e9c79be1e628493366df3d0ca590b6c0701ec0117ae96c2fc967c6030ce",
+      "metrics/epoch_001.json": "05393b79f91a628d64405f2f13d4e3f04d88f1efbf9054e97db13ce08be2587e",
+      "metrics/epoch_002.json": "2b661379847d84d423a28ab1d0a5af991ad86ff580e032508f1b0a2e0b6dcd85",
+      "metrics/epoch_003.json": "624315f71969e0f45f19fadd8c5676936764bd010c159d51947dd06f91d9a085",
+      "metrics/epoch_004.json": "f23d182db2841cd1e5512ac8440e32597b12fe39dad2ad84f2b1b595f03b8bbf",
+      "metrics/epoch_005.json": "38bae0102a33ee2fe1181d9544f9625bfcac6728c43fe68355b37cec6437732b",
+      "metrics/epoch_006.json": "b4299665bb2f0a7c11f7161ccdb722ab20e41022b7143ea08d2d75a82ee6105b",
+      "metrics/epoch_007.json": "4eb47e3f5a0a697703fa4fd6bd3df7b0c8d93507ed9deaceb0895a7259874445",
+      "metrics/epoch_008.json": "f16361dbd787380fb1fca72ba765acbf7152c99e7e64ba754e2fd999893a9fcb",
+      "metrics/epoch_009.json": "9afb8ce0a2de4986c27c05ce3cc073f057306c8e640d4cb6927360449890aa2c",
+      "metrics/epoch_010.json": "17ae10aca84249c8c4f40763c0d698ee15cd6ef232c12ef8d3ad552967a301ae",
+      "provenance.json": "4d56f316a7d8f09aea63d3adfe0f570d86999e2454060cddd61fe0ddfe904348",
+      "status.json": "f27c1b4bd7601a3f3c12bfbb89d5a03e6b7882946f4c17cb19738f4580a85fd3"
+    },
+    "rear_natural_flip_000": {
+      "config.json": "44808dfaabd65b0b272f86641519f7aa1a9f07d6bba01546cb04acc57cf0591a",
+      "metrics/dev_baseline.json": "89f93e9c79be1e628493366df3d0ca590b6c0701ec0117ae96c2fc967c6030ce",
+      "metrics/epoch_001.json": "0975ba82f543b4b91f167fe095853f748351fec57c3a046036eea53b3bdbd205",
+      "metrics/epoch_002.json": "d4075e06330fd0cddae9c4de02da0ad7f5b2790cddf308f6e8d368dc5963a6f5",
+      "metrics/epoch_003.json": "fe7603ebb8a92dc1bf096bd686aba479232bac3635be4be46279947b4dbfff61",
+      "metrics/epoch_004.json": "9d00f7a2f41e7f45b0a0475bd5c18df67a7a94333b799b188636992d75df4e5e",
+      "metrics/epoch_005.json": "b459cdcfe8a817622db538d92eae8b214b2e6ec0c50913e2d9f8ec7e2d662749",
+      "metrics/epoch_006.json": "f4c45abf43e9a6ea38c8de64a925ca151b95fbbba32444fb6cf472bfcef03700",
+      "metrics/epoch_007.json": "4ed56e83d7329e49a108ff17a5b560668f72227d6ce80f6e690e48159bd08369",
+      "metrics/epoch_008.json": "388ca2b622ff3d054d62ac1df0eea8246574f11a91e0b7f1e5cbaff81c906868",
+      "metrics/epoch_009.json": "9a7b76f3e49283d1361c0da3d43c54b2b7abf479a1ff80506224162574ab2c15",
+      "metrics/epoch_010.json": "5419c3b435a5c983e692678b5942836055598ef640fa70ad6e50a9de9aa39a5b",
+      "provenance.json": "4d56f316a7d8f09aea63d3adfe0f570d86999e2454060cddd61fe0ddfe904348",
+      "status.json": "eae2ca4d8ad2db699487d6873349dfc2a4fda4cc20c8e0d680b4299aa34142f3"
+    }
+  },
+  "parent_records": {
+    "config.json": "06b6dd6cf3a3c58706b430138bb4b2a6039a0a0536e578856cf6cd4849e0b8bf",
+    "provenance.json": "2edd8dfb77a03266e81f66199c5f91243c4d618c6eab488425be4d709b4323f2",
+    "status.json": "52907fe89ce60ab8d189a213305ca42c05d71cc9d4481792a66569eba9ce6154"
+  },
+  "extension_source_sha256": {
+    "src/experiments/common/single_method.py": "cccd6771aafe9bfb7483e9f57da11316406842621801380fae2632ace8669499",
+    "src/experiments/common/single_method_yawpose.py": "4c8ef7065a08c55c07669fef4183a391141b6bd4640678e5407edf53c7fd7cba",
+    "src/experiments/scripts/train_single_yawpose.py": "08773d6353edb07d2451f9dc07075d4ed7beebe0d704936ccdcd149d787fca60",
+    "src/experiments/scripts/run_single_method.py": "b2c88bd8ae2a8edf3bc9e179082a1082b66fc360e9e1aff79409247132a0ae90"
+  },
+  "yaw_training_source_sha256": {
+    "src/experiments/common/datasets.py": "2c5c28d04bd018f579bbc50ef8717cff05a7e0dfb874f96f3daf188444346d67",
+    "src/experiments/common/pose.py": "c8c3d3763b9e7d9e342018476171c2922eb7f573e45b2b1ba0657beee9c38299",
+    "src/experiments/common/run_directory.py": "62d0f664979db61f6ad9eac0c8864480efe47d2c05c40da56d4b5f06c4097f7c",
+    "src/experiments/common/sampling.py": "7828227f94249156af5363da9845db5a196355f0f8d00d0cbd26b090bb979dc5",
+    "src/experiments/common/training.py": "b14128cb7c0f738778d636d86a905446ef553bb08714084fbdd8b116d893fb6b",
+    "src/experiments/common/rear_flip_search.py": "b82abd281157447eed8a56e525dd35df15938ea7c6e844825848c9112d39ece4",
+    "src/experiments/scripts/train_single_yawpose.py": "08773d6353edb07d2451f9dc07075d4ed7beebe0d704936ccdcd149d787fca60",
+    "src/experiments/common/single_method_yawpose.py": "4c8ef7065a08c55c07669fef4183a391141b6bd4640678e5407edf53c7fd7cba",
+    "src/experiments/common/yawpose.py": "41df088be84d985e27b83c9a5481abc8f0b0c8bb245bb01ccd65f4999b2fa3ae",
+    "src/experiments/scripts/run_rear_flip_search.py": "2e87e9548cb3ef7b3d4b9c2342520d349fe77a9bbb6a118a53f5e9b4a4e501a6",
+    "src/hpe/data/dataset.py": "92e4157e9bc766b240434e6caafded3d97668cea3b3eea753a9f18a5a954cc87",
+    "src/hpe/geometry/rotations.py": "232e605225ceba11e24de96d80ee7f784c2c50f4b114d914e2ac6c855b1722d6",
+    "src/hpe/models/checkpoint.py": "bdef13c0eb78bf3c325b1af94e8747c09fb0faf9031b6b799e03270daf210321",
+    "src/hpe/models/sixdrepnet360.py": "9e4ff8d9f4be26fd2aed4a7387bf128c4f242c8a9e9f4f4c513f0d01e90089a0"
+  }
+}

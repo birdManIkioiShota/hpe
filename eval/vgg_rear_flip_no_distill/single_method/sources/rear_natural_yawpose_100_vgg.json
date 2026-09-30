@@ -1,0 +1,6 @@
+{
+  "path": "eval/vgg_rear_flip_no_distill/vgg_dev/models/af6177f513150706a4974c9199c4bc937d6062ee79dec25c826a741a30eea3c2",
+  "checkpoint_sha256": "af6177f513150706a4974c9199c4bc937d6062ee79dec25c826a741a30eea3c2",
+  "evaluation_fingerprint": "e69b737d3ae819896e45aa28ac74b54e97b30a0df49a8e1db96db63a870b19ae",
+  "predictions_sha256": "ea4577e846b034eae14b25871fbfb2c60a9cb01be4776054e6d8a263240f2d45"
+}

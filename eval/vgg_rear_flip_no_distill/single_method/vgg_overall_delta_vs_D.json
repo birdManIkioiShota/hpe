@@ -1,0 +1,42 @@
+[
+  {
+    "condition_id": "rear_005_flip_000",
+    "reference_condition": "rear_natural_flip_000",
+    "count": 51914,
+    "so3_mean_deg_delta": 0.19043204641731126,
+    "yaw_maae_deg_delta": 0.10124307281396083,
+    "roll_maae_deg_delta": 0.12649211913879332,
+    "pitch_maae_deg_delta": 0.15076353064683534,
+    "mean_axis_maae_deg_delta": 0.12616624086652983
+  },
+  {
+    "condition_id": "rear_natural_flip_020",
+    "reference_condition": "rear_natural_flip_000",
+    "count": 51914,
+    "so3_mean_deg_delta": 0.666816598397352,
+    "yaw_maae_deg_delta": 0.32727704441759187,
+    "roll_maae_deg_delta": 0.44088417161972693,
+    "pitch_maae_deg_delta": 0.48803842908515715,
+    "mean_axis_maae_deg_delta": 0.41873321504082517
+  },
+  {
+    "condition_id": "rear_natural_distill_100",
+    "reference_condition": "rear_natural_flip_000",
+    "count": 51914,
+    "so3_mean_deg_delta": 15.283640046825134,
+    "yaw_maae_deg_delta": 6.443828364797088,
+    "roll_maae_deg_delta": 13.231896741930413,
+    "pitch_maae_deg_delta": 13.147407307827638,
+    "mean_axis_maae_deg_delta": 10.941044138185044
+  },
+  {
+    "condition_id": "rear_natural_yawpose_100",
+    "reference_condition": "rear_natural_flip_000",
+    "count": 51914,
+    "so3_mean_deg_delta": 0.014452651922226778,
+    "yaw_maae_deg_delta": 0.013051361036670261,
+    "roll_maae_deg_delta": 0.009582829088243372,
+    "pitch_maae_deg_delta": 0.009338148321966777,
+    "mean_axis_maae_deg_delta": 0.010657446148960137
+  }
+]
