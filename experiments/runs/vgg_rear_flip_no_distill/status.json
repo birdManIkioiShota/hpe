@@ -1,0 +1,9 @@
+{
+  "status": "completed",
+  "completed_conditions": 4,
+  "total_conditions": 4,
+  "comparison": "experiments/runs/vgg_rear_flip_no_distill/metrics/comparison.json",
+  "comparison_csv": "experiments/runs/vgg_rear_flip_no_distill/metrics/comparison.csv",
+  "effects": "experiments/runs/vgg_rear_flip_no_distill/metrics/effects.json",
+  "extension_condition": "rear_natural_flip_000"
+}

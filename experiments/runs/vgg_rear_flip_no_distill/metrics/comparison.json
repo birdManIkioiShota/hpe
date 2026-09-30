@@ -58,5 +58,25 @@
     "front_p90_delta_deg": -39.11498037837072,
     "side_p90_delta_deg": -27.528168445535933,
     "best_epoch": 0
+  },
+  {
+    "condition_id": "rear_natural_flip_000",
+    "rear_fraction_level": "natural",
+    "rear_fraction": 0.01860905635947297,
+    "flip_consistency_weight": 0.0,
+    "epoch": 10,
+    "rear_fraction_observed": 0.01860804174340086,
+    "rear_mean_deg": 34.587416582883236,
+    "rear_p90_deg": 124.3497611798887,
+    "rear_over90_percent": 13.196480938416421,
+    "front_mean_deg": 4.582205304990275,
+    "side_mean_deg": 13.005647670223155,
+    "front_p90_deg": 7.9015377252764445,
+    "side_p90_deg": 32.267892356060756,
+    "front_delta_deg": -16.498953524794565,
+    "side_delta_deg": -9.406479163006221,
+    "front_p90_delta_deg": -40.18666257492919,
+    "side_p90_delta_deg": -39.68078276254974,
+    "best_epoch": 0
   }
 ]

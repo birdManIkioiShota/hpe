@@ -27,6 +27,12 @@
       "rear_fraction_level": "0.05",
       "rear_fraction": 0.05,
       "flip_consistency_weight": 0.2
+    },
+    {
+      "condition_id": "rear_natural_flip_000",
+      "rear_fraction_level": "natural",
+      "rear_fraction": 0.01860905635947297,
+      "flip_consistency_weight": 0.0
     }
   ],
   "shared_training": {

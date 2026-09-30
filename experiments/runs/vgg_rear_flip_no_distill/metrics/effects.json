@@ -1,0 +1,46 @@
+[
+  {
+    "condition_id": "rear_005_flip_000",
+    "rear_fraction_level": "0.05",
+    "flip_consistency_weight": 0.0,
+    "rear_mean_delta_vs_same_fraction_flip_zero": 0.0,
+    "front_mean_delta_vs_same_fraction_flip_zero": 0.0,
+    "side_mean_delta_vs_same_fraction_flip_zero": 0.0,
+    "rear_mean_delta_vs_natural_same_flip": -7.618450626674335,
+    "front_mean_delta_vs_natural_same_flip": 0.3364204291207882,
+    "side_mean_delta_vs_natural_same_flip": 0.5488840904415291
+  },
+  {
+    "condition_id": "rear_natural_flip_020",
+    "rear_fraction_level": "natural",
+    "flip_consistency_weight": 0.2,
+    "rear_mean_delta_vs_same_fraction_flip_zero": 5.844779537457171,
+    "front_mean_delta_vs_same_fraction_flip_zero": 0.4525752209999059,
+    "side_mean_delta_vs_same_fraction_flip_zero": 2.5832873835722836,
+    "rear_mean_delta_vs_natural_same_flip": 0.0,
+    "front_mean_delta_vs_natural_same_flip": 0.0,
+    "side_mean_delta_vs_natural_same_flip": 0.0
+  },
+  {
+    "condition_id": "rear_005_flip_020",
+    "rear_fraction_level": "0.05",
+    "flip_consistency_weight": 0.2,
+    "rear_mean_delta_vs_same_fraction_flip_zero": 5.705831290426854,
+    "front_mean_delta_vs_same_fraction_flip_zero": 0.3742318832669076,
+    "side_mean_delta_vs_same_fraction_flip_zero": 2.220851612684152,
+    "rear_mean_delta_vs_natural_same_flip": -7.757398873704652,
+    "front_mean_delta_vs_natural_same_flip": 0.2580770913877899,
+    "side_mean_delta_vs_natural_same_flip": 0.18644831955339747
+  },
+  {
+    "condition_id": "rear_natural_flip_000",
+    "rear_fraction_level": "natural",
+    "flip_consistency_weight": 0.0,
+    "rear_mean_delta_vs_same_fraction_flip_zero": 0.0,
+    "front_mean_delta_vs_same_fraction_flip_zero": 0.0,
+    "side_mean_delta_vs_same_fraction_flip_zero": 0.0,
+    "rear_mean_delta_vs_natural_same_flip": 0.0,
+    "front_mean_delta_vs_natural_same_flip": 0.0,
+    "side_mean_delta_vs_natural_same_flip": 0.0
+  }
+]

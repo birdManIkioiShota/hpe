@@ -1,0 +1,118 @@
+{
+  "kind": "append_natural_zero_flip_control",
+  "condition": {
+    "condition_id": "rear_natural_flip_000",
+    "rear_fraction_level": "natural",
+    "rear_fraction": 0.01860905635947297,
+    "flip_consistency_weight": 0.0
+  },
+  "original_config": {
+    "kind": "rear_sampling_flip_consistency_search",
+    "epochs": 10,
+    "sampling_policy": "proportional_to_source_rear_bucket_counts",
+    "natural_rear_fraction": 0.01860905635947297,
+    "epoch_sampling": {
+      "source_count": 417055,
+      "requested_samples": null,
+      "resolved_samples": 417024,
+      "basis": "dataset_size"
+    },
+    "conditions": [
+      {
+        "condition_id": "rear_005_flip_000",
+        "rear_fraction_level": "0.05",
+        "rear_fraction": 0.05,
+        "flip_consistency_weight": 0.0
+      },
+      {
+        "condition_id": "rear_natural_flip_020",
+        "rear_fraction_level": "natural",
+        "rear_fraction": 0.01860905635947297,
+        "flip_consistency_weight": 0.2
+      },
+      {
+        "condition_id": "rear_005_flip_020",
+        "rear_fraction_level": "0.05",
+        "rear_fraction": 0.05,
+        "flip_consistency_weight": 0.2
+      }
+    ],
+    "shared_training": {
+      "profile": "vgg-no-distill",
+      "vgg_data_id": "vgg_data",
+      "dad_data_id": null,
+      "device": "cuda:0",
+      "precision": "bf16",
+      "update_scope": "layer4",
+      "epochs": 10,
+      "samples_per_epoch": null,
+      "batch_size": 64,
+      "accumulation": 2,
+      "workers": 8,
+      "backbone_lr": 1e-06,
+      "head_lr": 3e-05,
+      "weight_decay": 0.0001,
+      "warmup_updates": 100,
+      "clip_norm": 1.0,
+      "rear_supervised_weight": 1.0,
+      "replay_supervised_weight": 1.0,
+      "retain_distill_weight": 0.0,
+      "retention_tolerance_deg": 0.0,
+      "seed": 42
+    }
+  },
+  "original_provenance": {
+    "base_checkpoint": {
+      "path": "checkpoints/6DRepNet360_Full-Rotation_300W_LP+Panoptic.pth",
+      "sha256": "3ee08f1e04b8d452a6c4a40926a6f38051894ae6d0aaa6d191fe6d8bc6e4f9c6"
+    },
+    "train_manifests": {
+      "datasets/prepared/vgg_data/train.jsonl": "087e644fa095374c730b0d10e38af8e8371556ffbb9c2d617aa1f5d3a644b394"
+    },
+    "dev_manifests": {
+      "datasets/prepared/vgg_data/dev.jsonl": "ba83be1e197275697e8919959519e4a5da314d460a34d5457ac9788f1a18d13b"
+    },
+    "source_sha256": {
+      "src/experiments/common/datasets.py": "2c5c28d04bd018f579bbc50ef8717cff05a7e0dfb874f96f3daf188444346d67",
+      "src/experiments/common/pose.py": "c8c3d3763b9e7d9e342018476171c2922eb7f573e45b2b1ba0657beee9c38299",
+      "src/experiments/common/rear_flip_search.py": "b82abd281157447eed8a56e525dd35df15938ea7c6e844825848c9112d39ece4",
+      "src/experiments/common/run_directory.py": "62d0f664979db61f6ad9eac0c8864480efe47d2c05c40da56d4b5f06c4097f7c",
+      "src/experiments/common/sampling.py": "7828227f94249156af5363da9845db5a196355f0f8d00d0cbd26b090bb979dc5",
+      "src/experiments/common/training.py": "b14128cb7c0f738778d636d86a905446ef553bb08714084fbdd8b116d893fb6b",
+      "src/experiments/scripts/run_rear_flip_search.py": "2e87e9548cb3ef7b3d4b9c2342520d349fe77a9bbb6a118a53f5e9b4a4e501a6",
+      "src/experiments/scripts/train_rear_balanced.py": "fb788f05885bdfe3d5dadf8c5aee01663f9f323e12d570c3a965158d5b2f619b",
+      "src/hpe/data/dataset.py": "92e4157e9bc766b240434e6caafded3d97668cea3b3eea753a9f18a5a954cc87",
+      "src/hpe/geometry/rotations.py": "232e605225ceba11e24de96d80ee7f784c2c50f4b114d914e2ac6c855b1722d6",
+      "src/hpe/models/checkpoint.py": "bdef13c0eb78bf3c325b1af94e8747c09fb0faf9031b6b799e03270daf210321",
+      "src/hpe/models/sixdrepnet360.py": "9e4ff8d9f4be26fd2aed4a7387bf128c4f242c8a9e9f4f4c513f0d01e90089a0"
+    },
+    "training_bucket_counts": {
+      "retention": 409294,
+      "negative:rear_120_to_lt150": 1563,
+      "negative:rear_150_to_180": 2085,
+      "positive:rear_120_to_lt150": 1477,
+      "positive:rear_150_to_180": 2636
+    }
+  },
+  "original_conditions": {
+    "rear_005_flip_000": {
+      "config.json": "4bc0b1106685566cd8d2534f74e00b4a9c3410dcd2e86f5025260adcd9c6a8e0",
+      "status.json": "2ed145fde1e2fda17e398e0666c362b9d73d7edb3206085fe899e3473587e57a",
+      "provenance.json": "4d56f316a7d8f09aea63d3adfe0f570d86999e2454060cddd61fe0ddfe904348",
+      "final_checkpoint_sha256": "6d3f6d57a353c3ac8932e11af637d5194ea628f9794c378ac6b91bede4ef5455"
+    },
+    "rear_natural_flip_020": {
+      "config.json": "7c4941a0a07f7a55614b1622e1688df13ccf456ea3cac8366b2cf75fc645d395",
+      "status.json": "4a72f126b5d3323a282ec3f40060f5708144dd239e42475afc46bff64eadd295",
+      "provenance.json": "4d56f316a7d8f09aea63d3adfe0f570d86999e2454060cddd61fe0ddfe904348",
+      "final_checkpoint_sha256": "b463acf78c9924e805c7506ec2e5757dd0ff5d7f7a2eeae02a4cf0e9c73369a1"
+    },
+    "rear_005_flip_020": {
+      "config.json": "d880cc0783c36ac3df212de0fee5ecc368cf6870297e89438fbb13b6847b3e75",
+      "status.json": "f27c1b4bd7601a3f3c12bfbb89d5a03e6b7882946f4c17cb19738f4580a85fd3",
+      "provenance.json": "4d56f316a7d8f09aea63d3adfe0f570d86999e2454060cddd61fe0ddfe904348",
+      "final_checkpoint_sha256": "517bb98ca6579a3e68f3f599c6172d72a542291ef819475552e18641294a4647"
+    }
+  },
+  "extension_source_sha256": "167375417e1c6231dc71a2fdc830166d4a31f2e9ffa96170ad195fbcd35e44f1"
+}
