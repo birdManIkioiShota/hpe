@@ -31,5 +31,16 @@
     "reference_vgg_dev_so3_mean_deg": null,
     "reference_kind": "training",
     "logical_id": "vgg_rear_flip_no_distill:rear_005_flip_020"
+  },
+  {
+    "experiment_id": "vgg_rear_flip_no_distill",
+    "condition_id": "rear_natural_flip_000",
+    "checkpoint_path": "experiments/runs/vgg_rear_flip_no_distill/conditions/rear_natural_flip_000/checkpoints/epoch_010.pth",
+    "checkpoint_sha256": "707e9b97aa2e182865f8084fe4285ea03f6a79cf5c00ca83ff313a5f6f0ec544",
+    "reference_run_path": "experiments/runs/vgg_rear_flip_no_distill/conditions/rear_natural_flip_000/status.json",
+    "epoch": 10,
+    "reference_vgg_dev_so3_mean_deg": null,
+    "reference_kind": "training",
+    "logical_id": "vgg_rear_flip_no_distill:rear_natural_flip_000"
   }
 ]

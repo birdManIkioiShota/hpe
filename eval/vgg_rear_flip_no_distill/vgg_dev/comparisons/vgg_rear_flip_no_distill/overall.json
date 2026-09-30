@@ -46,5 +46,21 @@
     "mean_axis_maae_deg": 4.005489176838101,
     "defined_yaw_count": 51914,
     "undefined_yaw_count": 0
+  },
+  {
+    "experiment_id": "vgg_rear_flip_no_distill",
+    "condition_id": "rear_natural_flip_000",
+    "logical_id": "vgg_rear_flip_no_distill:rear_natural_flip_000",
+    "epoch": 10,
+    "checkpoint_sha256": "707e9b97aa2e182865f8084fe4285ea03f6a79cf5c00ca83ff313a5f6f0ec544",
+    "shared_prediction_result": false,
+    "count": 51914,
+    "so3_mean_deg": 5.600377817496118,
+    "pitch_maae_deg": 4.1335854162450945,
+    "yaw_maae_deg": 3.074884413602964,
+    "roll_maae_deg": 3.413693341045996,
+    "mean_axis_maae_deg": 3.540721056964685,
+    "defined_yaw_count": 51914,
+    "undefined_yaw_count": 0
   }
 ]
